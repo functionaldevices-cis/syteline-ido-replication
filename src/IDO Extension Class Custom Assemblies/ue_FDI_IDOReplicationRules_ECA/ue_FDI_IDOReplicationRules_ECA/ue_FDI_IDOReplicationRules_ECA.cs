@@ -19,7 +19,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
     /**********************************************************************************************************/
     /*
     /* Name:     ue_FDI_IDOReplicationRules_ECA
-    /* Purpose:  Assembly class to hold all generic methods for Functional Devices.
+    /* Purpose:  Assembly class to hold all methods related to AES-Driven IDO-Layer Replication.
     /* Date:     2025-04-21
     /* Author:   Andy Mercer
     /*
