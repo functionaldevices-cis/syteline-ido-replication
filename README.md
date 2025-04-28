@@ -5,13 +5,32 @@
 
 An AES-driven IDO-layer data replication system for Syteline, that lets administrators set up event driven replication rules, external target systems, and even field-level data mapping/transformation.
 
-Current targets include:
+## Status:
 
-* Azure EventHubs
-* Salesforce REST API
+* IDOs structure - Complete
+* Naming convention - Complete
+* Main IDO Method - Framework Complete
+* External Targets - Need to build out
 
-Future potential targets:
+## IDOs
 
-* Other Syteline instances through REST or SOAP APIs
-* Direct SQL databases (PostGres, MS SQL Server, MySQL, etc)
-* Other ERP systems with a REST API?
+* ue_FDI_IDOReplicationRules
+* ue_FDI_IDOReplicationCredentials
+* ue_FDI_IDOReplicationMapFields
+* ue_FDI_IDOReplicationMapFieldSources
+
+## Forms
+
+* ue_FDI_IDOReplicationRules
+![image](https://github.com/user-attachments/assets/78fe11a2-e623-480b-bd1d-1b44760298ea)
+  
+* ue_FDI_IDOReplicationCredentials
+![image](https://github.com/user-attachments/assets/a05d732e-aeb0-48ef-9042-c01a54e5947e)
+
+## External Targets:
+
+* Azure EventHubs - Code Fully Written, But Waiting to Hear from Infor on Security Issues and/or Installing dependencies
+* Salesforce REST API - Code Stub Written. Need to merge in code from other projects
+* Other Syteline instances through REST or SOAP APIs - Conceptual, not started
+* Direct SQL databases (PostGres, MS SQL Server, MySQL, etc) - Conceptual, not started
+* Other ERP systems with a REST API - Conceptual, not started
