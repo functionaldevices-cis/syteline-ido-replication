@@ -1,0 +1,5 @@
+Table Name,Schema,Multi-Site
+ue_FDI_idorepl_cred_mst,dbo,1
+ue_FDI_idorepl_mapfield_mst,dbo,1
+ue_FDI_idorepl_mapfieldsource_mst,dbo,1
+ue_FDI_idorepl_rule_mst,dbo,1
