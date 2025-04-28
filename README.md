@@ -12,6 +12,13 @@ An AES-driven IDO-layer data replication system for Syteline, that lets administ
 * Main IDO Method - Framework Complete
 * External Targets - Need to build out
 
+## Tables
+
+* ue_FDI_idorepl_cred_mst
+* ue_FDI_idorepl_mapfield_mst
+* ue_FDI_idorepl_mapfieldsource_mst
+* ue_FDI_idorepl_rule_mst
+
 ## IDOs
 
 * ue_FDI_IDOReplicationRules
