@@ -178,6 +178,8 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                     // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
 
+                    // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
+
                     remappedReplicationRecords = this.RemapRecords(
                         mapFields: mapFields,
                         recordsResponseData: replicationRecordsResponse
