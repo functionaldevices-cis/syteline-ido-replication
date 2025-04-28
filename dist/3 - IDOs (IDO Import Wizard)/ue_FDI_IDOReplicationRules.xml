@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjectStudioExport Version="060000">
+   <IDODefinitions>
+      <IDODefinition Name="ue_FDI_IDOReplicationRules">
+         <ServerName>ue_FDI</ServerName>
+         <AccessAs>ue_</AccessAs>
+         <LabelStringID>oue_FDI_IDOReplicationRules</LabelStringID>
+         <RevisionNo>13</RevisionNo>
+         <RevisionDate>2025-04-25T00:49:55</RevisionDate>
+         <CustomAssemblyName>ue_FDI_IDOReplicationRules_ECA</CustomAssemblyName>
+         <ExtClassNamespace>ue_FDI_IDOReplicationRules_ECA</ExtClassNamespace>
+         <ExtClassName>ue_FDI_IDOReplicationRules_ECA</ExtClassName>
+         <ReplaceFlag>0</ReplaceFlag>
+         <QuoteTableAliases>0</QuoteTableAliases>
+         <Tables>
+            <Table Name="ue_FDI_idorepl_cred" Alias="idorepl_cred" Type="SECONDARY">
+               <ExplicitJoin>[idorepl_cred].[credential_id] = [idorepl_rule].[credential_id]</ExplicitJoin>
+               <JoinType>LEFT OUTER</JoinType>
+            </Table>
+            <Table Name="ue_FDI_idorepl_rule" Alias="idorepl_rule" Type="PRIMARY" />
+         </Tables>
+         <Methods>
+            <Method Name="ReplicateRecordToExternalSystems" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="IDOName" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="rowPointer" Sequence="1">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="targetType" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
+            </Method>
+         </Methods>
+         <Properties>
+            <Property Name="CreateDate" Key="0" Binding="BOUND" Sequence="3">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreateDate</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CreatedBy" Key="0" Binding="BOUND" Sequence="1">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreatedBy</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CredentialID" Key="0" Binding="BOUND" Sequence="10">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>credential_id</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialName" Key="0" Binding="BOUND" Sequence="10">
+               <PropertyClass>LongDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>name</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CredentialTargetType" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>target_type</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CredentialValue01" Key="0" Binding="BOUND" Sequence="12">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value01</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CredentialValue02" Key="0" Binding="BOUND" Sequence="13">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value02</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue03" Key="0" Binding="BOUND" Sequence="14">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value03</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue04" Key="0" Binding="BOUND" Sequence="15">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value04</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue05" Key="0" Binding="BOUND" Sequence="16">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value05</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue06" Key="0" Binding="BOUND" Sequence="17">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value06</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue07" Key="0" Binding="BOUND" Sequence="18">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value07</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue08" Key="0" Binding="BOUND" Sequence="19">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value08</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue09" Key="0" Binding="BOUND" Sequence="20">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value09</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="CredentialValue10" Key="0" Binding="BOUND" Sequence="21">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value10</BoundToColumn>
+               <ColumnTableAlias>idorepl_cred</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="IDOName" Key="0" Binding="BOUND" Sequence="14">
+               <PropertyClass>IDOName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>ido_name</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>nvarchar</ColumnDataType>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="InWorkflow" Key="0" Binding="BOUND" Sequence="7">
+               <PropertyClass>InWorkflowBase</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>InWorkflow</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>tinyint</ColumnDataType>
+                  <IsRORecordFlag>1</IsRORecordFlag>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="IsActive" Key="0" Binding="BOUND" Sequence="13">
+               <PropertyClass>ListYesNo</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>is_active</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="MapFields" Binding="SUBCOLLECTION" Sequence="0">
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <Subcollection>ue_FDI_IDOReplicationMapFields</Subcollection>
+               <SubcollectionFilter>RuleNum=RuleNum</SubcollectionFilter>
+               <SubstitutionProperties />
+               <PropertyAttributes />
+            </Property>
+            <Property Name="NoteExistsFlag" Key="0" Binding="BOUND" Sequence="6">
+               <PropertyClass>FlagNy</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>NoteExistsFlag</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option01" Key="0" Binding="BOUND" Sequence="15">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option01</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option02" Key="0" Binding="BOUND" Sequence="16">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option02</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option03" Key="0" Binding="BOUND" Sequence="17">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option03</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option04" Key="0" Binding="BOUND" Sequence="18">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option04</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option05" Key="0" Binding="BOUND" Sequence="19">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option05</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option06" Key="0" Binding="BOUND" Sequence="20">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option06</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option07" Key="0" Binding="BOUND" Sequence="21">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option07</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option08" Key="0" Binding="BOUND" Sequence="22">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option08</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option09" Key="0" Binding="BOUND" Sequence="23">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option09</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Option10" Key="0" Binding="BOUND" Sequence="24">
+               <PropertyClass>LongDesc</PropertyClass>
+               <BoundToColumn>option10</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Options" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>options</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="RecordDate" Key="0" Binding="BOUND" Sequence="4">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RecordDate</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RowPointer" Key="0" Binding="BOUND" Sequence="5">
+               <PropertyClass>RowPointer</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RowPointer</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RuleNum" Key="0" Binding="BOUND" Sequence="15">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>rule_num</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <DefaultValue>AUTONUMBER()</DefaultValue>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="TargetType" Key="0" Binding="BOUND" Sequence="9">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>target_type</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>UpdatedBy</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+         </Properties>
+         <Rules />
+      </IDODefinition>
+   </IDODefinitions>
+</ObjectStudioExport>

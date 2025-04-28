@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjectStudioExport Version="060000">
+   <IDODefinitions>
+      <IDODefinition Name="ue_FDI_IDOReplicationMapFieldSources">
+         <ServerName>ue_FDI</ServerName>
+         <AccessAs>ue_</AccessAs>
+         <LabelStringID>oue_FDI_IDOReplicationMapFieldSources</LabelStringID>
+         <RevisionNo>12</RevisionNo>
+         <RevisionDate>2025-04-25T12:07:30</RevisionDate>
+         <ReplaceFlag>0</ReplaceFlag>
+         <QuoteTableAliases>1</QuoteTableAliases>
+         <Tables>
+            <Table Name="ue_FDI_idorepl_mapfield" Alias="idorepl_mapfield" Type="SECONDARY">
+               <ExplicitJoin>[idorepl_mapfield].[rule_num] = [mapfieldsource].[rule_num] AND [idorepl_mapfield].[field_seq] = [mapfieldsource].[field_seq]</ExplicitJoin>
+               <JoinType>LEFT OUTER</JoinType>
+            </Table>
+            <Table Name="ue_FDI_idorepl_mapfieldsource" Alias="mapfieldsource" Type="PRIMARY" />
+         </Tables>
+         <Methods />
+         <Properties>
+            <Property Name="CreateDate" Key="0" Binding="BOUND" Sequence="3">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreateDate</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CreatedBy" Key="0" Binding="BOUND" Sequence="1">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreatedBy</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="FieldName" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>LongDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>name</BoundToColumn>
+               <ColumnTableAlias>idorepl_mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="FieldSeq" Key="0" Binding="BOUND" Sequence="10">
+               <PropertyClass>Sequence</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>field_seq</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>SequenceType</ColumnDataType>
+                  <DataType>Long Integer</DataType>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="InWorkflow" Key="0" Binding="BOUND" Sequence="7">
+               <PropertyClass>InWorkflowBase</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>InWorkflow</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>tinyint</ColumnDataType>
+                  <IsRORecordFlag>1</IsRORecordFlag>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="NoteExistsFlag" Key="0" Binding="BOUND" Sequence="6">
+               <PropertyClass>FlagNy</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>NoteExistsFlag</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="RecordDate" Key="0" Binding="BOUND" Sequence="4">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RecordDate</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RowPointer" Key="0" Binding="BOUND" Sequence="5">
+               <PropertyClass>RowPointer</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RowPointer</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RuleNum" Key="0" Binding="BOUND" Sequence="9">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>rule_num</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="SourceSeq" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>Sequence</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>source_seq</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>SequenceType</ColumnDataType>
+                  <DataType>Long Integer</DataType>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="Type" Key="0" Binding="BOUND" Sequence="12">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>type</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+                  <InlineList>ENTRIES(IDOProperty,Literal) DISPLAY(1) VALUE(1)</InlineList>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>UpdatedBy</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="Value" Key="0" Binding="BOUND" Sequence="13">
+               <PropertyClass>LongDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>value</BoundToColumn>
+               <ColumnTableAlias>mapfieldsource</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>LongDescType</ColumnDataType>
+                  <DataLength>255</DataLength>
+               </PropertyAttributes>
+            </Property>
+         </Properties>
+         <Rules />
+      </IDODefinition>
+   </IDODefinitions>
+</ObjectStudioExport>

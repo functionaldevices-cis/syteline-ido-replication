@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ObjectStudioExport Version="060000">
+   <IDODefinitions>
+      <IDODefinition Name="ue_FDI_IDOReplicationMapFields">
+         <ServerName>ue_FDI</ServerName>
+         <AccessAs>ue_</AccessAs>
+         <LabelStringID>oue_FDI_IDOReplicationMapFields</LabelStringID>
+         <RevisionNo>14</RevisionNo>
+         <RevisionDate>2025-04-24T19:38:29</RevisionDate>
+         <ReplaceFlag>0</ReplaceFlag>
+         <QuoteTableAliases>1</QuoteTableAliases>
+         <Tables>
+            <Table Name="ue_FDI_idorepl_rule" Alias="idorepl_rule" Type="SECONDARY">
+               <ExplicitJoin>[idorepl_rule].[rule_num] = [mapfield].[rule_num]</ExplicitJoin>
+               <JoinType>LEFT OUTER</JoinType>
+            </Table>
+            <Table Name="ue_FDI_idorepl_mapfield" Alias="mapfield" Type="PRIMARY" />
+         </Tables>
+         <Methods />
+         <Properties>
+            <Property Name="CreateDate" Key="0" Binding="BOUND" Sequence="3">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreateDate</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CreatedBy" Key="0" Binding="BOUND" Sequence="1">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreatedBy</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="FieldSeq" Key="0" Binding="BOUND" Sequence="10">
+               <PropertyClass>Sequence</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>field_seq</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>SequenceType</ColumnDataType>
+                  <DataType>Long Integer</DataType>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="IDOName" Key="0" Binding="BOUND" Sequence="13">
+               <PropertyClass>IDOName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>ido_name</BoundToColumn>
+               <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="InWorkflow" Key="0" Binding="BOUND" Sequence="7">
+               <PropertyClass>InWorkflowBase</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>InWorkflow</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>tinyint</ColumnDataType>
+                  <IsRORecordFlag>1</IsRORecordFlag>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="JSON" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <Expression>CONCAT(
+   '{ "OutputFieldName": "' + Name + '", "Sources": [',
+   ISNULL(
+      (
+         SELECT
+            STRING_AGG(
+               CASE
+                  WHEN
+                     ue_FDI_idorepl_mapfieldsource.type = 'IdoProperty'
+                  THEN
+                     '"P(' + ue_FDI_idorepl_mapfieldsource.value + ')"'
+                  ELSE
+                     '"' + ue_FDI_idorepl_mapfieldsource.value + '"'
+               END,
+               ', '
+            )
+         WITHIN GROUP
+            (ORDER BY ue_FDI_idorepl_mapfieldsource.source_seq ASC)
+         FROM
+            dbo.ue_FDI_idorepl_mapfieldsource
+         WHERE
+            ue_FDI_idorepl_mapfieldsource.rule_num = RuleNum and ue_FDI_idorepl_mapfieldsource.field_seq = FieldSeq
+      ),
+      ''
+   ),
+   '] }'
+)</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>LongerDescType</ColumnDataType>
+                  <DataLength>2000</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="Name" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>LongDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>name</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>LongDescType</ColumnDataType>
+                  <DataLength>255</DataLength>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="NoteExistsFlag" Key="0" Binding="BOUND" Sequence="6">
+               <PropertyClass>FlagNy</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>NoteExistsFlag</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="RecordDate" Key="0" Binding="BOUND" Sequence="4">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RecordDate</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RowPointer" Key="0" Binding="BOUND" Sequence="5">
+               <PropertyClass>RowPointer</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RowPointer</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RuleNum" Key="0" Binding="BOUND" Sequence="9">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>rule_num</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>GenericIntType</ColumnDataType>
+                  <DataType>Long Integer</DataType>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="Sources" Binding="SUBCOLLECTION" Sequence="0">
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <Subcollection>ue_FDI_IDOReplicationMapFieldSources</Subcollection>
+               <SubcollectionFilter>RuleNum=RuleNum,FieldSeq=FieldSeq</SubcollectionFilter>
+               <SubstitutionProperties />
+               <PropertyAttributes />
+            </Property>
+            <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>UpdatedBy</BoundToColumn>
+               <ColumnTableAlias>mapfield</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+         </Properties>
+         <Rules />
+      </IDODefinition>
+   </IDODefinitions>
+</ObjectStudioExport>
