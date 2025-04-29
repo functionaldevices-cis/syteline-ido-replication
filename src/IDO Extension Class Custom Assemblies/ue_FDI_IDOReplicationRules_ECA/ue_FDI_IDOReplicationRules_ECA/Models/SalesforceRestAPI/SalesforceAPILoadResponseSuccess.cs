@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPILoadResponseSuccess

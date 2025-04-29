@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPIAccessTokenDetails

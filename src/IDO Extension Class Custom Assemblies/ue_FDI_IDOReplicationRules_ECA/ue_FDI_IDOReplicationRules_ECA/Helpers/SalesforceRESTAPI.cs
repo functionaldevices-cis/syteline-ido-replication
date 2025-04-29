@@ -5,8 +5,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 using ue_FDI_IDOReplicationRules_ECA.Models;
-using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI;
+using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
+using static Mongoose.Core.Common.QuickKeywordParser;
 
 
 namespace ue_FDI_IDOReplicationRules_ECA.Helpers
@@ -129,12 +131,14 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
         }
 
-        public void UpsertRecords(string objectName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryResult> onStartCallback = null, Action<SalesforceAPIQueryResult> onProgressCallback = null, Action<SalesforceAPIQueryResult> onCompleteCallback = null)
+        public async Task<List<SalesforceAPIUpsertResponse>> UpsertRecords(string objectName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null)
         {
+
+            List <SalesforceAPIUpsertResponse> responses = new List<SalesforceAPIUpsertResponse>();
 
             // RUN START CALLBACK
 
-            onStartCallback?.Invoke(new SalesforceAPIQueryResult(
+            onStartCallback?.Invoke(new SalesforceAPIQueryStatus(
                 CountTotal: records.Count,
                 CountCompleted: 0
             ));
@@ -148,32 +152,43 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             for (int i = 0; i < records.Count; i += 200)
             {
 
+                var recordBatch = records.Skip(i).Take(200);
+
                 // UPSERT RECORD BATCH
 
-                UpsertRecordBatch(
+                var response = await UpsertRecordBatch(
                     objectName: objectName,
-                    recordsPackage: new SalesforceAPIUpsertPackage(records.Skip(i).Take(200).Select(record => attributesField.Concat(record).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.First().Value)).ToList())
+                    recordsPackage: new SalesforceAPIUpsertPackage(recordBatch.Select(record => attributesField.Concat(record).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.First().Value)).ToList())
                 );
+
+                responses.Add(response);
 
                 // RUN PROGRESS CALLBACK
 
-                onProgressCallback?.Invoke(new SalesforceAPIQueryResult(
+                onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
                     CountTotal: records.Count,
                     CountCompleted: i + 200
+                ));
+
+                onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
+                    CountTotal: records.Count,
+                    CountCompleted: i + recordBatch.Count()
                 ));
 
             }
 
             // RUN COMPLETE CALLBACK
 
-            onCompleteCallback?.Invoke(new SalesforceAPIQueryResult(
+            onCompleteCallback?.Invoke(new SalesforceAPIQueryStatus(
                 CountTotal: records.Count,
                 CountCompleted: records.Count
             ));
 
+            return responses;
+
         }
 
-        public void UpsertRecordBatch(string objectName, SalesforceAPIUpsertPackage recordsPackage)
+        public async Task<SalesforceAPIUpsertResponse> UpsertRecordBatch(string objectName, SalesforceAPIUpsertPackage recordsPackage)
         {
 
             SalesforceAPIAccessTokenDetails accessToken = this.GetAccessToken();
@@ -199,22 +214,36 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                 };
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-                HttpResponseMessage httpResponse = this.HttpClient.SendAsync(
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(
                     request
-                ).Result;
+                );
 
-                string responseText = httpResponse.Content.ReadAsStringAsync().Result;
+                string responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                return new SalesforceAPIUpsertResponse(
+                    success: httpResponse.IsSuccessStatusCode,
+                    message: responseContent
+                );
+
+            }
+            else
+            {
+
+                return new SalesforceAPIUpsertResponse(
+                    success: false,
+                    message: accessToken.Message
+                );
 
             }
 
         }
 
-        public SalesforceAPILoadResultsResponse LoadRecords(string objectName, List<string> fieldNames, string filter = null, List<SalesforceAPILoadRequestOrderByField> orderBy = null, int? recordCap = null, Action<SalesforceAPIQueryResult> onStartCallback = null, Action<SalesforceAPIQueryResult> onProgressCallback = null, Action<SalesforceAPIQueryResult> onCompleteCallback = null, bool reportCompletionPercentage = false)
+        public async Task<SalesforceAPILoadResults> LoadRecords(string objectName, List<string> fieldNames, string filter = null, List<SalesforceAPILoadRequestOrderByField> orderBy = null, int? recordCap = null, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null, bool reportCompletionPercentage = false)
         {
 
             // INIT VARS
-            SalesforceAPILoadResultsResponse results = new SalesforceAPILoadResultsResponse();
-            SalesforceAPILoadResultsResponse response;
+            SalesforceAPILoadResults results = new SalesforceAPILoadResults();
+            SalesforceAPILoadResponse response;
 
             int requestCap = recordCap != null ? Math.Min((int)recordCap, this.StreamingRecordCap) : this.StreamingRecordCap;
             bool haveToPaginate = recordCap == null || recordCap >= this.StreamingRecordCap;
@@ -225,7 +254,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             // IF WE ARE LOADING VIA SOAP, WE NEED TO ENSURE THAT THE ROWPOINTER IS PART OF THE REQUEST, BECAUSE
             // THAT IS WHAT WE USE FOR PAGINATION, SINCE SOAP DOESN'T HAVE PAGINATION OUT OF BOX
 
-            onStartCallback?.Invoke(new SalesforceAPIQueryResult(
+            onStartCallback?.Invoke(new SalesforceAPIQueryStatus(
                 CountCompleted: 0
             ));
 
@@ -234,7 +263,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 // SEND REQUEST AND RETRIEVE RECORDS
 
-                response = this.LoadRecordBatch(
+                response = await this.LoadRecordBatch(
                     objectName: objectName,
                     fieldNames: fieldNames,
                     filter: filter,
@@ -242,25 +271,19 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                     recordCap: recordCap
                 );
 
-                results.success = response.success;
-                results.errorCode = response.errorCode;
-                results.message = response.message;
-                results.totalSize = response.totalSize;
-                results.done = response.done;
-                results.nextRecordsUrl = response.nextRecordsUrl;
-                results.records.AddRange(response.records);
+                results.AddResponse(response);
 
 
                 // SEND REQUEST AND RETRIEVE RECORDS
 
-                onProgressCallback?.Invoke(new SalesforceAPIQueryResult(
+                onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
                     CountTotal: results.totalSize,
-                    CountCompleted: results.records.Count
+                    CountCompleted: results.recordCount
                 ));
 
                 if (recordCap != null)
                 {
-                    if (recordCap <= results.records.Count)
+                    if (recordCap <= results.recordCount)
                     {
                         totalCapNotMet = false;
                     }
@@ -270,16 +293,16 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
             } while (moreRowsExist && totalCapNotMet);
 
-            onCompleteCallback?.Invoke(new SalesforceAPIQueryResult(
+            onCompleteCallback?.Invoke(new SalesforceAPIQueryStatus(
                 CountTotal: results.totalSize,
-                CountCompleted: results.records.Count
+                CountCompleted: results.recordCount
             ));
 
             return results;
 
         }
 
-        public SalesforceAPILoadResultsResponse LoadRecordBatch(string objectName, List<string> fieldNames, string filter = null, List<SalesforceAPILoadRequestOrderByField> orderBy = null, int? recordCap = null, string urlPathOverride = null)
+        public async Task<SalesforceAPILoadResponse> LoadRecordBatch(string objectName, List<string> fieldNames, string filter = null, List<SalesforceAPILoadRequestOrderByField> orderBy = null, int? recordCap = null, string urlPathOverride = null)
         {
 
             // BUILD ORDER BY STRING
@@ -301,7 +324,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 // LOAD THE REQUEST
 
-                HttpResponseMessage httpResponse = this.HttpClient.SendAsync(new HttpRequestMessage()
+                HttpResponseMessage httpResponse = await this.HttpClient.SendAsync(new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri($"{urlDomain}{urlPath}"),
@@ -309,20 +332,22 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                     {
                         { "Authorization", "Bearer " + this.GetAccessToken().Token }
                     }
-                }).Result;
+                });
+
+                string responseContent = await httpResponse.Content.ReadAsStringAsync();
 
                 // PARSE THE REQUEST
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    return new SalesforceAPILoadResultsResponse(
-                        successResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseSuccess>(httpResponse.Content.ReadAsStringAsync().Result) ?? throw new Exception("Unable to parse response.")
+                    return new SalesforceAPILoadResponse(
+                        successResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseSuccess>(responseContent) ?? throw new Exception("Unable to parse response.")
                     );
                 }
                 else
                 {
-                    return new SalesforceAPILoadResultsResponse(
-                        errorResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseError>(httpResponse.Content.ReadAsStringAsync().Result) ?? throw new Exception("Unable to parse response.")
+                    return new SalesforceAPILoadResponse(
+                        errorResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseError>(responseContent) ?? throw new Exception("Unable to parse response.")
                     );
                 }
 
@@ -330,7 +355,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             else
             {
 
-                return new SalesforceAPILoadResultsResponse(
+                return new SalesforceAPILoadResponse(
                     errorMessage: accessToken.Message
                 );
             }

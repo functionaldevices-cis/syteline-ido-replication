@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
-    public class SalesforceAPIQueryResult
+    public class SalesforceAPIQueryStatus
     {
         public int CountTotal
         {
@@ -19,7 +19,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
             get; set;
         } = 0;
 
-        public SalesforceAPIQueryResult(int CountTotal = 0, int CountCompleted = 0)
+        public SalesforceAPIQueryStatus(int CountTotal = 0, int CountCompleted = 0)
         {
             this.CountTotal = CountTotal;
             this.CountCompleted = CountCompleted;

@@ -5,13 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPILoadResponseRecord
     {
 
-        public SalesforceAPILoadResponseRecordAttributes Attributes
+        public Dictionary<string, string> Attributes
         {
             get; set;
         }
@@ -21,7 +21,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
             get; set;
         }
 
-        public SalesforceAPILoadResponseRecord(SalesforceAPILoadResponseRecordAttributes Attributes, Dictionary<string, object> Fields)
+        public SalesforceAPILoadResponseRecord(Dictionary<string, string> Attributes, Dictionary<string, object> Fields)
         {
             this.Attributes = Attributes;
             this.Fields = Fields;

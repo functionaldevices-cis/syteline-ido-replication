@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
-    public class SalesforceAPILoadResultsResponse
+    public class SalesforceAPILoadResponse
     {
         public bool success
         {
@@ -44,7 +44,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
             get; set;
         }
 
-        public SalesforceAPILoadResultsResponse(SalesforceAPILoadResponseSuccess successResponse = null, SalesforceAPILoadResponseError errorResponse = null, string errorMessage = null)
+        public SalesforceAPILoadResponse(SalesforceAPILoadResponseSuccess successResponse = null, SalesforceAPILoadResponseError errorResponse = null, string errorMessage = null)
         {
 
             this.success = successResponse != null ? true : false;
@@ -56,14 +56,15 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
             this.records = successResponse != null ? successResponse.records.Select(recordRaw =>
             {
 
-                SalesforceAPILoadResponseRecordAttributes attributes = new SalesforceAPILoadResponseRecordAttributes();
+                Dictionary<string, string> attributes = new Dictionary<string, string>();
 
                 if (recordRaw.ContainsKey("attributes"))
                 {
                     JsonElement attributesNestedObject = (JsonElement)recordRaw["attributes"];
-                    string type = attributesNestedObject.GetProperty("type").GetString() ?? "";
-                    string url = attributesNestedObject.GetProperty("url").GetString() ?? "";
-                    attributes = new SalesforceAPILoadResponseRecordAttributes(type, url);
+                    attributes = new Dictionary<string, string>() {
+                    { "type", attributesNestedObject.GetProperty("type").GetString() ?? "" },
+                    { "url", attributesNestedObject.GetProperty("url").GetString() ?? "" }
+                };
                     recordRaw.Remove("attributes");
                 }
 

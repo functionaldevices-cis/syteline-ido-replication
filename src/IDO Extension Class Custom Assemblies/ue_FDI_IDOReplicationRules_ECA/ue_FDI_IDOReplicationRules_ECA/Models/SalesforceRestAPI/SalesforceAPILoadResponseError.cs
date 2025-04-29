@@ -5,15 +5,15 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceAPI
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
-    public class SalesforceAPILoadResponseError : List<SalesforceAPILoadResponseErrorMessage>
+    public class SalesforceAPILoadResponseError : List<Dictionary<string, string>>
     {
 
-        public string errorCode => this[0].errorCode;
+        public string errorCode => this[0]["errorCode"];
 
-        public string message => this[0].message;
+        public string message => this[0]["message"];
 
     }
 
