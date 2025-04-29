@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI
 {
     public class MapFieldSource
     {
