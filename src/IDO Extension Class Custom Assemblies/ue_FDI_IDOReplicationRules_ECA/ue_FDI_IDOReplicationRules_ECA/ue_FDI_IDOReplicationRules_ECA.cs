@@ -221,7 +221,8 @@ namespace ue_FDI_IDOReplicationRules_ECA
                             );
 
                             Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
-                                objectName: "",
+                                objectName: replicationRule.Option01,
+                                externalIDFieldName: replicationRule.Option02,
                                 records: remappedReplicationRecords
                             );
                             salesforceUpsert.Wait();

@@ -131,7 +131,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
         }
 
-        public async Task<SalesforceAPIUpsertResults> UpsertRecords(string objectName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null)
+        public async Task<SalesforceAPIUpsertResults> UpsertRecords(string objectName, string externalIDFieldName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null)
         {
 
             // INIT VARS
@@ -160,6 +160,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 response = await this.UpsertRecordBatch(
                     objectName: objectName,
+                    externalIDFieldName: externalIDFieldName,
                     recordsPackage: new SalesforceAPIUpsertPackage(recordBatch.Select(record => attributesField.Concat(record).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.First().Value)).ToList())
                 );
 
@@ -191,7 +192,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
         }
 
-        public async Task<SalesforceAPIUpsertResponse> UpsertRecordBatch(string objectName, SalesforceAPIUpsertPackage recordsPackage)
+        public async Task<SalesforceAPIUpsertResponse> UpsertRecordBatch(string objectName, string externalIDFieldName, SalesforceAPIUpsertPackage recordsPackage)
         {
 
             SalesforceAPIAccessTokenDetails accessToken = this.GetAccessToken();
@@ -199,7 +200,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             {
 
                 string urlDomain = accessToken.InstanceURL;
-                string urlPath = $"/services/data/v{this.ApiVersion:0.0}/composite/sobjects/{objectName}/Syteline_Invoice_Number__c";
+                string urlPath = $"/services/data/v{this.ApiVersion:0.0}/composite/sobjects/{objectName}/{externalIDFieldName}";
 
                 // SEND THE REQUEST
 
