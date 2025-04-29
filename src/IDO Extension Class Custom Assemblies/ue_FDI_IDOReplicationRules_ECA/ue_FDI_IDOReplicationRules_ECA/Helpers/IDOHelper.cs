@@ -84,7 +84,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
 
         }
 
-        public GetRecordsResponseData GetRecords(QueryDef QueryDef) {
+        public GetRecordsResponseData GetRecords(SytelineQuery QueryDef) {
 
             // GENERIC SYSTEM PROPS
 
@@ -125,7 +125,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
 
         }
         
-        public int CreateRecord(QueryDef QueryDef) {
+        public int CreateRecord(SytelineQuery QueryDef) {
 
             if (this.IDOCommands != null) {
 

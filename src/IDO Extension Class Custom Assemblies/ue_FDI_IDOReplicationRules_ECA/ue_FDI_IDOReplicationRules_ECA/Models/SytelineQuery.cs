@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Models
 {
-    public class QueryDef
+    public class SytelineQuery
     {
 
         public string IDOName { get; set; }
@@ -36,7 +36,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models
 
         }
 
-        public QueryDef(string IDOName, List<string> selectProperties = null, Dictionary<string, object> updateProperties = null, Dictionary<string, object> insertProperties = null, string filter = "", string baseFilter = "", string orderBy = "", int recordCap = 0)
+        public SytelineQuery(string IDOName, List<string> selectProperties = null, Dictionary<string, object> updateProperties = null, Dictionary<string, object> insertProperties = null, string filter = "", string baseFilter = "", string orderBy = "", int recordCap = 0)
         {
 
             this.IDOName = IDOName;
