@@ -202,7 +202,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
-                    Method = HttpMethod.Patch,
+                    Method = new HttpMethod("PATCH"),
                     RequestUri = new Uri($"{urlDomain}{urlPath}"),
                     Headers =
                     {
