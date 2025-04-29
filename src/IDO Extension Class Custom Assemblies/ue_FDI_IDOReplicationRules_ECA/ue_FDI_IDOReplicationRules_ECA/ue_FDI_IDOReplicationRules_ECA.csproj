@@ -158,6 +158,7 @@
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseSuccess.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryResult.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertPackage.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponse.cs" />
     <Compile Include="ue_FDI_IDOReplicationRules_ECA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
