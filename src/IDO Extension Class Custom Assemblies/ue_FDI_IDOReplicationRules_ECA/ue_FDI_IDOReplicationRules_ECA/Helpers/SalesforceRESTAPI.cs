@@ -31,7 +31,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             get; set;
         }
 
-        public SalesforceCredential CurrentSalesforceCredential
+        public SalesforceAPICredential CurrentSalesforceCredential
         {
             get; set;
         }
@@ -41,7 +41,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             get; set;
         } = new SalesforceAPIAccessTokenDetails();
 
-        public SalesforceRestAPI(SalesforceCredential credential)
+        public SalesforceRestAPI(SalesforceAPICredential credential)
         {
 
             this.CurrentSalesforceCredential = credential;
@@ -57,7 +57,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
         }
 
-        public SalesforceAPIAccessTokenDetails GetAccessToken(SalesforceCredential credential = null)
+        public SalesforceAPIAccessTokenDetails GetAccessToken(SalesforceAPICredential credential = null)
         {
 
             if (credential == null)

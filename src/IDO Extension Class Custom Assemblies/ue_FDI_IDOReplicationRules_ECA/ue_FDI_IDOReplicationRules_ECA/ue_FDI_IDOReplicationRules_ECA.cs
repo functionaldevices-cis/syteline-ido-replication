@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using ue_FDI_IDOReplicationRules_ECA.Helpers;
 using ue_FDI_IDOReplicationRules_ECA.Models;
 using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
+using ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI;
+using ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
 
 namespace ue_FDI_IDOReplicationRules_ECA
 {
@@ -57,7 +59,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
  
             // SETUP UTILITIES
 
-            IDOHelper idoHelper = new IDOHelper(
+            SytelineInternalAPI idoHelper = new SytelineInternalAPI(
                 IDOCommands: this.Context.Commands,
                 BGTaskNum: BGTaskNum,
                 DebugLevel: debugLevel
@@ -68,7 +70,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
             // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-            GetRecordsResponseData replicationRuleRecordsResponse = idoHelper.GetRecords(new QueryDef(
+            GetRecordsResponseData replicationRuleRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
                 IDOName: "ue_FDI_IDOReplicationRules",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
@@ -103,7 +105,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
                 replicationRuleRecord => new ReplicationRule(replicationRuleRecord, replicationRuleRecordsResponse.PropertyKeys)
             );
 
-            GetRecordsResponseData replicationMapFieldSourceRecordsResponse = idoHelper.GetRecords(new QueryDef(
+            GetRecordsResponseData replicationMapFieldSourceRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
                 IDOName: "ue_FDI_IDOReplicationMapFieldSources",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
@@ -147,7 +149,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
             // LOAD THE REPLICATION RECORD
 
-            GetRecordsResponseData replicationRecordsResponse = idoHelper.GetRecords(new QueryDef(
+            GetRecordsResponseData replicationRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
                 IDOName: IDOName,
                 selectProperties: idoProperties,
                 filter: "( RowPointer = '" + rowPointer + "')"
@@ -209,7 +211,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
                             // SEND THE RECORD
 
                             SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
-                                credential: new SalesforceCredential(
+                                credential: new SalesforceAPICredential(
                                     ClientId: replicationRule.CredentialValue01,
                                     ClientSecret: replicationRule.CredentialValue02,
                                     Username: replicationRule.CredentialValue03,

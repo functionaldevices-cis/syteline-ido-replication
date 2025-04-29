@@ -139,16 +139,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\AzureEventHubPusher.cs" />
-    <Compile Include="Helpers\IDOHelper.cs" />
+    <Compile Include="Helpers\SytelineInternalAPI.cs" />
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
-    <Compile Include="Models\AzureEventHubCredential.cs" />
-    <Compile Include="Models\MapField.cs" />
-    <Compile Include="Models\MapFieldSource.cs" />
-    <Compile Include="Models\GetRecordsResponseData.cs" />
-    <Compile Include="Models\IDOProperty.cs" />
-    <Compile Include="Models\QueryDef.cs" />
+    <Compile Include="Models\AzureEventHubAPI\AzureEventHubCredential.cs" />
+    <Compile Include="Models\SytelineAPI\MapField.cs" />
+    <Compile Include="Models\SytelineAPI\MapFieldSource.cs" />
+    <Compile Include="Models\SytelineAPI\GetRecordsResponseData.cs" />
+    <Compile Include="Models\SytelineAPI\SytelineQuery.cs" />
     <Compile Include="Models\ReplicationRule.cs" />
-    <Compile Include="Models\SalesforceCredential.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPICredential.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIAccessTokenDetails.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadRequestOrderByField.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponse.cs" />
@@ -167,6 +166,7 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
