@@ -24,19 +24,23 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models
 
         public string SecurityToken { get; set; }
 
+        public string TokenRequestEndpointUrl { get; set; }
+ 
+
 
 
         /***********************************************************************************************************/
         /*********************************************** CONSTRUCTOR ***********************************************/
         /***********************************************************************************************************/
 
-        public SalesforceCredential(string ClientId, string ClientSecret, string Username, string Password, string SecurityToken)
+        public SalesforceCredential(string ClientId, string ClientSecret, string Username, string Password, string SecurityToken, string TokenRequestEndpointUrl = null)
         {
             this.ClientId = ClientId;
             this.ClientSecret = ClientSecret;
             this.Username = Username;
             this.Password = Password;
             this.SecurityToken = SecurityToken;
+            this.TokenRequestEndpointUrl = TokenRequestEndpointUrl ?? "https://login.salesforce.com/services/oauth2/token";
         }
 
     }
