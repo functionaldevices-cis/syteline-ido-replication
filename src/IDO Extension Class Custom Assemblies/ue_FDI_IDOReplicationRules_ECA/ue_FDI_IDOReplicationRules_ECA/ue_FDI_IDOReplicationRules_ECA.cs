@@ -208,14 +208,18 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                             // SEND THE RECORD
 
-                            currentRuleTask = SalesforceRESTAPI.Upsert(
-                                salesforceCredential: new SalesforceCredential(
+                            SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
+                                credential: new SalesforceCredential(
                                     ClientId: replicationRule.CredentialValue01,
                                     ClientSecret: replicationRule.CredentialValue02,
                                     Username: replicationRule.CredentialValue03,
                                     Password: replicationRule.CredentialValue04,
                                     SecurityToken: replicationRule.CredentialValue05
-                                ),
+                                )
+                            );
+
+                            currentRuleTask = salesforceRestAPI.UpsertRecords(
+                                objectName: "",
                                 records: remappedReplicationRecords
                             );
                             currentRuleTask.Wait();
