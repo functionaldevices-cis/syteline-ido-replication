@@ -131,10 +131,12 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
         }
 
-        public async Task<List<SalesforceAPIUpsertResponse>> UpsertRecords(string objectName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null)
+        public async Task<SalesforceAPIUpsertResults> UpsertRecords(string objectName, List<Dictionary<string, object>> records, Action<SalesforceAPIQueryStatus> onStartCallback = null, Action<SalesforceAPIQueryStatus> onProgressCallback = null, Action<SalesforceAPIQueryStatus> onCompleteCallback = null)
         {
 
-            List <SalesforceAPIUpsertResponse> responses = new List<SalesforceAPIUpsertResponse>();
+            // INIT VARS
+            SalesforceAPIUpsertResults results = new SalesforceAPIUpsertResults();
+            SalesforceAPIUpsertResponse response;
 
             // RUN START CALLBACK
 
@@ -156,12 +158,13 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 // UPSERT RECORD BATCH
 
-                var response = await UpsertRecordBatch(
+                response = await this.UpsertRecordBatch(
                     objectName: objectName,
                     recordsPackage: new SalesforceAPIUpsertPackage(recordBatch.Select(record => attributesField.Concat(record).GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.First().Value)).ToList())
                 );
 
-                responses.Add(response);
+                results.AddResponse(response);
+
 
                 // RUN PROGRESS CALLBACK
 
@@ -184,7 +187,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                 CountCompleted: records.Count
             ));
 
-            return responses;
+            return results;
 
         }
 

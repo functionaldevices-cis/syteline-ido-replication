@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ue_FDI_IDOReplicationRules_ECA.Helpers;
 using ue_FDI_IDOReplicationRules_ECA.Models;
+using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
 
 namespace ue_FDI_IDOReplicationRules_ECA
 {
@@ -163,7 +164,6 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                 List<Dictionary<string, object>> remappedReplicationRecords;
                 string currentRuleNum;
-                Task<bool> currentRuleTask;
                 List<MapField> mapFields;
                 ReplicationRule replicationRule;
 
@@ -194,13 +194,13 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                             // SEND THE RECORD
 
-                            currentRuleTask = AzureEventHubPusher.ExportToAzureEventHub(
+                            Task<bool> eventHubPush = AzureEventHubPusher.ExportToAzureEventHub(
                                 eventHubCredential: new AzureEventHubCredential(
                                     ConnectionString: replicationRule.CredentialValue01
                                 ),
                                 records: remappedReplicationRecords
                             );
-                            currentRuleTask.Wait();
+                            eventHubPush.Wait();
 
                             break;
 
@@ -218,11 +218,11 @@ namespace ue_FDI_IDOReplicationRules_ECA
                                 )
                             );
 
-                            currentRuleTask = salesforceRestAPI.UpsertRecords(
+                            Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
                                 objectName: "",
                                 records: remappedReplicationRecords
                             );
-                            currentRuleTask.Wait();
+                            salesforceUpsert.Wait();
 
                             break;
 

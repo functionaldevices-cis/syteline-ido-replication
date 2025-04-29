@@ -153,13 +153,13 @@
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadRequestOrderByField.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponse.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseError.cs" />
-    <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseErrorMessage.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseRecord.cs" />
-    <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseRecordAttributes.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseSuccess.cs" />
-    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryResult.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResult.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryStatus.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertPackage.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponse.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResults.cs" />
     <Compile Include="ue_FDI_IDOReplicationRules_ECA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
