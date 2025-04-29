@@ -13,13 +13,13 @@ using ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
 
-    public class IDOHelper {
+    public class SytelineAPI {
 
         public IIDOCommands IDOCommands { get; set; }
         public int BGTaskNum { get; set; }
         public int? DebugLevel { get; set; }
 
-        public IDOHelper(IIDOCommands IDOCommands, int BGTaskNum = 0, int? DebugLevel = null)
+        public SytelineAPI(IIDOCommands IDOCommands, int BGTaskNum = 0, int? DebugLevel = null)
         {
             this.IDOCommands = IDOCommands;
             this.BGTaskNum = BGTaskNum;

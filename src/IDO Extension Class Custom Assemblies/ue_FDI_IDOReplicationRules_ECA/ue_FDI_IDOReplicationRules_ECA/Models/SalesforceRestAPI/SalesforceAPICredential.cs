@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models
+namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
-    public class SalesforceCredential
+    public class SalesforceAPICredential
     {
 
         /***********************************************************************************************************/
@@ -33,7 +33,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models
         /*********************************************** CONSTRUCTOR ***********************************************/
         /***********************************************************************************************************/
 
-        public SalesforceCredential(string ClientId, string ClientSecret, string Username, string Password, string SecurityToken, string TokenRequestEndpointUrl = null)
+        public SalesforceAPICredential(string ClientId, string ClientSecret, string Username, string Password, string SecurityToken, string TokenRequestEndpointUrl = null)
         {
             this.ClientId = ClientId;
             this.ClientSecret = ClientSecret;

@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
-using ue_FDI_IDOReplicationRules_ECA.Models;
+using ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
 
 
 namespace ue_FDI_IDOReplicationRules_ECA.Helpers
