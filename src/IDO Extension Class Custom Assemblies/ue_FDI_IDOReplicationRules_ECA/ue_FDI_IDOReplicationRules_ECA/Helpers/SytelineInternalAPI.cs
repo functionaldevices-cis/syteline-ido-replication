@@ -16,43 +16,10 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
     public class SytelineInternalAPI {
 
         public IIDOCommands IDOCommands { get; set; }
-        public int BGTaskNum { get; set; }
-        public int? DebugLevel { get; set; }
 
-        public SytelineInternalAPI(IIDOCommands IDOCommands, int BGTaskNum = 0, int? DebugLevel = null)
+        public SytelineInternalAPI(IIDOCommands IDOCommands)
         {
             this.IDOCommands = IDOCommands;
-            this.BGTaskNum = BGTaskNum;
-            this.DebugLevel = DebugLevel;
-        }
-
-        public void WriteLogMessage(string sMessage, int iMinDebugLevel = 0) {
-
-            if ((this.DebugLevel >= iMinDebugLevel) && (this.BGTaskNum > 0)) {
-
-                this.IDOCommands?.Invoke(new InvokeRequestData {
-                    IDOName = "ProcessErrorLogs",
-                    MethodName = "AddProcessErrorLog",
-                    Parameters = new InvokeParameterList() {
-                        BGTaskNum,
-                        sMessage,
-                        0
-                    }
-                });
-
-            }
-
-        }
-
-        public List<T> ExtractPropertiesAsList<T>(LoadCollectionResponseData oLdResponse, string propertyName) {
-
-            int index = oLdResponse.PropertyList.IndexOf(propertyName);
-            if (index > -1) {
-                return oLdResponse.Items.Select(record => record.PropertyValues[index].GetValue<T>()).ToList();
-            } else {
-                return new List<T>();
-            }
-
         }
 
         public List<Dictionary<string, T>> UnpackRecords<T>(GetRecordsResponseData records) {

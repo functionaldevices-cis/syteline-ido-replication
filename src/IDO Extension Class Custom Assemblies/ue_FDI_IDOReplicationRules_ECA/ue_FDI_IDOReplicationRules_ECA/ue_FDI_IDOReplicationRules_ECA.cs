@@ -60,13 +60,17 @@ namespace ue_FDI_IDOReplicationRules_ECA
             // SETUP UTILITIES
 
             SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
+                IDOCommands: this.Context.Commands
+            );
+
+            Utils utils = new Utils(
                 IDOCommands: this.Context.Commands,
                 BGTaskNum: BGTaskNum,
                 DebugLevel: debugLevel
             );
 
 
-            //idoHelper.WriteLogMessage("( IDOName = '" + IDOName + "') AND ( IsActive = 1 )" + (targetType != null ? "AND ( TargetType = '" + targetType + "' )" : ""));
+            //utils.WriteLogMessage("( IDOName = '" + IDOName + "') AND ( IsActive = 1 )" + (targetType != null ? "AND ( TargetType = '" + targetType + "' )" : ""));
 
             // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
