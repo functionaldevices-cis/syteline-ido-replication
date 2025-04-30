@@ -144,6 +144,7 @@
     <Compile Include="Helpers\AzureEventHubPusher.cs" />
     <Compile Include="Helpers\SytelineInternalAPI.cs" />
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
+    <Compile Include="Helpers\Utils.cs" />
     <Compile Include="Models\AzureEventHubAPI\AzureEventHubCredential.cs" />
     <Compile Include="Models\SytelineAPI\MapField.cs" />
     <Compile Include="Models\SytelineAPI\MapFieldSource.cs" />
