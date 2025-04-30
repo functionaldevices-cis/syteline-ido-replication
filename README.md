@@ -36,8 +36,8 @@ An AES-driven IDO-layer data replication system for Syteline, that lets administ
 
 ## External Targets:
 
-* Azure EventHubs - Code Fully Written, But Waiting to Hear from Infor on Security Issues and/or Installing dependencies
-* Salesforce REST API - Code Stub Written. Need to merge in code from other projects
+* Azure EventHubs - Complete But Blocked By Security (waiting to Hear from Infor on Installing dependencies as fully trusted)
+* Salesforce REST API - Complete
 * Other Syteline instances through REST or SOAP APIs - Conceptual, not started
 * Direct SQL databases (PostGres, MS SQL Server, MySQL, etc) - Conceptual, not started
 * Other ERP systems with a REST API - Conceptual, not started
