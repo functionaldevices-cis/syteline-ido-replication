@@ -19,10 +19,16 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
             get; set;
         } = 0;
 
-        public SalesforceAPIQueryStatus(int CountTotal = 0, int CountCompleted = 0)
+        public string Message
+        {
+            get; set;
+        } = "";
+
+        public SalesforceAPIQueryStatus(int CountTotal = 0, int CountCompleted = 0, string Message = "")
         {
             this.CountTotal = CountTotal;
             this.CountCompleted = CountCompleted;
+            this.Message = Message;
         }
 
     }

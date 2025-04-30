@@ -170,12 +170,8 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
                     CountTotal: records.Count,
-                    CountCompleted: i + 200
-                ));
-
-                onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
-                    CountTotal: records.Count,
-                    CountCompleted: i + recordBatch.Count()
+                    CountCompleted: i + 200,
+                    Message: response.message
                 ));
 
             }

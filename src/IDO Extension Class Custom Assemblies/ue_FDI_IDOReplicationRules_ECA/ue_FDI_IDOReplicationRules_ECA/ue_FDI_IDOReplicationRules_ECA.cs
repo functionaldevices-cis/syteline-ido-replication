@@ -220,17 +220,16 @@ namespace ue_FDI_IDOReplicationRules_ECA
                                 )
                             );
 
-                            sytelineAPI.WriteLogMessage("objectName: '" + replicationRule.Option01 + "'");
-                            sytelineAPI.WriteLogMessage("externalIDFieldName: '" + replicationRule.Option02 + "'");
-                            sytelineAPI.WriteLogMessage("Syteline_Invoice_Number__c: '" + remappedReplicationRecords[0]["Syteline_Invoice_Number__c"] + "'");
+                            utils.WriteLogMessage("Pushing " + replicationRecordsResponse.Items.Count + " records to Salesforce.");
 
-                            SalesforceAPIUpsertResults salesforceUpsert = salesforceRestAPI.UpsertRecords(
+                            Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
                                 objectName: replicationRule.Option01,
                                 externalIDFieldName: replicationRule.Option02,
-                                records: remappedReplicationRecords
-                            ).Result;
+                                records: remappedReplicationRecords,
+                                onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.Message); }
+                            );
 
-                            sytelineAPI.WriteLogMessage(salesforceUpsert.responses[0].message);
+                            salesforceUpsert.Wait();
 
                             break;
 
