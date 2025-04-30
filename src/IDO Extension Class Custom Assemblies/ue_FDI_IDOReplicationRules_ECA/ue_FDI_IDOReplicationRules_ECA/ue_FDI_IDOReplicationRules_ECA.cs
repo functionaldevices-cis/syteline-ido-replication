@@ -59,7 +59,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
  
             // SETUP UTILITIES
 
-            SytelineInternalAPI idoHelper = new SytelineInternalAPI(
+            SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
                 IDOCommands: this.Context.Commands,
                 BGTaskNum: BGTaskNum,
                 DebugLevel: debugLevel
@@ -70,7 +70,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
             // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-            GetRecordsResponseData replicationRuleRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
+            GetRecordsResponseData replicationRuleRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
                 IDOName: "ue_FDI_IDOReplicationRules",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
@@ -105,7 +105,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
                 replicationRuleRecord => new ReplicationRule(replicationRuleRecord, replicationRuleRecordsResponse.PropertyKeys)
             );
 
-            GetRecordsResponseData replicationMapFieldSourceRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
+            GetRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
                 IDOName: "ue_FDI_IDOReplicationMapFieldSources",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
@@ -149,7 +149,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
             // LOAD THE REPLICATION RECORD
 
-            GetRecordsResponseData replicationRecordsResponse = idoHelper.GetRecords(new SytelineQuery(
+            GetRecordsResponseData replicationRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
                 IDOName: IDOName,
                 selectProperties: idoProperties,
                 filter: "( RowPointer = '" + rowPointer + "')"
@@ -206,7 +206,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                             break;
 
-                        case "SalesforceRestAPI":
+                        case "SalesforceRESTAPI":
 
                             // SEND THE RECORD
 
@@ -220,12 +220,17 @@ namespace ue_FDI_IDOReplicationRules_ECA
                                 )
                             );
 
-                            Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
+                            sytelineAPI.WriteLogMessage("objectName: '" + replicationRule.Option01 + "'");
+                            sytelineAPI.WriteLogMessage("externalIDFieldName: '" + replicationRule.Option02 + "'");
+                            sytelineAPI.WriteLogMessage("Syteline_Invoice_Number__c: '" + remappedReplicationRecords[0]["Syteline_Invoice_Number__c"] + "'");
+
+                            SalesforceAPIUpsertResults salesforceUpsert = salesforceRestAPI.UpsertRecords(
                                 objectName: replicationRule.Option01,
                                 externalIDFieldName: replicationRule.Option02,
                                 records: remappedReplicationRecords
-                            );
-                            salesforceUpsert.Wait();
+                            ).Result;
+
+                            sytelineAPI.WriteLogMessage(salesforceUpsert.responses[0].message);
 
                             break;
 
@@ -284,7 +289,19 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                     }
 
-                    remappedRecord[fieldMap.OutputFieldName] = string.Concat(values);
+                    if (fieldMap.OutputFieldName.Contains('.'))
+                    {
+
+                        string[] fieldNameParts = fieldMap.OutputFieldName.Split('.');
+                        remappedRecord[fieldNameParts[0]] = new Dictionary<string, string>() { { fieldNameParts[1], string.Concat(values) } };
+
+                    }
+                    else
+                    {
+
+                        remappedRecord[fieldMap.OutputFieldName] = string.Concat(values);
+
+                    }
 
                 }
 

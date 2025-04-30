@@ -1,32 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
     public class SalesforceAPIUpsertPackage
     {
-
-        [JsonPropertyName("allOrNone")]
-        public bool AllOrNone
+        public bool allOrNone
         {
             get; set;
         }
 
-        [JsonPropertyName("records")]
-        public List<Dictionary<string, object>> Records
+        public List<Dictionary<string, object>> records
         {
             get; set;
         }
 
 
-        public SalesforceAPIUpsertPackage(List<Dictionary<string, object>> Records, bool AllOrNone = false)
+        public SalesforceAPIUpsertPackage(List<Dictionary<string, object>> records, bool allOrNone = false)
         {
-            this.AllOrNone = AllOrNone;
-            this.Records = Records;
+            this.allOrNone = allOrNone;
+            this.records = records;
         }
 
     }

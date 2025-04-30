@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 using ue_FDI_IDOReplicationRules_ECA.Models;
 using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
-using static Mongoose.Core.Common.QuickKeywordParser;
+using Newtonsoft.Json;
 
 
 namespace ue_FDI_IDOReplicationRules_ECA.Helpers
@@ -91,7 +90,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                             })
                         ).Result;
 
-                        Dictionary<string, object> parsedResponseContent = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(httpResponse.Content.ReadAsStringAsync().Result) ?? throw new Exception("Unable to parse response.");
+                        Dictionary<string, object> parsedResponseContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(httpResponse.Content.ReadAsStringAsync().Result);
 
 
                         this.AccessTokenDetails.Valid = httpResponse.IsSuccessStatusCode;
@@ -213,7 +212,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                         { "Authorization", "Bearer " + accessToken.Token }
                     },
                     Content = new StringContent(
-                        content: JsonSerializer.Serialize<SalesforceAPIUpsertPackage>(recordsPackage)
+                        content:  JsonConvert.SerializeObject(recordsPackage)
                     )
                 };
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -345,13 +344,13 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     return new SalesforceAPILoadResponse(
-                        successResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseSuccess>(responseContent) ?? throw new Exception("Unable to parse response.")
+                        successResponse: JsonConvert.DeserializeObject<SalesforceAPILoadResponseSuccess>(responseContent)
                     );
                 }
                 else
                 {
                     return new SalesforceAPILoadResponse(
-                        errorResponse: JsonSerializer.Deserialize<SalesforceAPILoadResponseError>(responseContent) ?? throw new Exception("Unable to parse response.")
+                        errorResponse: JsonConvert.DeserializeObject<SalesforceAPILoadResponseError>(responseContent)
                     );
                 }
 

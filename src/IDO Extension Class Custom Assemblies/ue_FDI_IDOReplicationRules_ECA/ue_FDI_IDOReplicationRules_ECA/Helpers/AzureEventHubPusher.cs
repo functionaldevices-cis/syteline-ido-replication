@@ -1,11 +1,11 @@
-﻿using System.Text;
-using Azure.Messaging.EventHubs;
+﻿using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
 
 
@@ -33,7 +33,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 for (int i = 0; i < records.Count; i += 500)
                 {
-                    List<string> batch = records.Skip(i).Take(500).Select(record => JsonSerializer.Serialize(record)).ToList();
+                    List<string> batch = records.Skip(i).Take(500).Select(record => JsonConvert.SerializeObject(record)).ToList();
                     Task<bool> task = AzureEventHubPusher.SendBatch(producerClient, batch);
                     task.Wait();
 
