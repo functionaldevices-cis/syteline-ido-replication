@@ -100,6 +100,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models
             this.Option08 = record.PropertyValues[propertyKeys["Option08"]].Value;
             this.Option09 = record.PropertyValues[propertyKeys["Option09"]].Value;
             this.Option10 = record.PropertyValues[propertyKeys["Option10"]].Value;
+
             this.MapFields = new Dictionary<string, MapField>();
 
         }
