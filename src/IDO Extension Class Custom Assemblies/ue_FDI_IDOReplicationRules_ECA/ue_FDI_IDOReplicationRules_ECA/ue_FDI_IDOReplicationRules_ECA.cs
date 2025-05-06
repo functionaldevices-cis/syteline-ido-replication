@@ -292,19 +292,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
 
                     }
 
-                    if (fieldMap.OutputFieldName.Contains('.'))
-                    {
-
-                        string[] fieldNameParts = fieldMap.OutputFieldName.Split('.');
-                        remappedRecord[fieldNameParts[0]] = new Dictionary<string, string>() { { fieldNameParts[1], string.Concat(values) } };
-
-                    }
-                    else
-                    {
-
-                        remappedRecord[fieldMap.OutputFieldName] = string.Concat(values);
-
-                    }
+                    remappedRecord[fieldMap.OutputFieldName] = string.Concat(values);
 
                 }
 
