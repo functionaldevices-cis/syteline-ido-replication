@@ -26,21 +26,22 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
 
             return records.LoadCollectionResponseData.Items.Select(
                 record => records.PropertyKeys.ToDictionary(
-                    propertyName =>
-                    {
-                        return propertyName.Key;
-                    },
-                    propertyName =>
-                    {
-                        if (!record.PropertyValues[propertyName.Value].IsNull)
-                        {
-                            return record.PropertyValues[propertyName.Value].GetValue<T>();
-                        }
-                        return default;
-                    }
-
+                    propertyName => propertyName.Key,
+                    propertyName => this.ParseIDOPropertyValue<T>(record.PropertyValues[propertyName.Value])
                 )
             ).ToList();
+
+        }
+
+        public T ParseIDOPropertyValue<T>(IDOPropertyValue value)
+        {
+
+            if (!value.IsNull)
+            {
+                return value.GetValue<T>();
+            }
+
+            return default;
 
         }
 
