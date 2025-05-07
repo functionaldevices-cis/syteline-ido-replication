@@ -14,29 +14,42 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
         public List<Dictionary<string, object>> records
         {
             get; set;
-        }
+        } = new List<Dictionary<string, object>>();
 
 
         public SalesforceAPIUpsertPackage(List<Dictionary<string, object>> records, bool allOrNone = false)
         {
-            string[] keyParts;
 
             this.allOrNone = allOrNone;
-            this.records = records.Count == 0 ? [] : records.Select(record =>
+            if (records.Count > 0)
             {
 
-                records[0].Keys.Where(key => key.Contains('.')).ToList().ForEach(key => {
+                string[] keyParts;
+                List<string> lookupFieldNames = records[0].Keys.Where(key => key.Contains('.')).ToList();
 
-                    keyParts = key.Split('.');
+                this.records = records.Select(record =>
+                {
 
-                    record[keyParts[0]] = new Dictionary<string, string>() { { keyParts[1], string.Concat(record[key]) } };
-                    record.Remove(key);
+                    lookupFieldNames.ForEach(key =>
+                    {
 
-                });
+                        keyParts = key.Split('.');
 
-                return record;
+                        if (record[key] != null && record[key].ToString() != "")
+                        {
+                            record[keyParts[0]] = new Dictionary<string, object>() { { keyParts[1], record[key] } };
+                        }
 
-            }).ToList();
+                        record.Remove(key);
+
+                    });
+
+                    return record;
+
+                }).ToList();
+
+            }
+
         }
 
     }
