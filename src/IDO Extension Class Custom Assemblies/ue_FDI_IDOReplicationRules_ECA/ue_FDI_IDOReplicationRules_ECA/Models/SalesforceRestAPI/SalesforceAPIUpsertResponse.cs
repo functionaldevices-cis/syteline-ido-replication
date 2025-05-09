@@ -6,24 +6,31 @@ using System.Threading.Tasks;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
-    public class SalesforceAPIUpsertResponse
+    public class SalesforceAPIUpsertResponse : SalesforceAPIQueryResponse
     {
 
-        public bool success
+        public List<Dictionary<string, string>> recordResults { get; set; }
+
+        public List<Dictionary<string, string>> recordResultsSuccesses => this.recordResults.Where(result => result["success"] == "True").ToList();
+
+        public List<Dictionary<string, string>> recordResultsFailures => this.recordResults.Where(result => result["success"] == "False").ToList();
+
+
+        public SalesforceAPIUpsertResponse(List<SalesforceAPIUpsertResponseRecordResult> successResponse = null, SalesforceAPIQueryResponseError errorResponse = null, string errorMessage = null)
         {
-            get; set;
+            this.success = successResponse != null ? true : false;
+            this.errorCode = errorResponse?.errorCode ?? (errorMessage ?? "");
+            this.message = errorResponse?.message ?? "";
+            if (successResponse != null)
+            {
+                this.recordResults = successResponse.Select(recordResult => new Dictionary<string, string>() { { "id", recordResult.id }, { "success", recordResult.success.ToString() }, { "operation", recordResult.operation }, { "errorMessage", recordResult.errorMessage } }).ToList();
+            }
+            else
+            {
+                this.recordResults = new List<Dictionary<string, string>>();
+            }
         }
 
-        public string message
-        {
-            get; set;
-        }
-
-        public SalesforceAPIUpsertResponse(bool success, string message)
-        {
-            this.success = success;
-            this.message = message;
-        }
     }
 
 }

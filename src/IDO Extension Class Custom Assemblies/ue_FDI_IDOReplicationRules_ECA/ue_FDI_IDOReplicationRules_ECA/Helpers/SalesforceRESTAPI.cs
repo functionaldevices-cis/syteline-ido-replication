@@ -170,8 +170,12 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 onProgressCallback?.Invoke(new SalesforceAPIQueryStatus(
                     CountTotal: records.Count,
-                    CountCompleted: i + 200,
-                    Message: response.message
+                    CountCompleted: i + recordBatch.Count(),
+                    CountBatch: recordBatch.Count(),
+                    Success: response.success,
+                    ErrorCode: response.errorCode,
+                    ErrorMessage: response.message,
+                    RecordDetails: response.recordResults
                 ));
 
             }
@@ -219,18 +223,25 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 string responseContent = await httpResponse.Content.ReadAsStringAsync();
 
-                return new SalesforceAPIUpsertResponse(
-                    success: httpResponse.IsSuccessStatusCode,
-                    message: responseContent
-                );
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    return new SalesforceAPIUpsertResponse(
+                        successResponse: JsonConvert.DeserializeObject<List<SalesforceAPIUpsertResponseRecordResult>>(responseContent) ?? throw new Exception("Unable to parse response.")
+                    );
+                }
+                else
+                {
+                    return new SalesforceAPIUpsertResponse(
+                        errorResponse: JsonConvert.DeserializeObject<SalesforceAPIQueryResponseError>(responseContent) ?? throw new Exception("Unable to parse response.")
+                    );
+                }
 
             }
             else
             {
 
                 return new SalesforceAPIUpsertResponse(
-                    success: false,
-                    message: accessToken.Message
+                    errorMessage: accessToken.Message
                 );
 
             }
@@ -346,7 +357,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                 else
                 {
                     return new SalesforceAPILoadResponse(
-                        errorResponse: JsonConvert.DeserializeObject<SalesforceAPILoadResponseError>(responseContent)
+                        errorResponse: JsonConvert.DeserializeObject<SalesforceAPIQueryResponseError>(responseContent)
                     );
                 }
 

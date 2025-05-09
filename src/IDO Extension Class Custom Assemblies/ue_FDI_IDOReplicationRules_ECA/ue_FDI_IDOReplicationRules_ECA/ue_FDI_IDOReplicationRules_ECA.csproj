@@ -146,6 +146,9 @@
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="Models\AzureEventHubAPI\AzureEventHubCredential.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryResponse.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponseRecordResult.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponseRecordResultError.cs" />
     <Compile Include="Models\SytelineAPI\MapField.cs" />
     <Compile Include="Models\SytelineAPI\MapFieldSource.cs" />
     <Compile Include="Models\SytelineAPI\GetRecordsResponseData.cs" />
@@ -155,7 +158,7 @@
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIAccessTokenDetails.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadRequestOrderByField.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponse.cs" />
-    <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseError.cs" />
+    <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryResponseError.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseRecord.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResponseSuccess.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadResult.cs" />

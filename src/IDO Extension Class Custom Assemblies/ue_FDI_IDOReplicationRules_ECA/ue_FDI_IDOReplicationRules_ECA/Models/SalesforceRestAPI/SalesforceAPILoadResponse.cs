@@ -44,7 +44,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
             get; set;
         }
 
-        public SalesforceAPILoadResponse(SalesforceAPILoadResponseSuccess successResponse = null, SalesforceAPILoadResponseError errorResponse = null, string errorMessage = null)
+        public SalesforceAPILoadResponse(SalesforceAPILoadResponseSuccess successResponse = null, SalesforceAPIQueryResponseError errorResponse = null, string errorMessage = null)
         {
 
             this.success = successResponse != null ? true : false;

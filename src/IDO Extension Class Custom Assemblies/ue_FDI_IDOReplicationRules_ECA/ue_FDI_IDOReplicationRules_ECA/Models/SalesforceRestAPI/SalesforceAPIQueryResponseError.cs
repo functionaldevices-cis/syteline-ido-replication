@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
-    public class SalesforceAPILoadResponseError : List<Dictionary<string, string>>
+    public class SalesforceAPIQueryResponseError : List<Dictionary<string, string>>
     {
 
         public string errorCode => this[0]["errorCode"];
