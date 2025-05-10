@@ -30,7 +30,7 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
         }
         public string operation => this.created ? "Insert" : "Update";
 
-        public string errorMessage => this.errors.Count > 0 ? (this.errors[0].fields[0] + ": " + this.errors[0].message) : "";
+        public string errorMessage => this.errors.Count > 0 ? ((this.errors[0].fields.Count > 0 ? this.errors[0].fields[0] : "") + ": " + this.errors[0].message) : "";
 
     }
 
