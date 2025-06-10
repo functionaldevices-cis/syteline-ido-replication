@@ -194,6 +194,8 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
         public async Task<SalesforceAPIUpsertResponse> UpsertRecordBatch(string objectName, string externalIDFieldName, SalesforceAPIUpsertPackage recordsPackage)
         {
 
+            SalesforceAPIUpsertResponse response;
+
             SalesforceAPIAccessTokenDetails accessToken = this.GetAccessToken();
             if (accessToken.Valid)
             {
@@ -225,13 +227,18 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    return new SalesforceAPIUpsertResponse(
+                    response = new SalesforceAPIUpsertResponse(
                         successResponse: JsonConvert.DeserializeObject<List<SalesforceAPIUpsertResponseRecordResult>>(responseContent) ?? throw new Exception("Unable to parse response.")
                     );
+
+                    for (int counter = 0; counter < response.recordResults.Count(); counter++)
+                    {
+                        response.recordResults[counter]["externalID"] = recordsPackage.records[counter][externalIDFieldName].ToString() ?? "";
+                    }
                 }
                 else
                 {
-                    return new SalesforceAPIUpsertResponse(
+                    response = new SalesforceAPIUpsertResponse(
                         errorResponse: JsonConvert.DeserializeObject<SalesforceAPIQueryResponseError>(responseContent) ?? throw new Exception("Unable to parse response.")
                     );
                 }
@@ -240,11 +247,13 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
             else
             {
 
-                return new SalesforceAPIUpsertResponse(
+                response = new SalesforceAPIUpsertResponse(
                     errorMessage: accessToken.Message
                 );
 
             }
+
+            return response;
 
         }
 

@@ -39,10 +39,22 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
                         {
                             record[keyParts[0]] = new Dictionary<string, object>() { { keyParts[1], record[key] } };
                         }
+                        else
+                        {
+                            record[(keyParts[0].Contains("__r") ? keyParts[0].Replace("__r", "__c") : keyParts[0] + "Id")] = null;
+                        }
 
                         record.Remove(key);
 
                     });
+
+                    foreach (string key in record.Keys)
+                    {
+                        if ((record[key] ?? "").ToString() == "")
+                        {
+                            record[key] = null;
+                        }
+                    }
 
                     return record;
 
