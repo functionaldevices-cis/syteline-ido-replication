@@ -78,17 +78,46 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                     {
                         // LOAD THE REQUEST
 
-                        HttpResponseMessage httpResponse = this.HttpClient.PostAsync(
-                            requestUri: new Uri(credential.TokenRequestEndpointUrl),
-                            content: new FormUrlEncodedContent(new Dictionary<string, string>()
-                            {
-                            { "grant_type", "password" },
-                            { "client_id", credential.ClientId },
-                            { "client_secret", credential.ClientSecret },
-                            { "username", credential.Username },
-                            { "password", credential.Password + credential.SecurityToken }
-                            })
-                        ).Result;
+                        HttpResponseMessage httpResponse;
+
+                        switch (credential.AuthFlow)
+                        {
+
+                            case "UsernamePassword":
+
+                                httpResponse = this.HttpClient.PostAsync(
+                                    requestUri: new Uri(credential.TokenRequestEndpoint),
+                                    content: new FormUrlEncodedContent(new Dictionary<string, string>()
+                                    {
+                                    { "grant_type", "password" },
+                                    { "client_id", credential.ClientId },
+                                    { "client_secret", credential.ClientSecret },
+                                    { "username", credential.Username }, // Username IS TESTED FOR NULLABILITY WHEN LOADED
+                                    { "password", credential.Password + credential.SecurityToken }  // Password AND SecurityToken ARE TESTED FOR NULLABILITY WHEN LOADED
+                                    })
+                                ).Result;
+
+                                break;
+
+                            case "ClientCredentials":
+
+                                httpResponse = this.HttpClient.PostAsync(
+                                    requestUri: new Uri(credential.TokenRequestEndpoint),
+                                    content: new FormUrlEncodedContent(new Dictionary<string, string>()
+                                    {
+                                    { "grant_type", "client_credentials" },
+                                    { "client_id", credential.ClientId },
+                                    { "client_secret", credential.ClientSecret }
+                                    })
+                                ).Result;
+
+                                break;
+
+                            default:
+
+                                throw new Exception("");
+
+                        }
 
                         Dictionary<string, object> parsedResponseContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(httpResponse.Content.ReadAsStringAsync().Result);
 
