@@ -89,11 +89,11 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                                     requestUri: new Uri(credential.TokenRequestEndpoint),
                                     content: new FormUrlEncodedContent(new Dictionary<string, string>()
                                     {
-                                    { "grant_type", "password" },
-                                    { "client_id", credential.ClientId },
-                                    { "client_secret", credential.ClientSecret },
-                                    { "username", credential.Username }, // Username IS TESTED FOR NULLABILITY WHEN LOADED
-                                    { "password", credential.Password + credential.SecurityToken }  // Password AND SecurityToken ARE TESTED FOR NULLABILITY WHEN LOADED
+                                        { "grant_type", "password" },
+                                        { "client_id", credential.ClientId },
+                                        { "client_secret", credential.ClientSecret },
+                                        { "username", credential.Username }, // Username IS TESTED FOR NULLABILITY WHEN LOADED
+                                        { "password", credential.Password + credential.SecurityToken }  // Password AND SecurityToken ARE TESTED FOR NULLABILITY WHEN LOADED
                                     })
                                 ).Result;
 
@@ -105,9 +105,9 @@ namespace ue_FDI_IDOReplicationRules_ECA.Helpers
                                     requestUri: new Uri(credential.TokenRequestEndpoint),
                                     content: new FormUrlEncodedContent(new Dictionary<string, string>()
                                     {
-                                    { "grant_type", "client_credentials" },
-                                    { "client_id", credential.ClientId },
-                                    { "client_secret", credential.ClientSecret }
+                                        { "grant_type", "client_credentials" },
+                                        { "client_id", credential.ClientId },
+                                        { "client_secret", credential.ClientSecret }
                                     })
                                 ).Result;
 
