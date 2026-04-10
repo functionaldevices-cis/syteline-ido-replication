@@ -201,7 +201,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
                             // SEND THE RECORD
 
                             Task<bool> eventHubPush = AzureEventHubPusher.ExportToAzureEventHub(
-                                eventHubCredential: new AzureEventHubCredential(
+                                eventHubCredential: new AzureEventHubSASCredential(
                                     ConnectionString: replicationRule.CredentialValue01
                                 ),
                                 records: remappedReplicationRecords
@@ -230,7 +230,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
                                 objectName: replicationRule.Option01,
                                 externalIDFieldName: replicationRule.Option02,
                                 records: remappedReplicationRecords,
-                                onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.Message); }
+                                onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.ErrorMessage); }
                             );
 
                             salesforceUpsert.Wait();

@@ -5,7 +5,6 @@ using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
@@ -29,7 +28,6 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
         }
 
         private bool _SortDesc;
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool SortDesc
         {
             get => _SortDesc;

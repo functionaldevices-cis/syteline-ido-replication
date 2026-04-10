@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
@@ -60,11 +60,11 @@ namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 
                 if (recordRaw.ContainsKey("attributes"))
                 {
-                    JsonElement attributesNestedObject = (JsonElement)recordRaw["attributes"];
+                    JToken attributesNestedObject = (JToken)recordRaw["attributes"];
                     attributes = new Dictionary<string, string>() {
-                    { "type", attributesNestedObject.GetProperty("type").GetString() ?? "" },
-                    { "url", attributesNestedObject.GetProperty("url").GetString() ?? "" }
-                };
+                        { "type", attributesNestedObject.SelectToken("type").ToString() ?? "" },
+                        { "url", attributesNestedObject.SelectToken("url").ToString() ?? "" }
+                    };
                     recordRaw.Remove("attributes");
                 }
 
