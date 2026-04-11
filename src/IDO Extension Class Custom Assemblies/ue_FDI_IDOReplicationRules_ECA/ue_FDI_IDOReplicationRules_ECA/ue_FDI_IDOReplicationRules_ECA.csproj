@@ -7,8 +7,8 @@
     <ProjectGuid>{37EB2A3E-A8B1-4D5F-A52D-FAF6E7EC8B27}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ue_FDI_IDOReplicationRules_ECA</RootNamespace>
-    <AssemblyName>ue_FDI_IDOReplicationRules_ECA</AssemblyName>
+    <RootNamespace>ue_AIR_IDOReplicationRules_ECA</RootNamespace>
+    <AssemblyName>ue_AIR_IDOReplicationRules_ECA</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -110,7 +110,7 @@
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertPackage.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponse.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResults.cs" />
-    <Compile Include="ue_FDI_IDOReplicationRules_ECA.cs" />
+    <Compile Include="ue_AIR_IDOReplicationRules_ECA.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

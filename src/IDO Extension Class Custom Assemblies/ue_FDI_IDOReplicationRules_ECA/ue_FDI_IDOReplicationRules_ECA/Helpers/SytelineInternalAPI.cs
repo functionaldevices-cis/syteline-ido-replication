@@ -9,9 +9,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Helpers {
+namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
 
     public class SytelineInternalAPI {
 

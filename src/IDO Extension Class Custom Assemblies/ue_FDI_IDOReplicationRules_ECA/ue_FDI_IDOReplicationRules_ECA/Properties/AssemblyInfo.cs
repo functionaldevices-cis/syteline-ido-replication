@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ue_FDI_IDOReplicationRules_ECA")]
+[assembly: AssemblyTitle("ue_AIR_IDOReplicationRules_ECA")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ue_FDI_IDOReplicationRules_ECA")]
+[assembly: AssemblyProduct("ue_AIR_IDOReplicationRules_ECA")]
 [assembly: AssemblyCopyright("Copyright ©  2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

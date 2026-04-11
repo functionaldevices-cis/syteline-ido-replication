@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPICredential

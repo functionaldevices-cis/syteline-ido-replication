@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPIQueryResponse

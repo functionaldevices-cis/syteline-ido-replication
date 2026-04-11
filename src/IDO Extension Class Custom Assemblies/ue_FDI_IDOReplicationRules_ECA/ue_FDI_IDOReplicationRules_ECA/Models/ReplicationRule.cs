@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Mongoose.IDO;
 using Mongoose.IDO.Protocol;
-using ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models
+namespace ue_AIR_IDOReplicationRules_ECA.Models
 {
     public class ReplicationRule
     {

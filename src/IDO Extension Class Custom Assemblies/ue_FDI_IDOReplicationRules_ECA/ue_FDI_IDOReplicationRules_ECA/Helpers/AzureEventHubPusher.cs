@@ -5,9 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Helpers
+namespace ue_AIR_IDOReplicationRules_ECA.Helpers
 {
 
     public class AzureEventHubPusher

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
     public class SalesforceAPIUpsertPackage
     {

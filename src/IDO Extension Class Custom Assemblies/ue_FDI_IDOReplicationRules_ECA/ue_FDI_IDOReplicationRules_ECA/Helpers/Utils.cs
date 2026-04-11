@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Helpers
+namespace ue_AIR_IDOReplicationRules_ECA.Helpers
 {
     public class Utils
     {

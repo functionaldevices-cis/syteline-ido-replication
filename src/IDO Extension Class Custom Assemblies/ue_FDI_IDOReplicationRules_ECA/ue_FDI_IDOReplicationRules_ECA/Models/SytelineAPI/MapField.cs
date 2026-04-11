@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 {
 
     public class MapField

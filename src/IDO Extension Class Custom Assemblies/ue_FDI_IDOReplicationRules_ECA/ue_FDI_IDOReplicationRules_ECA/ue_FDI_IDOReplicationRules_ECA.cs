@@ -8,20 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ue_FDI_IDOReplicationRules_ECA.Helpers;
-using ue_FDI_IDOReplicationRules_ECA.Models;
-using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
-using ue_FDI_IDOReplicationRules_ECA.Models.SytelineAPI;
-using ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
+using ue_AIR_IDOReplicationRules_ECA.Helpers;
+using ue_AIR_IDOReplicationRules_ECA.Models;
+using ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models.AzureEventHubAPI;
 
-namespace ue_FDI_IDOReplicationRules_ECA
+namespace ue_AIR_IDOReplicationRules_ECA
 {
 
     /**********************************************************************************************************/
     /**********************************************************************************************************/
     /**********************************************************************************************************/
     /*
-    /* Name:     ue_FDI_IDOReplicationRules_ECA
+    /* Name:     ue_AIR_IDOReplicationRules_ECA
     /* Purpose:  Assembly class to hold all methods related to AES-Driven IDO-Layer Replication.
     /* Date:     2025-04-21
     /* Author:   Andy Mercer
@@ -32,8 +32,8 @@ namespace ue_FDI_IDOReplicationRules_ECA
     /**********************************************************************************************************/
     /**********************************************************************************************************/
 
-    [IDOExtensionClass("ue_FDI_IDOReplicationRules_ECA")]
-    public class ue_FDI_IDOReplicationRules_ECA : ExtensionClassBase
+    [IDOExtensionClass("ue_AIR_IDOReplicationRules_ECA")]
+    public class ue_AIR_IDOReplicationRules_ECA : ExtensionClassBase
     {
 
         /**********************************************************************************************************/
@@ -75,7 +75,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
             // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
             GetRecordsResponseData replicationRuleRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
-                IDOName: "ue_FDI_IDOReplicationRules",
+                IDOName: "ue_AIR_IDOReplicationRules",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
                     { "TargetType" },
@@ -110,7 +110,7 @@ namespace ue_FDI_IDOReplicationRules_ECA
             );
 
             GetRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
-                IDOName: "ue_FDI_IDOReplicationMapFieldSources",
+                IDOName: "ue_AIR_IDOReplicationMapFieldSources",
                 selectProperties: new List<string>(){
                     { "RuleNum" },
                     { "FieldSeq" },

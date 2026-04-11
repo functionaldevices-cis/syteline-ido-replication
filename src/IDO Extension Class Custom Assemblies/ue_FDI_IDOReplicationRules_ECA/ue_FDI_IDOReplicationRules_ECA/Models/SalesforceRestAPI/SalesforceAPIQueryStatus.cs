@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI
 {
 
     public class SalesforceAPIQueryStatus

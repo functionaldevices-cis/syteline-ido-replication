@@ -5,12 +5,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
-using ue_FDI_IDOReplicationRules_ECA.Models;
-using ue_FDI_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
+using ue_AIR_IDOReplicationRules_ECA.Models;
+using ue_AIR_IDOReplicationRules_ECA.Models.SalesforceRestAPI;
 using Newtonsoft.Json;
 
 
-namespace ue_FDI_IDOReplicationRules_ECA.Helpers
+namespace ue_AIR_IDOReplicationRules_ECA.Helpers
 {
 
     public class SalesforceRestAPI

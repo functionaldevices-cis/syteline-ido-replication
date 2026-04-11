@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 
-namespace ue_FDI_IDOReplicationRules_ECA.Models.AzureEventHubAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models.AzureEventHubAPI
 {
 
     public class AzureEventHubSASCredential
