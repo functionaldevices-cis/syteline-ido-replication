@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <FormsAndObjectsExport Version="010000">
    <Forms Type="1">
-      <Form Name="ue_FDI_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
+      <Form Name="ue_AIR_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
          <Caption>fIDOReplicationRules</Caption>
          <Type>0</Type>
          <StandardOperations>1019</StandardOperations>
@@ -52,7 +52,7 @@
                <ContainerSequence>0</ContainerSequence>
                <DataSource>object.CredentialID</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>STDOLE ue_FDI_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) RECORDCAP(0))</ComboListSource>
+               <ComboListSource>STDOLE ue_AIR_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) RECORDCAP(0))</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -121,7 +121,7 @@
                <ContainerSequence>1</ContainerSequence>
                <DataSource>object.CredentialName</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>STDOLE ue_FDI_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) RECORDCAP(0))</ComboListSource>
+               <ComboListSource>STDOLE ue_AIR_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) RECORDCAP(0))</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -1718,7 +1718,7 @@
          </EventHandlers>
          <Variables>
             <Variable Name="BGTaskName">
-               <Value>ue_FDI_ReplicateRecordToExternalSystems</Value>
+               <Value>ue_AIR_ReplicateRecordToExternalSystems</Value>
                <Value2 />
                <Value3 />
                <Description />
@@ -1748,13 +1748,13 @@
                <Description />
             </Variable>
             <Variable Name="fds_DataSource">
-               <Value>ue_FDI_IDOReplicationRules( OBJNAME(sReplicationRules) LOCKMODE(Row) )</Value>
+               <Value>ue_AIR_IDOReplicationRules( OBJNAME(sReplicationRules) LOCKMODE(Row) )</Value>
                <Value2 />
                <Value3 />
                <Description />
             </Variable>
             <Variable Name="fds_SC2">
-               <Value>OBJECT2( ue_FDI_IDOReplicationMapFields( CA(RNCSDVIOG) OBJNAME(sReplicationMapFields) FILTERPERM(RuleNum = FP(RuleNum)) ORDERBY(FieldSeq ASC) LOCKMODE(Row) ) )</Value>
+               <Value>OBJECT2( ue_AIR_IDOReplicationMapFields( CA(RNCSDVIOG) OBJNAME(sReplicationMapFields) FILTERPERM(RuleNum = FP(RuleNum)) ORDERBY(FieldSeq ASC) LOCKMODE(Row) ) )</Value>
                <Value2 />
                <Value3 />
                <Description />
@@ -1775,7 +1775,7 @@
                <ScriptLine />
                <ScriptLine>namespace Mongoose.FormScripts</ScriptLine>
                <ScriptLine>{</ScriptLine>
-               <ScriptLine>   public class ue_FDI_IDOReplicationRules : FormScript</ScriptLine>
+               <ScriptLine>   public class ue_AIR_IDOReplicationRules : FormScript</ScriptLine>
                <ScriptLine>   {</ScriptLine>
                <ScriptLine />
                <ScriptLine>      public void Test()</ScriptLine>
