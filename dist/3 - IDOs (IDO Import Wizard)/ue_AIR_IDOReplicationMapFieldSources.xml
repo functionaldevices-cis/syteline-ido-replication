@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ObjectStudioExport Version="060000">
    <IDODefinitions>
-      <IDODefinition Name="ue_FDI_IDOReplicationMapFieldSources">
-         <ServerName>ue_FDI</ServerName>
+      <IDODefinition Name="ue_AIR_IDOReplicationMapFieldSources">
+         <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
-         <LabelStringID>oue_FDI_IDOReplicationMapFieldSources</LabelStringID>
+         <LabelStringID>oue_AIR_IDOReplicationMapFieldSources</LabelStringID>
          <RevisionNo>12</RevisionNo>
          <RevisionDate>2025-04-25T12:07:30</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>1</QuoteTableAliases>
          <Tables>
-            <Table Name="ue_FDI_idorepl_mapfield" Alias="idorepl_mapfield" Type="SECONDARY">
+            <Table Name="ue_AIR_idorepl_mapfield" Alias="idorepl_mapfield" Type="SECONDARY">
                <ExplicitJoin>[idorepl_mapfield].[rule_num] = [mapfieldsource].[rule_num] AND [idorepl_mapfield].[field_seq] = [mapfieldsource].[field_seq]</ExplicitJoin>
                <JoinType>LEFT OUTER</JoinType>
             </Table>
-            <Table Name="ue_FDI_idorepl_mapfieldsource" Alias="mapfieldsource" Type="PRIMARY" />
+            <Table Name="ue_AIR_idorepl_mapfieldsource" Alias="mapfieldsource" Type="PRIMARY" />
          </Tables>
          <Methods />
          <Properties>

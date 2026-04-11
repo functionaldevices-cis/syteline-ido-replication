@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ObjectStudioExport Version="060000">
    <IDODefinitions>
-      <IDODefinition Name="ue_FDI_IDOReplicationRules">
-         <ServerName>ue_FDI</ServerName>
+      <IDODefinition Name="ue_AIR_IDOReplicationRules">
+         <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
-         <LabelStringID>oue_FDI_IDOReplicationRules</LabelStringID>
+         <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
          <RevisionNo>13</RevisionNo>
          <RevisionDate>2025-04-25T00:49:55</RevisionDate>
-         <CustomAssemblyName>ue_FDI_IDOReplicationRules_ECA</CustomAssemblyName>
-         <ExtClassNamespace>ue_FDI_IDOReplicationRules_ECA</ExtClassNamespace>
-         <ExtClassName>ue_FDI_IDOReplicationRules_ECA</ExtClassName>
+         <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
+         <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
+         <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <Tables>
-            <Table Name="ue_FDI_idorepl_cred" Alias="idorepl_cred" Type="SECONDARY">
+            <Table Name="ue_AIR_idorepl_cred" Alias="idorepl_cred" Type="SECONDARY">
                <ExplicitJoin>[idorepl_cred].[credential_id] = [idorepl_rule].[credential_id]</ExplicitJoin>
                <JoinType>LEFT OUTER</JoinType>
             </Table>
-            <Table Name="ue_FDI_idorepl_rule" Alias="idorepl_rule" Type="PRIMARY" />
+            <Table Name="ue_AIR_idorepl_rule" Alias="idorepl_rule" Type="PRIMARY" />
          </Tables>
          <Methods>
             <Method Name="ReplicateRecordToExternalSystems" Transactional="NO">
@@ -187,7 +187,7 @@
             </Property>
             <Property Name="MapFields" Binding="SUBCOLLECTION" Sequence="0">
                <PseudoKeyFlag>0</PseudoKeyFlag>
-               <Subcollection>ue_FDI_IDOReplicationMapFields</Subcollection>
+               <Subcollection>ue_AIR_IDOReplicationMapFields</Subcollection>
                <SubcollectionFilter>RuleNum=RuleNum</SubcollectionFilter>
                <SubstitutionProperties />
                <PropertyAttributes />

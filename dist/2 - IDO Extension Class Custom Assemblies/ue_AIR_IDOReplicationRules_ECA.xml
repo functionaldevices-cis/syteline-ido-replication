@@ -2,9 +2,9 @@
 <ObjectStudioExport Version="060000">
    <CustomAssemblies>
       <CustomAssembly AssemblyType="0">
-         <AssemblyName>ue_FDI_IDOReplicationRules_ECA</AssemblyName>
-         <FullName>ue_FDI_IDOReplicationRules_ECA, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</FullName>
-         <FileName>ue_FDI_IDOReplicationRules_ECA</FileName>
+         <AssemblyName>ue_AIR_IDOReplicationRules_ECA</AssemblyName>
+         <FullName>ue_AIR_IDOReplicationRules_ECA, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</FullName>
+         <FileName>ue_AIR_IDOReplicationRules_ECA</FileName>
          <AccessAs>ue_</AccessAs>
          <AssemblyImage>TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAgAAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4gRE9TIG1v

@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ObjectStudioExport Version="060000">
    <IDODefinitions>
-      <IDODefinition Name="ue_FDI_IDOReplicationMapFields">
-         <ServerName>ue_FDI</ServerName>
+      <IDODefinition Name="ue_AIR_IDOReplicationMapFields">
+         <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
-         <LabelStringID>oue_FDI_IDOReplicationMapFields</LabelStringID>
+         <LabelStringID>oue_AIR_IDOReplicationMapFields</LabelStringID>
          <RevisionNo>14</RevisionNo>
          <RevisionDate>2025-04-24T19:38:29</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>1</QuoteTableAliases>
          <Tables>
-            <Table Name="ue_FDI_idorepl_rule" Alias="idorepl_rule" Type="SECONDARY">
+            <Table Name="ue_AIR_idorepl_rule" Alias="idorepl_rule" Type="SECONDARY">
                <ExplicitJoin>[idorepl_rule].[rule_num] = [mapfield].[rule_num]</ExplicitJoin>
                <JoinType>LEFT OUTER</JoinType>
             </Table>
-            <Table Name="ue_FDI_idorepl_mapfield" Alias="mapfield" Type="PRIMARY" />
+            <Table Name="ue_AIR_idorepl_mapfield" Alias="mapfield" Type="PRIMARY" />
          </Tables>
          <Methods />
          <Properties>
@@ -75,20 +75,20 @@
             STRING_AGG(
                CASE
                   WHEN
-                     ue_FDI_idorepl_mapfieldsource.type = 'IdoProperty'
+                     ue_AIR_idorepl_mapfieldsource.type = 'IdoProperty'
                   THEN
-                     '"P(' + ue_FDI_idorepl_mapfieldsource.value + ')"'
+                     '"P(' + ue_AIR_idorepl_mapfieldsource.value + ')"'
                   ELSE
-                     '"' + ue_FDI_idorepl_mapfieldsource.value + '"'
+                     '"' + ue_AIR_idorepl_mapfieldsource.value + '"'
                END,
                ', '
             )
          WITHIN GROUP
-            (ORDER BY ue_FDI_idorepl_mapfieldsource.source_seq ASC)
+            (ORDER BY ue_AIR_idorepl_mapfieldsource.source_seq ASC)
          FROM
-            dbo.ue_FDI_idorepl_mapfieldsource
+            dbo.ue_AIR_idorepl_mapfieldsource
          WHERE
-            ue_FDI_idorepl_mapfieldsource.rule_num = RuleNum and ue_FDI_idorepl_mapfieldsource.field_seq = FieldSeq
+            ue_AIR_idorepl_mapfieldsource.rule_num = RuleNum and ue_AIR_idorepl_mapfieldsource.field_seq = FieldSeq
       ),
       ''
    ),
@@ -148,7 +148,7 @@
             </Property>
             <Property Name="Sources" Binding="SUBCOLLECTION" Sequence="0">
                <PseudoKeyFlag>0</PseudoKeyFlag>
-               <Subcollection>ue_FDI_IDOReplicationMapFieldSources</Subcollection>
+               <Subcollection>ue_AIR_IDOReplicationMapFieldSources</Subcollection>
                <SubcollectionFilter>RuleNum=RuleNum,FieldSeq=FieldSeq</SubcollectionFilter>
                <SubstitutionProperties />
                <PropertyAttributes />
