@@ -22,17 +22,6 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
             this.IDOCommands = IDOCommands;
         }
 
-        public List<Dictionary<string, T>> UnpackRecords<T>(GetRecordsResponseData records) {
-
-            return records.LoadCollectionResponseData.Items.Select(
-                record => records.PropertyKeys.ToDictionary(
-                    propertyName => propertyName.Key,
-                    propertyName => this.ParseIDOPropertyValue<T>(record.PropertyValues[propertyName.Value])
-                )
-            ).ToList();
-
-        }
-
         public T ParseIDOPropertyValue<T>(IDOPropertyValue value)
         {
 
@@ -52,66 +41,65 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
 
         }
 
-        public GetRecordsResponseData GetRecords(SytelineQuery QueryDef) {
+        public LoadRecordsResponseData LoadRecords(string IDOName, string filter, string orderBy, List<string> properties, int recordCap = 0)
+        {
 
             // GENERIC SYSTEM PROPS
 
             LoadCollectionRequestData oLoadRequest;
             LoadCollectionResponseData oLoadResponse = new LoadCollectionResponseData();
 
-            if (this.IDOCommands != null) {
+            // SET UP DATA LOAD REQUEST PARAMETERS
 
-                // SET UP DATA LOAD REQUEST PARAMETERS
+            oLoadRequest = new LoadCollectionRequestData()
+            {
+                IDOName = IDOName,
+                RecordCap = recordCap,
+                Filter = filter,
+                OrderBy = orderBy,
+                ReadMode = ReadMode.ReadCommitted
+            };
+            oLoadRequest.PropertyList.SetProperties(string.Join(", ", properties));
 
-                oLoadRequest = new LoadCollectionRequestData() {
-                    IDOName = QueryDef.IDOName,
-                    RecordCap = QueryDef.RecordCap,
-                    Filter = QueryDef.Filter,
-                    OrderBy = QueryDef.OrderBy,
-                    ReadMode = ReadMode.ReadUncommitted
-                };
-                oLoadRequest.PropertyList.SetProperties(string.Join(", ", QueryDef.SelectProperties));
+            // LOAD THE RECORD(S)
 
-                // LOAD THE RECORD(S)
-                if (this.IDOCommands != null) {
-                    oLoadResponse = this.IDOCommands.LoadCollection(oLoadRequest);
-                }
-
-            }
-
-            Dictionary<string, int> propertyKeys = Enumerable.Range(0, QueryDef.SelectProperties.Count).ToDictionary(
-                i => QueryDef.SelectProperties[i],
-                i => i
-            );
+            oLoadResponse = this.IDOCommands.LoadCollection(oLoadRequest);
 
             // IF WE HAVE A VALID RECORD
 
-            return new GetRecordsResponseData(
-                propertyKeys: propertyKeys,
-                loadCollectionResponseData: oLoadResponse
+            return new LoadRecordsResponseData(
+                queryIDOName: IDOName,
+                queryFilter: filter,
+                queryOrderBy: orderBy,
+                queryProperties: properties,
+                loadCollectionResponseData: oLoadResponse,
+                loadCollectionRequestData: oLoadRequest
             );
 
         }
-        
-        public int CreateRecord(SytelineQuery QueryDef) {
 
-            if (this.IDOCommands != null) {
+        public LoadRecordsResponseData RefreshRequest(LoadRecordsResponseData loadRecordsResponseData)
+        {
 
-                // GENERIC SYSTEM PROPS
+            // REFRESH THE RECORD(S)
 
-                UpdateCollectionRequestData oUpdateRequest;
-                IDOUpdateItem oUpdateItem;
+            loadRecordsResponseData.LoadCollectionResponseData = this.IDOCommands.LoadCollection(loadRecordsResponseData.LoadCollectionRequestData);
+
+            return loadRecordsResponseData;
+
+        }
+
+        public int CreateRecord(string IDOName, IDOUpdateItem record)
+        {
+
+            if (this.IDOCommands != null)
+            {
+
 
                 // CREATE THE UPDATE REQUEST WRAPPER
 
-                oUpdateRequest = new UpdateCollectionRequestData(QueryDef.IDOName);
-                oUpdateItem = new IDOUpdateItem(UpdateAction.Insert);
-
-                foreach (KeyValuePair<string, object> property in QueryDef.InsertProperties) {
-                    oUpdateItem.Properties.Add(property.Key, property.Value ?? "", true);
-                }
-
-                oUpdateRequest.Items.Add(oUpdateItem);
+                UpdateCollectionRequestData oUpdateRequest = new UpdateCollectionRequestData(IDOName);
+                oUpdateRequest.Items.Add(record);
 
                 // SEND THE UPDATE REQUEST
 
@@ -125,91 +113,16 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
 
         }
 
-        public int UpdateRecords(string IDOName = null, Dictionary<string, Dictionary<string, object>> itemUpdates = null, LoadCollectionResponseData oLoadResponse = null)
+        public int CreateRecords(string IDOName, List<IDOUpdateItem> records)
         {
 
             if (this.IDOCommands != null)
             {
-
-                // GENERIC SYSTEM PROPS
-
-                UpdateCollectionRequestData oUpdateRequest;
-
-                if (IDOName != null && itemUpdates != null)
-                {
-
-                    oUpdateRequest = new UpdateCollectionRequestData(IDOName);
-
-                    // CREATE THE UPDATE REQUEST WRAPPER
-
-                    foreach (KeyValuePair<string, Dictionary<string, object>> itemUpdate in itemUpdates)
-                    {
-
-                        oUpdateRequest.Items.Add(
-                            this.BuildUpdateItem(
-                                itemID: itemUpdate.Key,
-                                propertyUpdates: itemUpdate.Value
-                            )
-                        );
-
-                    }
-
-                    // SEND THE UPDATE REQUEST
-
-                    this.IDOCommands.UpdateCollection(oUpdateRequest);
-
-                }
-                else if (oLoadResponse != null)
-                {
-
-                    oUpdateRequest = new UpdateCollectionRequestData(oLoadResponse.IDOName);
-
-                    int iCounter;
-
-                    for (iCounter = 0; iCounter <= oLoadResponse.Items.Count - 1; iCounter++)
-                    {
-
-                        IDOItem record = oLoadResponse.Items[iCounter];
-
-                        oUpdateRequest.Items.Add(
-                            this.BuildUpdateItem(
-                                itemID: record.ItemID,
-                                propertyUpdates: oLoadResponse.PropertyList.List.Zip(record.PropertyValues, (k, v) => new { k, v }).ToDictionary(x => x.k, x => (object)x.v.Value)
-                            )
-                        );
-
-                    }
-
-                    this.IDOCommands.UpdateCollection(oUpdateRequest);
-
-                }
-
-                return 1;
-
-
-            }
-
-            return 0;
-
-        }
-
-        public int UpdateRecord(string IDOName, string itemID, Dictionary<string, object> propertyUpdates)
-        {
-
-            if (this.IDOCommands != null)
-            {
-
-                // GENERIC SYSTEM PROPS
-                UpdateCollectionRequestData oUpdateRequest;
 
                 // CREATE THE UPDATE REQUEST WRAPPER
 
-                oUpdateRequest = new UpdateCollectionRequestData(IDOName);
-
-                oUpdateRequest.Items.Add(this.BuildUpdateItem(
-                    itemID: itemID,
-                    propertyUpdates: propertyUpdates
-                ));
+                UpdateCollectionRequestData oUpdateRequest = new UpdateCollectionRequestData(IDOName);
+                oUpdateRequest.Items.AddRange(records);
 
                 // SEND THE UPDATE REQUEST
 
@@ -217,26 +130,106 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
 
                 return 1;
 
+            }
+
+            return 0;
+
+        }
+
+        public int UpdateRecord(string IDOName, IDOUpdateItem record)
+        {
+
+            if (this.IDOCommands != null)
+            {
+
+                // GENERIC SYSTEM PROPS
+
+                UpdateCollectionRequestData oUpdateRequest = new UpdateCollectionRequestData(IDOName);
+                oUpdateRequest.Items.Add(record);
+
+                this.IDOCommands.UpdateCollection(oUpdateRequest);
+
+                return 1;
 
             }
 
             return 0;
 
         }
-        
-        private IDOUpdateItem BuildUpdateItem(string itemID, Dictionary<string, object> propertyUpdates)
+
+        public int UpdateRecords(string IDOName, List<IDOUpdateItem> records)
+        {
+
+            if (this.IDOCommands != null)
+            {
+
+                // GENERIC SYSTEM PROPS
+
+                UpdateCollectionRequestData oUpdateRequest = new UpdateCollectionRequestData(IDOName);
+                oUpdateRequest.Items.AddRange(records);
+
+                this.IDOCommands.UpdateCollection(oUpdateRequest);
+
+                return 1;
+
+            }
+
+            return 0;
+
+        }
+
+        public IDOUpdateItem BuildInsertItem(Dictionary<string, object> propertyUpdates)
         {
 
             // CREATE AN UPDATE ITEM OBJECT
 
-            IDOUpdateItem oUpdateItem = new IDOUpdateItem(UpdateAction.Update, itemID) { ItemID = itemID };
+            IDOUpdateItem oUpdateItem = new IDOUpdateItem(UpdateAction.Insert);
 
             foreach (KeyValuePair<string, object> propertyUpdate in propertyUpdates)
             {
 
                 // IF WE HAVE A VALUE IN THE VALUE PROP, USE THAT. OTHERWISE, USE WHAT IS IN THE LOAD COLLECTION.
 
-                oUpdateItem.Properties.Add(propertyUpdate.Key, propertyUpdate.Value ?? "", true);
+                if (propertyUpdate.Value != null)
+                {
+
+                    oUpdateItem.Properties.Add(propertyUpdate.Key, propertyUpdate.Value, true);
+
+                }
+
+            }
+
+            return oUpdateItem;
+
+        }
+
+        public IDOUpdateItem BuildUpdateItem(string itemID = null, List<IDOUpdateProperty> propertyUpdates = null)
+        {
+
+            IDOUpdateItem oUpdateItem = itemID != null ? new IDOUpdateItem(UpdateAction.Update, itemID)
+            {
+                ItemID = itemID
+            } : new IDOUpdateItem(UpdateAction.Update)
+            {
+                UseOptimisticLocking = false
+            };
+
+            if (propertyUpdates != null)
+            {
+
+                foreach (IDOUpdateProperty propertyUpdate in propertyUpdates)
+                {
+
+                    // IF WE HAVE A VALUE IN THE VALUE PROP, USE THAT. OTHERWISE, USE WHAT IS IN THE LOAD COLLECTION.
+
+                    if (propertyUpdate.Value != null)
+                    {
+
+                        oUpdateItem.Properties.Add(propertyUpdate.Name, propertyUpdate.Value, propertyUpdate.Modified);
+
+                    }
+
+                }
 
             }
 

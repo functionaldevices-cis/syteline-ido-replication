@@ -11,9 +11,9 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers
     {
         public IIDOCommands IDOCommands { get; set; }
         public int BGTaskNum { get; set; }
-        public int? DebugLevel { get; set; }
+        public int DebugLevel { get; set; }
 
-        public Utils(IIDOCommands IDOCommands, int BGTaskNum = 0, int? DebugLevel = null)
+        public Utils(IIDOCommands IDOCommands, int BGTaskNum = 0, int DebugLevel = 0)
         {
             this.IDOCommands = IDOCommands;
             this.BGTaskNum = BGTaskNum;

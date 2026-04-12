@@ -54,7 +54,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
 
         [IDOMethod(MethodFlags.None, "Infobar")]
-        public int ReplicateRecordToExternalSystems(int BGTaskNum = -1, string rowPointer = "", string IDOName = "", string targetType = null, int debugLevel = 0)
+        public int ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, int debugLevel = 0, string targetType = null)
         {
  
             // SETUP UTILITIES
@@ -74,9 +74,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-            GetRecordsResponseData replicationRuleRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
+            LoadRecordsResponseData replicationRuleRecordsResponse = sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_IDOReplicationRules",
-                selectProperties: new List<string>(){
+                properties: new List<string>(){
                     { "RuleNum" },
                     { "TargetType" },
                     { "CredentialValue01" },
@@ -102,7 +102,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 },
                 filter: "( IDOName = '" + IDOName + "') AND ( IsActive = 1 )" + (targetType != null ? "AND ( TargetType = '" + targetType + "' )" : ""),
                 orderBy: "RuleNum ASC"
-            ));
+            );
 
             Dictionary<string, ReplicationRule> replicationRules = replicationRuleRecordsResponse.Items.ToDictionary(
                 replicationRuleRecord => replicationRuleRecord.PropertyValues[replicationRuleRecordsResponse.PropertyKeys["RuleNum"]].Value,
@@ -112,9 +112,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
             if (replicationRules.Keys.Count > 0)
             {
 
-                GetRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
+                LoadRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.LoadRecords(
                     IDOName: "ue_AIR_IDOReplicationMapFieldSources",
-                    selectProperties: new List<string>(){
+                    properties: new List<string>(){
                         { "RuleNum" },
                         { "FieldSeq" },
                         { "FieldName" },
@@ -123,7 +123,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     },
                     filter: "( RuleNum IN (" + string.Join(",", replicationRules.Keys.Select(ruleNum => "'" + ruleNum + "'")) + ") )",
                     orderBy: "RuleNum ASC, FieldSeq ASC, SourceSeq ASC"
-                ));
+                );
 
                 List<string> idoProperties = new List<string>();
 
@@ -157,11 +157,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 // LOAD THE REPLICATION RECORD
 
-                GetRecordsResponseData replicationRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
+                LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
                     IDOName: IDOName,
-                    selectProperties: idoProperties,
-                    filter: "( RowPointer = '" + rowPointer + "')"
-                ));
+                    properties: idoProperties,
+                    filter: queryFilter,
+                    orderBy: "",
+                    recordCap: recordCap
+                );
+
+                utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
 
                 // STEP THROUGH EACH RULE
                 // REMAP THE RECORD(S) BASED ON THE MAP
@@ -253,7 +257,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         }
 
-        private List<Dictionary<string, object>> RemapRecords(List<MapField> mapFields, GetRecordsResponseData recordsResponseData)
+        private List<Dictionary<string, object>> RemapRecords(List<MapField> mapFields, LoadRecordsResponseData recordsResponseData)
         {
 
             List<object> values;
