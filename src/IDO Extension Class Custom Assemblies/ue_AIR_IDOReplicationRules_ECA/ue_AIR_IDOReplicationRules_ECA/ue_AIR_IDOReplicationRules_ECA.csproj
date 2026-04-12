@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\AzureEventHubPusher.cs" />
+    <Compile Include="Helpers\FilterStringParser.cs" />
     <Compile Include="Helpers\SytelineInternalAPI.cs" />
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
     <Compile Include="Helpers\Utils.cs" />
@@ -93,10 +94,10 @@
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIQueryResponse.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponseRecordResult.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIUpsertResponseRecordResultError.cs" />
+    <Compile Include="Models\SytelineAPI\LoadRecordsRequestData.cs" />
+    <Compile Include="Models\SytelineAPI\LoadRecordsResponseData.cs" />
     <Compile Include="Models\SytelineAPI\MapField.cs" />
     <Compile Include="Models\SytelineAPI\MapFieldSource.cs" />
-    <Compile Include="Models\SytelineAPI\GetRecordsResponseData.cs" />
-    <Compile Include="Models\SytelineAPI\SytelineQuery.cs" />
     <Compile Include="Models\ReplicationRule.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPICredential.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIAccessTokenDetails.cs" />
