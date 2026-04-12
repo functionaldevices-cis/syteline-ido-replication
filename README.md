@@ -36,8 +36,10 @@ An AES-driven IDO-layer data replication system for Syteline, that lets administ
 
 ## External Targets:
 
-* Azure EventHubs - Complete But Blocked By Security (waiting to Hear from Infor on Installing dependencies as fully trusted)
-* Salesforce REST API - Complete
-* Other Syteline instances through REST or SOAP APIs - Conceptual, not started
-* Direct SQL databases (PostGres, MS SQL Server, MySQL, etc) - Conceptual, not started
-* Other ERP systems with a REST API - Conceptual, not started
+|Target|Status|Details|
+| -------- | -------- | -------- |
+|**Azure EventHubs**|:white_check_mark: Working|If using the Azure Event Hub as a Custom Endpoint to get to Fabric Eventstreams, both standard and [Inferred Multi-Schema](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/event-streams/process-events-with-multiple-schemas) Eventstreams are supported, but [Event Schema Eventstreams](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/schema-sets/use-event-schemas) Eventstreams don't work currently due undocumented header requirements from Microsoft. See this [forum post](https://community.fabric.microsoft.com/t5/Eventstream/Event-Schema-Inside-Eventstream-Never-Matching/m-p/5146439) for details.
+|**Salesforce REST API**|:white_check_mark:Working|Fully Working|
+|**Other Syteline instances through REST or SOAP APIs**|:x: Not Available Yet|Conceptual, not started|
+|**Direct SQL databases (PostGres, MS SQL Server, MySQL, etc)**|:x: Not Available Yet|Conceptual, not started|
+|**Other ERP systems with a REST API**|:x: Not Available Yet|Conceptual, not started|
