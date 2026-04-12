@@ -109,133 +109,139 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 replicationRuleRecord => new ReplicationRule(replicationRuleRecord, replicationRuleRecordsResponse.PropertyKeys)
             );
 
-            GetRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
-                IDOName: "ue_AIR_IDOReplicationMapFieldSources",
-                selectProperties: new List<string>(){
-                    { "RuleNum" },
-                    { "FieldSeq" },
-                    { "FieldName" },
-                    { "Type" },
-                    { "Value" }
-                },
-                filter: "( RuleNum IN (" + string.Join(",", replicationRules.Keys.Select(ruleNum => "'" + ruleNum + "'")) + ") )",
-                orderBy: "RuleNum ASC, FieldSeq ASC, SourceSeq ASC"
-            ));
-
-            List<string> idoProperties = new List<string>();
-
-            replicationMapFieldSourceRecordsResponse.Items.ForEach(replicationRuleRecord => {
-
-                string ruleNum = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["RuleNum"]].Value;
-                string fieldSeq = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["FieldSeq"]].Value;
-                string fieldName = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["FieldName"]].Value;
-                string type = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["Type"]].Value;
-                string value = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["Value"]].Value;
-
-                if (!replicationRules[ruleNum].MapFields.ContainsKey(fieldSeq))
-                {
-                    replicationRules[ruleNum].MapFields[fieldSeq] = new MapField(fieldName);
-                }
-
-                if (value != null && value != "")
-                {
-
-                    replicationRules[ruleNum].MapFields[fieldSeq].AddSource(source: new MapFieldSource(type: type, value: value));
-
-                    if (type == "IDOProperty" && !idoProperties.Contains(value))
-                    {
-                        idoProperties.Add(value);
-                    }
-
-                }
-
-            });
-
-            // LOAD THE REPLICATION RECORD
-
-            GetRecordsResponseData replicationRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
-                IDOName: IDOName,
-                selectProperties: idoProperties,
-                filter: "( RowPointer = '" + rowPointer + "')"
-            ));
-
-            // STEP THROUGH EACH RULE
-            // REMAP THE RECORD(S) BASED ON THE MAP
-            // SEND
-
-            if (replicationRecordsResponse.Items.Count > 0)
+            if (replicationRules.Keys.Count > 0)
             {
 
-                // SETUP RECORD STRUCTURE RECORD
+                GetRecordsResponseData replicationMapFieldSourceRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
+                    IDOName: "ue_AIR_IDOReplicationMapFieldSources",
+                    selectProperties: new List<string>(){
+                        { "RuleNum" },
+                        { "FieldSeq" },
+                        { "FieldName" },
+                        { "Type" },
+                        { "Value" }
+                    },
+                    filter: "( RuleNum IN (" + string.Join(",", replicationRules.Keys.Select(ruleNum => "'" + ruleNum + "'")) + ") )",
+                    orderBy: "RuleNum ASC, FieldSeq ASC, SourceSeq ASC"
+                ));
 
-                List<Dictionary<string, object>> remappedReplicationRecords;
-                string currentRuleNum;
-                List<MapField> mapFields;
-                ReplicationRule replicationRule;
+                List<string> idoProperties = new List<string>();
 
-                foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                replicationMapFieldSourceRecordsResponse.Items.ForEach(replicationRuleRecord =>
                 {
 
-                    // SETUP RULE STRUCTURE
+                    string ruleNum = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["RuleNum"]].Value;
+                    string fieldSeq = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["FieldSeq"]].Value;
+                    string fieldName = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["FieldName"]].Value;
+                    string type = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["Type"]].Value;
+                    string value = replicationRuleRecord.PropertyValues[replicationMapFieldSourceRecordsResponse.PropertyKeys["Value"]].Value;
 
-                    currentRuleNum = replicationRuleKeyValPair.Key;
-                    replicationRule = replicationRuleKeyValPair.Value;
-                    mapFields = replicationRule.MapFieldsList;
+                    if (!replicationRules[ruleNum].MapFields.ContainsKey(fieldSeq))
+                    {
+                        replicationRules[ruleNum].MapFields[fieldSeq] = new MapField(fieldName);
+                    }
 
-                    // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
-
-                    // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
-
-                    remappedReplicationRecords = this.RemapRecords(
-                        mapFields: mapFields,
-                        recordsResponseData: replicationRecordsResponse
-                    );
-
-                    // SEND RECORDS
-
-                    switch (replicationRule.TargetType)
+                    if (value != null && value != "")
                     {
 
-                        case "AzureEventHub":
+                        replicationRules[ruleNum].MapFields[fieldSeq].AddSource(source: new MapFieldSource(type: type, value: value));
 
-                            // SEND THE RECORD
+                        if (type == "IDOProperty" && !idoProperties.Contains(value))
+                        {
+                            idoProperties.Add(value);
+                        }
 
-                            Task<bool> eventHubPush = AzureEventHubPusher.ExportToAzureEventHub(
-                                eventHubCredential: new AzureEventHubSASCredential(
-                                    ConnectionString: replicationRule.CredentialValue01
-                                ),
-                                records: remappedReplicationRecords
-                            );
-                            eventHubPush.Wait();
+                    }
 
-                            break;
+                });
 
-                        case "SalesforceRESTAPI":
+                // LOAD THE REPLICATION RECORD
 
-                            // SEND THE RECORD
+                GetRecordsResponseData replicationRecordsResponse = sytelineAPI.GetRecords(new SytelineQuery(
+                    IDOName: IDOName,
+                    selectProperties: idoProperties,
+                    filter: "( RowPointer = '" + rowPointer + "')"
+                ));
 
-                            SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
-                                credential: new SalesforceAPICredential(
-                                    ClientId: replicationRule.CredentialValue01,
-                                    ClientSecret: replicationRule.CredentialValue02,
-                                    Username: replicationRule.CredentialValue03,
-                                    Password: replicationRule.CredentialValue04,
-                                    SecurityToken: replicationRule.CredentialValue05
-                                )
-                            );
+                // STEP THROUGH EACH RULE
+                // REMAP THE RECORD(S) BASED ON THE MAP
+                // SEND
 
-                            utils.WriteLogMessage("Pushing " + replicationRecordsResponse.Items.Count + " records to Salesforce.");
+                if (replicationRecordsResponse.Items.Count > 0)
+                {
 
-                            Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
-                                objectName: replicationRule.Option01,
-                                externalIDFieldName: replicationRule.Option02,
-                                records: remappedReplicationRecords,
-                                onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.ErrorMessage); }
-                            );
+                    // SETUP RECORD STRUCTURE RECORD
 
-                            salesforceUpsert.Wait();
+                    List<Dictionary<string, object>> remappedReplicationRecords;
+                    string currentRuleNum;
+                    List<MapField> mapFields;
+                    ReplicationRule replicationRule;
 
-                            break;
+                    foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                    {
+
+                        // SETUP RULE STRUCTURE
+
+                        currentRuleNum = replicationRuleKeyValPair.Key;
+                        replicationRule = replicationRuleKeyValPair.Value;
+                        mapFields = replicationRule.MapFieldsList;
+
+                        // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
+
+                        // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
+
+                        remappedReplicationRecords = this.RemapRecords(
+                            mapFields: mapFields,
+                            recordsResponseData: replicationRecordsResponse
+                        );
+
+                        // SEND RECORDS
+
+                        switch (replicationRule.TargetType)
+                        {
+
+                            case "AzureEventHub":
+
+                                // SEND THE RECORD
+
+                                Task<bool> eventHubPush = AzureEventHubPusher.ExportToAzureEventHub(
+                                    eventHubCredential: new AzureEventHubSASCredential(
+                                        ConnectionString: replicationRule.CredentialValue01
+                                    ),
+                                    records: remappedReplicationRecords
+                                );
+                                eventHubPush.Wait();
+
+                                break;
+
+                            case "SalesforceRESTAPI":
+
+                                // SEND THE RECORD
+
+                                SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
+                                    credential: new SalesforceAPICredential(
+                                        ClientId: replicationRule.CredentialValue01,
+                                        ClientSecret: replicationRule.CredentialValue02,
+                                        Username: replicationRule.CredentialValue03,
+                                        Password: replicationRule.CredentialValue04,
+                                        SecurityToken: replicationRule.CredentialValue05
+                                    )
+                                );
+
+                                utils.WriteLogMessage("Pushing " + replicationRecordsResponse.Items.Count + " records to Salesforce.");
+
+                                Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
+                                    objectName: replicationRule.Option01,
+                                    externalIDFieldName: replicationRule.Option02,
+                                    records: remappedReplicationRecords,
+                                    onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.ErrorMessage); }
+                                );
+
+                                salesforceUpsert.Wait();
+
+                                break;
+
+                        }
 
                     }
 
