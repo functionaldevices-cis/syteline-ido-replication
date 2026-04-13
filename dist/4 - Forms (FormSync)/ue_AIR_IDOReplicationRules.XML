@@ -2,14 +2,14 @@
 <FormsAndObjectsExport Version="010000">
    <Forms Type="1">
       <Form Name="ue_AIR_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
-         <Caption>fIDOReplicationRules</Caption>
+         <Caption>fue_AIR_IDOReplicationRules</Caption>
          <Type>0</Type>
          <StandardOperations>1019</StandardOperations>
          <Flags>1048778</Flags>
-         <Height>46</Height>
+         <Height>60</Height>
          <LeftPos>0</LeftPos>
          <TopPos>0</TopPos>
-         <Width>180</Width>
+         <Width>220</Width>
          <HelpContextID>-1</HelpContextID>
          <PaneZeroSize>49.875</PaneZeroSize>
          <PrimaryDataSource>V(fds_DataSource)  V(fds_SC2)</PrimaryDataSource>
@@ -19,15 +19,15 @@
                <DeviceID>-1</DeviceID>
                <Type>8</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>7.22222222222222</TopPos>
-               <LeftPos>99.375</LeftPos>
-               <Height>1.55555555555556</Height>
+               <TopPos>25</TopPos>
+               <LeftPos>19</LeftPos>
+               <Height>1.5</Height>
                <ListHeight>0</ListHeight>
-               <Width>9.75</Width>
+               <Width>10</Width>
                <Caption>sTest</Caption>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName />
-               <ContainerSequence>0</ContainerSequence>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>5</ContainerSequence>
                <Binding>0</Binding>
                <EventToGenerate>Test</EventToGenerate>
                <Flags>1</Flags>
@@ -37,12 +37,34 @@
                <Post301Format />
                <EffectiveCaption>sTest</EffectiveCaption>
             </Component>
+            <Component Name="CreateAESRecordsButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>4</TopPos>
+               <LeftPos>36</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>sue_AIR_CreateAESTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>CreateAESRecords</EventToGenerate>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(CreateAESRecordsButton), #P(EventHandlersSetup) = 0, "True")</Post301Format>
+               <EffectiveCaption>sue_AIR_CreateAESTriggers</EffectiveCaption>
+            </Component>
             <Component Name="CredentialIDEdit">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>8</TabOrder>
-               <TopPos>13.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>20.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>10</Width>
@@ -90,8 +112,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>7</TabOrder>
-               <TopPos>13.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>20.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -111,8 +133,8 @@
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>8</TabOrder>
-               <TopPos>13.5</TopPos>
-               <LeftPos>37.5</LeftPos>
+               <TopPos>20.5</TopPos>
+               <LeftPos>37</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>30</Width>
@@ -134,12 +156,12 @@
                <DeviceID>-1</DeviceID>
                <Type>13</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>11</TopPos>
-               <LeftPos>5</LeftPos>
+               <TopPos>18</TopPos>
+               <LeftPos>4.5</LeftPos>
                <Height>35</Height>
                <ListHeight>0</ListHeight>
                <Width>124</Width>
-               <Caption>sTargetCredentials</Caption>
+               <Caption>sue_AIR_TargetCredentials</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>notebook1_SITE</ContainerName>
                <ContainerSequence>1</ContainerSequence>
@@ -149,14 +171,14 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <Post301Format />
-               <EffectiveCaption>sTargetCredentials</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_TargetCredentials</EffectiveCaption>
             </Component>
             <Component Name="CredentialValue01Edit">
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>15</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>22</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -178,8 +200,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>15.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>22.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -198,8 +220,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>18</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>25</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -221,8 +243,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>18.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>25.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -241,8 +263,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>21</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>28</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -264,8 +286,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>21.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>28.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -284,8 +306,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>24</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>31</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -307,8 +329,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>24.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>31.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -327,8 +349,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>27</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>34</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -350,8 +372,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>27.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>34.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -370,8 +392,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>30</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>37</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -393,8 +415,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>30.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>37.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -413,8 +435,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>33</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>40</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -436,8 +458,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>33.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>40.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -456,8 +478,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>36</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>43</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -479,8 +501,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>36.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>43.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -499,8 +521,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>39</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>46</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -522,8 +544,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>39.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>46.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -542,8 +564,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>42</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>49</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -565,8 +587,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>42.3</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>49.3</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -585,12 +607,12 @@
                <DeviceID>-1</DeviceID>
                <Type>13</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>11</TopPos>
-               <LeftPos>5</LeftPos>
+               <TopPos>18</TopPos>
+               <LeftPos>4.5</LeftPos>
                <Height>35</Height>
                <ListHeight>0</ListHeight>
                <Width>124</Width>
-               <Caption>sFieldMapping</Caption>
+               <Caption>sue_AIR_FieldMapping</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>notebook1_SITE</ContainerName>
                <ContainerSequence>0</ContainerSequence>
@@ -600,7 +622,145 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <Post301Format />
-               <EffectiveCaption>sFieldMapping</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_FieldMapping</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_FieldName">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sFieldName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object2.Sources.FieldName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sFieldName</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_FieldSeq">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sFieldSeq</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object2.Sources.FieldSeq</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>Sequence</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sFieldSeq</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_RuleNum">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sRuleNum</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object2.Sources.RuleNum</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sRuleNum</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_SourceSeq">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sSourceSeq</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>object2.Sources.SourceSeq</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>Sequence</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sSourceSeq</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_Type">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sType</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
+               <DataSource>object2.Sources.Type</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sType</EffectiveCaption>
+            </Component>
+            <Component Name="FieldSources_Value">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>-0.722222222222221</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sValue</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>MapFieldSourcesGrid</ContainerName>
+               <ContainerSequence>5</ContainerSequence>
+               <DataSource>object2.Sources.Value</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sValue</EffectiveCaption>
             </Component>
             <Component Name="FormCollectionGrid">
                <DeviceID>-1</DeviceID>
@@ -624,15 +784,57 @@
                <Post301Format />
                <EffectiveCaption>fIDOReplicationRules</EffectiveCaption>
             </Component>
+            <Component Name="groupBox1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>1</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>10</Height>
+               <ListHeight>0</ListHeight>
+               <Width>70</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="groupBox2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>12</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>42</Height>
+               <ListHeight>0</ListHeight>
+               <Width>146</Width>
+               <Caption>sue_AIR_OutputTarget</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_OutputTarget</EffectiveCaption>
+            </Component>
             <Component Name="IDONameEdit">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>12</TabOrder>
-               <TopPos>3</TopPos>
-               <LeftPos>25</LeftPos>
+               <TopPos>2.5</TopPos>
+               <LeftPos>15</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
-               <Width>37.05</Width>
+               <Width>40</Width>
                <Caption>C(IDONameStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -677,11 +879,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>11</TabOrder>
-               <TopPos>3.3</TopPos>
-               <LeftPos>3.5</LeftPos>
+               <TopPos>2.8</TopPos>
+               <LeftPos>4.25</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>10</Width>
                <Caption>sIDOName</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -698,11 +900,11 @@
                <DeviceID>-1</DeviceID>
                <Type>5</Type>
                <TabOrder>14</TabOrder>
-               <TopPos>3</TopPos>
-               <LeftPos>63</LeftPos>
+               <TopPos>15</TopPos>
+               <LeftPos>53</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
-               <Width>40</Width>
+               <Width>14</Width>
                <Caption>sIsActive</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -710,7 +912,7 @@
                <DataSource>object.IsActive</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
+               <ReadOnly>True</ReadOnly>
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <MenuName>StdDefault</MenuName>
@@ -838,11 +1040,11 @@
                <DeviceID>-1</DeviceID>
                <Type>14</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>13.1666666666667</TopPos>
-               <LeftPos>6.75</LeftPos>
-               <Height>26.7777777777778</Height>
+               <TopPos>20.5</TopPos>
+               <LeftPos>5.5</LeftPos>
+               <Height>24</Height>
                <ListHeight>0</ListHeight>
-               <Width>39.75</Width>
+               <Width>40</Width>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>FieldMapTab</ContainerName>
                <ContainerSequence>0</ContainerSequence>
@@ -854,64 +1056,19 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format />
             </Component>
-            <Component Name="MapFieldSourcesFieldNameGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sFieldName</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>2</ContainerSequence>
-               <DataSource>object2.Sources.FieldName</DataSource>
-               <Binding>1</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>True</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format />
-               <EffectiveCaption>sFieldName</EffectiveCaption>
-            </Component>
-            <Component Name="MapFieldSourcesFieldSeqGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sFieldSeq</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>1</ContainerSequence>
-               <DataSource>object2.Sources.FieldSeq</DataSource>
-               <Binding>1</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <PropertyClassName>Sequence</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sFieldSeq</EffectiveCaption>
-            </Component>
             <Component Name="MapFieldSourcesGrid">
                <DeviceID>-1</DeviceID>
                <Type>14</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>13.2777777777778</TopPos>
-               <LeftPos>49.25</LeftPos>
-               <Height>12.5555555555556</Height>
+               <TopPos>20.5</TopPos>
+               <LeftPos>48</LeftPos>
+               <Height>20</Height>
                <ListHeight>0</ListHeight>
-               <Width>83.125</Width>
+               <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>FieldMapTab</ContainerName>
                <ContainerSequence>1</ContainerSequence>
-               <DataSource>V(cds_DataSourcegrid1_SITE)</DataSource>
+               <DataSource>V(cds_DataSourceMapFieldSourcesGrid)</DataSource>
                <Binding>4</Binding>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
@@ -919,105 +1076,12 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format />
             </Component>
-            <Component Name="MapFieldSourcesRuleNumGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sRuleNum</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>0</ContainerSequence>
-               <DataSource>object2.Sources.RuleNum</DataSource>
-               <Binding>1</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <PropertyClassName>GenericInt</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sRuleNum</EffectiveCaption>
-            </Component>
-            <Component Name="MapFieldSourcesSourceSeqGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sSourceSeq</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>3</ContainerSequence>
-               <DataSource>object2.Sources.SourceSeq</DataSource>
-               <Binding>1</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <PropertyClassName>Sequence</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sSourceSeq</EffectiveCaption>
-            </Component>
-            <Component Name="MapFieldSourcesTypeGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12</Width>
-               <Caption>sType</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>4</ContainerSequence>
-               <DataSource>object2.Sources.Type</DataSource>
-               <Binding>1</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <PropertyClassName>ShortDesc</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sType</EffectiveCaption>
-            </Component>
-            <Component Name="MapFieldSourcesValueGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>5.88235294117647</Height>
-               <ListHeight>0</ListHeight>
-               <Width>15</Width>
-               <Caption>sValue</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>MapFieldSourcesGrid</ContainerName>
-               <ContainerSequence>5</ContainerSequence>
-               <DataSource>object2.Sources.Value</DataSource>
-               <Binding>1</Binding>
-               <ComboListSource>STDOLE IdoProperties(  PROPERTIES(PropertyName) DISPLAY(1)FILTER(CollectionName = FP(IDOName))RECORDCAP(0))</ComboListSource>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <PropertyClassName>LongDesc</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sValue</EffectiveCaption>
-            </Component>
             <Component Name="notebook1_SITE">
                <DeviceID>-1</DeviceID>
                <Type>12</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>11</TopPos>
-               <LeftPos>5</LeftPos>
+               <TopPos>18</TopPos>
+               <LeftPos>4.5</LeftPos>
                <Height>35</Height>
                <ListHeight>0</ListHeight>
                <Width>124</Width>
@@ -1031,12 +1095,106 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format />
             </Component>
+            <Component Name="OnUpdateHandlerIsActiveCheckbox">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>7</TopPos>
+               <LeftPos>15</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>24</Width>
+               <Caption>sue_AIR_OnUpdateHandlerIsActive</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.EventHandlersPostUpdateActive</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_OnUpdateHandlerIsActive</EffectiveCaption>
+            </Component>
+            <Component Name="OnUpdateHandlerIsActiveCheckbox1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>5.5</TopPos>
+               <LeftPos>15</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>24</Width>
+               <Caption>sue_AIR_OnInsertHandlerIsActive</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.EventHandlersPostInsertActive</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_OnInsertHandlerIsActive</EffectiveCaption>
+            </Component>
+            <Component Name="OnUpdateHandlerIsActiveCheckbox2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>4</TopPos>
+               <LeftPos>15</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>sue_AIR_HandlersAreSetup</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.EventHandlersSetup</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_HandlersAreSetup</EffectiveCaption>
+            </Component>
+            <Component Name="OpenAESRecordsButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>4</TopPos>
+               <LeftPos>36</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>22</Width>
+               <Caption>sue_AIR_OpenAESTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>OpenAESRecords</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(OpenAESRecordsButton), #P(EventHandlersSetup) = 1, "True")</Post301Format>
+               <EffectiveCaption>sue_AIR_OpenAESTriggers</EffectiveCaption>
+            </Component>
             <Component Name="Option01Edit">
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>13.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>20.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1057,8 +1215,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>13.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>20.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1077,8 +1235,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>16.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>23.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1099,8 +1257,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>16.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>23.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1119,8 +1277,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>19.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>26.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1141,8 +1299,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>19.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>26.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1161,8 +1319,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>22.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>29.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1183,8 +1341,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>22.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>29.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1203,8 +1361,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>25.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>32.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1225,8 +1383,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>25.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>32.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1245,8 +1403,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>28.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>35.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1267,8 +1425,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>28.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>35.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1287,8 +1445,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>31.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>38.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1309,8 +1467,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>31.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>38.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1329,8 +1487,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>34.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>41.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1351,8 +1509,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>34.7777777777778</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>41.7777777777778</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1371,8 +1529,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>37.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>44.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1393,8 +1551,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>37.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>44.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1413,8 +1571,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>40.5</TopPos>
-               <LeftPos>27</LeftPos>
+               <TopPos>47.5</TopPos>
+               <LeftPos>26.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
@@ -1435,8 +1593,8 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>40.8</TopPos>
-               <LeftPos>6</LeftPos>
+               <TopPos>47.8</TopPos>
+               <LeftPos>5.5</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -1479,16 +1637,40 @@
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>75</TabOrder>
-               <TopPos>7.33333333333333</TopPos>
-               <LeftPos>83.75</LeftPos>
-               <Height>1.27777777777778</Height>
+               <TopPos>22</TopPos>
+               <LeftPos>19</LeftPos>
+               <Height>1.3</Height>
                <ListHeight>0</ListHeight>
-               <Width>15.25</Width>
+               <Width>16</Width>
                <Caption>C(RemappedShipToStateStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName />
-               <ContainerSequence>0</ContainerSequence>
-               <DataSource>variables.sRowPointer</DataSource>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>variables.sQueryFilter</DataSource>
+               <Binding>6</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>State</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(RemappedShipToStateStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="RemappedShipToStateCombobox2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>75</TabOrder>
+               <TopPos>23.5</TopPos>
+               <LeftPos>19</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>16</Width>
+               <Caption>C(RemappedShipToStateStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>variables.sRecordCap(INITIALVALUE(1))</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
@@ -1503,8 +1685,8 @@
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>12</TabOrder>
-               <TopPos>1.5</TopPos>
-               <LeftPos>25</LeftPos>
+               <TopPos>13.5</TopPos>
+               <LeftPos>15</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>37.05</Width>
@@ -1523,6 +1705,30 @@
                <Post301Format />
                <EffectiveCaption>C(RuleNumStatic)</EffectiveCaption>
             </Component>
+            <Component Name="RuleNumEdit1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>12</TabOrder>
+               <TopPos>2.05555555555556</TopPos>
+               <LeftPos>109.625</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.75</Width>
+               <Caption>C(RuleNumStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.EventHandlerDescription</DataSource>
+               <Binding>1</Binding>
+               <Flags>131073</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>Description</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(RuleNumStatic)</EffectiveCaption>
+            </Component>
             <Component Name="RuleNumGridCol">
                <DeviceID>-1</DeviceID>
                <Type>15</Type>
@@ -1532,7 +1738,7 @@
                <Height>5.88235294117647</Height>
                <ListHeight>0</ListHeight>
                <Width>12.5</Width>
-               <Caption>sRuleNum</Caption>
+               <Caption>sue_AIR_RuleNum</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>FormCollectionGrid</ContainerName>
                <ContainerSequence>0</ContainerSequence>
@@ -1544,18 +1750,18 @@
                <HelpContextID>0</HelpContextID>
                <PropertyClassName>GenericInt</PropertyClassName>
                <Post301Format />
-               <EffectiveCaption>sRuleNum</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
             </Component>
             <Component Name="RuleNumStatic">
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>11</TabOrder>
-               <TopPos>1.8</TopPos>
-               <LeftPos>3.5</LeftPos>
+               <TopPos>13.8</TopPos>
+               <LeftPos>4.25</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
-               <Caption>sRuleNum</Caption>
+               <Width>10</Width>
+               <Caption>sue_AIR_RuleNum</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
                <ContainerSequence>0</ContainerSequence>
@@ -1565,18 +1771,60 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
-               <EffectiveCaption>sRuleNum</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
+            </Component>
+            <Component Name="RuleNumStatic1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>11</TabOrder>
+               <TopPos>22.3</TopPos>
+               <LeftPos>10</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>8</Width>
+               <Caption>sFilter</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sFilter</EffectiveCaption>
+            </Component>
+            <Component Name="RuleNumStatic2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>11</TabOrder>
+               <TopPos>23.8</TopPos>
+               <LeftPos>10</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>8</Width>
+               <Caption>Limit</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>Limit</EffectiveCaption>
             </Component>
             <Component Name="TargetOptionsTab">
                <DeviceID>-1</DeviceID>
                <Type>13</Type>
                <TabOrder>0</TabOrder>
-               <TopPos>11</TopPos>
-               <LeftPos>5</LeftPos>
+               <TopPos>18</TopPos>
+               <LeftPos>4.5</LeftPos>
                <Height>35</Height>
                <ListHeight>0</ListHeight>
                <Width>124</Width>
-               <Caption>sTargetOptions</Caption>
+               <Caption>sue_AIR_TargetOptions</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>notebook1_SITE</ContainerName>
                <ContainerSequence>2</ContainerSequence>
@@ -1586,14 +1834,14 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <Post301Format />
-               <EffectiveCaption>sTargetOptions</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_TargetOptions</EffectiveCaption>
             </Component>
             <Component Name="TargetTypeEdit">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>18</TabOrder>
-               <TopPos>4.5</TopPos>
-               <LeftPos>25</LeftPos>
+               <TopPos>15</TopPos>
+               <LeftPos>15</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>37.05</Width>
@@ -1617,8 +1865,8 @@
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>18</TabOrder>
-               <TopPos>13.5</TopPos>
-               <LeftPos>68</LeftPos>
+               <TopPos>20.5</TopPos>
+               <LeftPos>67.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>19</Width>
@@ -1668,12 +1916,12 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>17</TabOrder>
-               <TopPos>4.8</TopPos>
-               <LeftPos>3.5</LeftPos>
+               <TopPos>15.3</TopPos>
+               <LeftPos>4.25</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
-               <Caption>sTargetType</Caption>
+               <Width>10</Width>
+               <Caption>sue_AIR_TargetType</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
                <ContainerSequence>0</ContainerSequence>
@@ -1683,13 +1931,59 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
-               <EffectiveCaption>sTargetType</EffectiveCaption>
+               <EffectiveCaption>sue_AIR_TargetType</EffectiveCaption>
+            </Component>
+            <Component Name="TestGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>20.5</TopPos>
+               <LeftPos>7.375</LeftPos>
+               <Height>7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>46.125</Width>
+               <Caption>sTest</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>TestingTab</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sTest</EffectiveCaption>
+            </Component>
+            <Component Name="TestingTab">
+               <DeviceID>-1</DeviceID>
+               <Type>13</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>18</TopPos>
+               <LeftPos>4.5</LeftPos>
+               <Height>35</Height>
+               <ListHeight>0</ListHeight>
+               <Width>124</Width>
+               <Caption>sue_AIR_Test</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>notebook1_SITE</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_Test</EffectiveCaption>
             </Component>
          </Components>
          <EventHandlers>
             <EventHandler Name="CredentialTargetTypeChanged" Sequence="0">
                <ResponseType>35</ResponseType>
                <Response>UpdateValueLabels()</Response>
+            </EventHandler>
+            <EventHandler Name="OpenAESRecords" Sequence="0">
+               <ResponseType>6</ResponseType>
+               <Response>EventHandlers( LINKBY(EventHandlerDescription=Description) )</Response>
             </EventHandler>
             <EventHandler Name="StdObjectNewCompleted" Sequence="0">
                <ResponseType>35</ResponseType>
@@ -1724,13 +2018,13 @@
                <Description />
             </Variable>
             <Variable Name="BGTaskParms">
-               <Value>BG~TASKID~,V(sRowPointer),P(IDOName),V(iDebugLevel)</Value>
+               <Value>BG~TASKID~, V(sQueryFilter), P(IDOName), V(sRecordCap)</Value>
                <Value2 />
                <Value3 />
                <Description />
             </Variable>
             <Variable Name="cds_DataSourcegrid1_SITE">
-               <Value>object2.Sources( CA(RNCSDVIOG) ORDERBY(SourceSeq ASC) LOCKMODE(Row) )</Value>
+               <Value>object2.Sources( CA(RNCSDVI) OBJNAME(oSources) LOCKMODE(Row) )</Value>
                <Value2 />
                <Value3 />
                <Description />
@@ -1742,7 +2036,7 @@
                <Description />
             </Variable>
             <Variable Name="cds_DataSourceMapFieldSourcesGrid">
-               <Value>object2.Sources( CA(RNCSDVIOG) LOCKMODE(Row) )</Value>
+               <Value>object2.Sources( CA(RNCSDVI) OBJNAME(oSources) ORDERBY(RuleNum, FieldSeq, SourceSeq) LOCKMODE(Row) )</Value>
                <Value2 />
                <Value3 />
                <Description />
@@ -1755,6 +2049,12 @@
             </Variable>
             <Variable Name="fds_SC2">
                <Value>OBJECT2( ue_AIR_IDOReplicationMapFields( CA(RNCSDVIOG) OBJNAME(sReplicationMapFields) FILTERPERM(RuleNum = FP(RuleNum)) ORDERBY(FieldSeq ASC) LOCKMODE(Row) ) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="fds_SC3">
+               <Value>OBJECT3( MGCore.EventHandlers( CA(RNCSDVIOG) OBJNAME(oEventHandlers) FILTERPERM(IDOCollections = FP(IDOName) AND Description LIKE 'ue_AIR%') ORDERBY(Sequence) LOCKMODE(Row) ) )</Value>
                <Value2 />
                <Value3 />
                <Description />
