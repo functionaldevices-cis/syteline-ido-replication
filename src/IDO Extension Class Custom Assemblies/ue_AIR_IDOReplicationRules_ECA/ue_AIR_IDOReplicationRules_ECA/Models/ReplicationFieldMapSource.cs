@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 {
-    public class MapFieldSource
+    public class ReplicationFieldMapSource
     {
 
         /***********************************************************************************************************/
@@ -26,7 +26,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /***********************************************************************************************************/
 
 
-        public MapFieldSource(string encodedValue = null, string type = null, string value = null)
+        public ReplicationFieldMapSource(string encodedValue = null, string type = null, string value = null)
         {
 
             if (encodedValue != null)

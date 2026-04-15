@@ -5,7 +5,7 @@ using System.Linq;
 namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 {
 
-    public class MapField
+    public class ReplicationFieldMap
     {
 
         /***********************************************************************************************************/
@@ -14,7 +14,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 
         public string OutputFieldName { get; set; }
 
-        public List<MapFieldSource> ParsedSources { get; set; } = new List<MapFieldSource>();
+        public List<ReplicationFieldMapSource> ParsedSources { get; set; } = new List<ReplicationFieldMapSource>();
 
 
 
@@ -34,7 +34,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /*********************************************** CONSTRUCTOR ***********************************************/
         /***********************************************************************************************************/
 
-        public MapField(string OutputFieldName)
+        public ReplicationFieldMap(string OutputFieldName)
         {
             this.OutputFieldName = OutputFieldName;
         }
@@ -45,11 +45,11 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /************************************************* METHODS *************************************************/
         /***********************************************************************************************************/
 
-        public void AddSource(string encodedValue = null, MapFieldSource source = null)
+        public void AddSource(string encodedValue = null, ReplicationFieldMapSource source = null)
         {
             if (encodedValue != null)
             {
-                this.ParsedSources.Add(new MapFieldSource(encodedValue: encodedValue));
+                this.ParsedSources.Add(new ReplicationFieldMapSource(encodedValue: encodedValue));
             } else if (source != null)
             {
                 this.ParsedSources.Add(source);
