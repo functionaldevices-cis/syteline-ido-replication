@@ -138,13 +138,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     if (!replicationRules[ruleNum].MapFields.ContainsKey(fieldSeq))
                     {
-                        replicationRules[ruleNum].MapFields[fieldSeq] = new ReplicationFieldMap(fieldName);
+                        replicationRules[ruleNum].MapFields[fieldSeq] = new ReplicationField(fieldName);
                     }
 
                     if (value != null && value != "")
                     {
 
-                        replicationRules[ruleNum].MapFields[fieldSeq].AddSource(source: new ReplicationFieldMapSource(type: type, value: value));
+                        replicationRules[ruleNum].MapFields[fieldSeq].AddSource(source: new ReplicationFieldSource(type: type, value: value));
 
                         if (type == "IDOProperty" && !idoProperties.Contains(value))
                         {
@@ -178,7 +178,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     List<Dictionary<string, object>> remappedReplicationRecords;
                     string currentRuleNum;
-                    List<ReplicationFieldMap> mapFields;
+                    List<ReplicationField> mapFields;
                     ReplicationRule replicationRule;
 
                     foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
@@ -257,7 +257,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         }
 
-        private List<Dictionary<string, object>> RemapRecords(List<ReplicationFieldMap> mapFields, LoadRecordsResponseData recordsResponseData)
+        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> mapFields, LoadRecordsResponseData recordsResponseData)
         {
 
             List<object> values;
@@ -270,12 +270,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 remappedRecord = new Dictionary<string, object>();
 
-                foreach (ReplicationFieldMap fieldMap in mapFields)
+                foreach (ReplicationField fieldMap in mapFields)
                 {
 
                     values = new List<object>();
 
-                    foreach (ReplicationFieldMapSource source in fieldMap.ParsedSources)
+                    foreach (ReplicationFieldSource source in fieldMap.ParsedSources)
                     {
 
                         if (source.Type == "IDOProperty")

@@ -16,6 +16,8 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public List<ReplicationFieldSource> ParsedSources { get; set; } = new List<ReplicationFieldSource>();
 
+        public ReplicationFieldTransform Transformaton { get; set; } = new ReplicationFieldTransform();
+
 
 
         /***********************************************************************************************************/
