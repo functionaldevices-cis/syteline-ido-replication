@@ -60,7 +60,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string Option10 { get; set; }
 
-        public Dictionary<string, ReplicationFieldMap> MapFields { get; set; }
+        public Dictionary<string, ReplicationField> MapFields { get; set; }
 
 
 
@@ -68,7 +68,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
         /**************************************** CALCULATED PROPERTIES ********************************************/
         /***********************************************************************************************************/
 
-        public List<ReplicationFieldMap> MapFieldsList => this.MapFields.Values.ToList();
+        public List<ReplicationField> MapFieldsList => this.MapFields.Values.ToList();
 
 
         /***********************************************************************************************************/
@@ -101,7 +101,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
             this.Option09 = record.PropertyValues[propertyKeys["Option09"]].Value;
             this.Option10 = record.PropertyValues[propertyKeys["Option10"]].Value;
 
-            this.MapFields = new Dictionary<string, ReplicationFieldMap>();
+            this.MapFields = new Dictionary<string, ReplicationField>();
 
         }
 

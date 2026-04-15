@@ -7,9 +7,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models
 {
-    public class ReplicationFieldMapSource
+    public class ReplicationFieldSource
     {
 
         /***********************************************************************************************************/
@@ -26,7 +26,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /***********************************************************************************************************/
 
 
-        public ReplicationFieldMapSource(string encodedValue = null, string type = null, string value = null)
+        public ReplicationFieldSource(string encodedValue = null, string type = null, string value = null)
         {
 
             if (encodedValue != null)

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
+namespace ue_AIR_IDOReplicationRules_ECA.Models
 {
 
-    public class ReplicationFieldMap
+    public class ReplicationField
     {
 
         /***********************************************************************************************************/
@@ -14,7 +14,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 
         public string OutputFieldName { get; set; }
 
-        public List<ReplicationFieldMapSource> ParsedSources { get; set; } = new List<ReplicationFieldMapSource>();
+        public List<ReplicationFieldSource> ParsedSources { get; set; } = new List<ReplicationFieldSource>();
 
 
 
@@ -34,7 +34,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /*********************************************** CONSTRUCTOR ***********************************************/
         /***********************************************************************************************************/
 
-        public ReplicationFieldMap(string OutputFieldName)
+        public ReplicationField(string OutputFieldName)
         {
             this.OutputFieldName = OutputFieldName;
         }
@@ -45,11 +45,11 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
         /************************************************* METHODS *************************************************/
         /***********************************************************************************************************/
 
-        public void AddSource(string encodedValue = null, ReplicationFieldMapSource source = null)
+        public void AddSource(string encodedValue = null, ReplicationFieldSource source = null)
         {
             if (encodedValue != null)
             {
-                this.ParsedSources.Add(new ReplicationFieldMapSource(encodedValue: encodedValue));
+                this.ParsedSources.Add(new ReplicationFieldSource(encodedValue: encodedValue));
             } else if (source != null)
             {
                 this.ParsedSources.Add(source);
