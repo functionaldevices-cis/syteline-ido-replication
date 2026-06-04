@@ -3,9 +3,9 @@ using Mongoose.IDO.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ue_AIR_IDOReplicationRules_ECA.Helpers;
+using ue_AIR_IDOReplicationConfig_ECA.Helpers;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
+namespace ue_AIR_IDOReplicationConfig_ECA.Models.SytelineAPI
 {
 
     public class LoadRecordsRequestData

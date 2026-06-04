@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Helpers
+namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
 {
     public static class FilterStringParser
     {

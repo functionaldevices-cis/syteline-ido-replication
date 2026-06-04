@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models
+namespace ue_AIR_IDOReplicationConfig_ECA.Models
 {
 
     public static class ReplicationFieldTransformTypes

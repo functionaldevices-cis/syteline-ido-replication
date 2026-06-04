@@ -4,11 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
+namespace ue_AIR_IDOReplicationConfig_ECA.Models.SytelineAPI
 {
 
     public class LoadRecordsResponseData
     {
+
         public Dictionary<string, int> PropertyKeys { get; set; } = new Dictionary<string, int>();
 
         public List<string> PropertyNames { get; set; } = new List<string>();

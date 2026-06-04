@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ue_AIR_IDOReplicationRules_ECA.Models
+namespace ue_AIR_IDOReplicationConfig_ECA.Models
 {
 
     public class ReplicationField
