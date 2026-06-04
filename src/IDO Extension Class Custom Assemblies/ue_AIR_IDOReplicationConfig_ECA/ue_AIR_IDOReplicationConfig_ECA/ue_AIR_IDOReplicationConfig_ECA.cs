@@ -79,7 +79,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 IDOCommands: this.Context.Commands
             );
 
-            Utils utils = new Utils(
+            Utilities utils = new Utilities(
                 commands: this.Context.Commands
             );
 

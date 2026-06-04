@@ -87,10 +87,11 @@
   <ItemGroup>
     <Compile Include="Helpers\AzureEventHubPusher.cs" />
     <Compile Include="Helpers\FilterStringParser.cs" />
+    <Compile Include="Helpers\PerfDebugger.cs" />
     <Compile Include="Helpers\StringConverter.cs" />
     <Compile Include="Helpers\SytelineInternalAPI.cs" />
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
-    <Compile Include="Helpers\Utils.cs" />
+    <Compile Include="Helpers\Utilities.cs" />
     <Compile Include="Models\AzureEventHubAPI\AzureEventHubSASCredential.cs" />
     <Compile Include="Models\ReplicationFieldTransformTypes.cs" />
     <Compile Include="Models\ReplicationFieldTransformType.cs" />
