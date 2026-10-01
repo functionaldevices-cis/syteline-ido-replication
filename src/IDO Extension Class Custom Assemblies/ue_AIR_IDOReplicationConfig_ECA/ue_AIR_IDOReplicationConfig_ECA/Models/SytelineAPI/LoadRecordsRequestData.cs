@@ -71,7 +71,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models.SytelineAPI
                 ).Select(
                     filterString =>
                     {
-                        filterString = FixParenthesis("( " + filterString.Trim().Replace(" <> N", " <> ").Replace(" = N", " = ").Replace(" like N", " like ").Replace("DATEPART( yyyy, ", "YEAR( ").Replace("DATEPART( mm, ", "MONTH( ").Replace("DATEPART( dd, ", "DAY( ") + " )");
+                        filterString = FixParenthesis("( " + filterString.Trim().Replace(" <> N", " <> ").Replace(" = N", " = ").Replace("<>N", "<>").Replace("=N", "=").Replace(" like N", " like ").Replace("DATEPART( yyyy, ", "YEAR( ").Replace("DATEPART( mm, ", "MONTH( ").Replace("DATEPART( dd, ", "DAY( ") + " )");
 
                         string filterOperator = FilterStringParser.ExtractOperator(filterString);
                         string filterValue = FilterStringParser.ExtractValue(filterString, filterOperator);
