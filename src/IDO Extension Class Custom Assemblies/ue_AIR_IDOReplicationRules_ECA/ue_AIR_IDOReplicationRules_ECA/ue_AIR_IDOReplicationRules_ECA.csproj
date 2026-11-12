@@ -105,6 +105,7 @@
     <Compile Include="Models\SytelineAPI\LoadRecordsResponseData.cs" />
     <Compile Include="Models\ReplicationField.cs" />
     <Compile Include="Models\ReplicationRule.cs" />
+    <Compile Include="Models\ReplicationRuleResult.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPICredential.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPIAccessTokenDetails.cs" />
     <Compile Include="Models\SalesforceRestAPI\SalesforceAPILoadRequestOrderByField.cs" />
