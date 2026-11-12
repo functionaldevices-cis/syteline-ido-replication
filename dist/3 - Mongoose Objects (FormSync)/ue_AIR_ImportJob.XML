@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FormsAndObjectsExport Version="010000">
+   <Forms Type="1">
+      <Form Name="ue_AIR_ImportJob" Scope="1" ScopeName="[NULL]">
+         <Caption />
+         <Type>8</Type>
+         <StandardOperations>0</StandardOperations>
+         <Flags>3146632</Flags>
+         <Height>400</Height>
+         <LeftPos>0</LeftPos>
+         <TopPos>0</TopPos>
+         <Width>600</Width>
+         <HelpContextID>-1</HelpContextID>
+         <PaneZeroSize>0</PaneZeroSize>
+         <PrimaryDataSource />
+         <MasterDeviceID>0</MasterDeviceID>
+         <LayoutAttributes Encoded="1">RESPONSIVE({_x0D_
+  "breakpoints": [_x0D_
+    {_x0D_
+      "id": "24a7b27e-f53b-4f63-a5c7-cad27cec41d5",_x0D_
+      "name": "Mobile",_x0D_
+      "description": "Mobile _x05_small_x06_ breakpoint: Form Width &lt;= 640px",_x0D_
+      "maxWidth": 640_x0D_
+    },_x0D_
+    {_x0D_
+      "id": "0bfac940-e8c2-460e-90d5-398eb935d0b3",_x0D_
+      "name": "Tablet",_x0D_
+      "description": "Tablet _x05_medium_x06_ breakpoint: 641px &lt;= Form Width &lt;= 1007px",_x0D_
+      "minWidth": 641,_x0D_
+      "maxWidth": 1007_x0D_
+    },_x0D_
+    {_x0D_
+      "id": "e505a515-552b-464c-9e7b-2118059e06ae",_x0D_
+      "name": "Desktop",_x0D_
+      "description": "Desktop _x05_large_x06_ breakpoint: 1008px &lt;= Form Width",_x0D_
+      "minWidth": 1008_x0D_
+    }_x0D_
+  ]_x0D_
+})</LayoutAttributes>
+         <Components>
+            <Component Name="button1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>364</TopPos>
+               <LeftPos>484</LeftPos>
+               <Height>40</Height>
+               <ListHeight>0</ListHeight>
+               <Width>121</Width>
+               <Caption>sue_AIR_Parse</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout1_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>Save</EventToGenerate>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>THEMECLASS(MG_BluePrimaryBtn)</Post301Format>
+               <EffectiveCaption>sue_AIR_Parse</EffectiveCaption>
+               <LayoutAttributes>INDEX(2) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="button2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>364</TopPos>
+               <LeftPos>10</LeftPos>
+               <Height>30</Height>
+               <ListHeight>0</ListHeight>
+               <Width>118</Width>
+               <Caption>sCancel</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout1_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>Cancel</EventToGenerate>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>THEMECLASS(MG_GraySecondaryBtn)</Post301Format>
+               <EffectiveCaption>sCancel</EffectiveCaption>
+               <LayoutAttributes>INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>364</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>40</Height>
+               <ListHeight>0</ListHeight>
+               <Width>604</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexlayoutPane_ue_AIR_ImportJob</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN0_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN1_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) MARGIN(10,10,10,10) INDEX(2) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="flexlayoutPane_ue_AIR_ImportJob">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>400</Height>
+               <ListHeight>0</ListHeight>
+               <Width>600</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>386</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(VerticalBox) AUTOSIZE(0) REGION0(ID: FLEX_PANE_REGION0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN1_SITE; VALUE: 6fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN2_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(0)</LayoutAttributes>
+            </Component>
+            <Component Name="InstructionsStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>202</Height>
+               <ListHeight>0</ListHeight>
+               <Width>604</Width>
+               <Caption>sue_AIR_ImportRuleInstructions</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexlayoutPane_ue_AIR_ImportJob</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>16</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(L) THEMECLASS(G2Header)</Post301Format>
+               <EffectiveCaption>sue_AIR_ImportRuleInstructions</EffectiveCaption>
+               <LayoutAttributes>MARGIN(10,10,10,10) INDEX(0) TARGET(FLEX_PANE_REGION0)</LayoutAttributes>
+            </Component>
+            <Component Name="multiLineEdit1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>18</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>259</TopPos>
+               <LeftPos>37</LeftPos>
+               <Height>96</Height>
+               <ListHeight>0</ListHeight>
+               <Width>101</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexlayoutPane_ue_AIR_ImportJob</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.sContent</DataSource>
+               <Binding>6</Binding>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>MARGIN(10,10,10,10) INDEX(1) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+         </Components>
+         <EventHandlers>
+            <EventHandler Name="Cancel" Sequence="0">
+               <ResponseType>21</ResponseType>
+               <Response>StdFormExitCancel(  )</Response>
+            </EventHandler>
+            <EventHandler Name="Save" Sequence="0">
+               <ResponseType>35</ResponseType>
+               <Response>SendContentToParent()</Response>
+            </EventHandler>
+            <EventHandler Name="Save" Sequence="1">
+               <ResponseType>21</ResponseType>
+               <Response>StdFormExitOk(  )</Response>
+            </EventHandler>
+         </EventHandlers>
+         <Variables>
+            <Variable Name="sContent">
+               <Value>~LIT~()</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+         </Variables>
+         <Script Language="Visual C#">
+            <ScriptLines>
+               <ScriptLine>using System;</ScriptLine>
+               <ScriptLine>using Mongoose.IDO.Protocol;</ScriptLine>
+               <ScriptLine>using Mongoose.Scripting;</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>namespace Mongoose.FormScripts</ScriptLine>
+               <ScriptLine>{</ScriptLine>
+               <ScriptLine>   public class ue_AIR_ImportJob : FormScript</ScriptLine>
+               <ScriptLine>   {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public void SendContentToParent()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine>         this.ThisForm.ParentForm.Variables("EncodedRule").Value = this.ThisForm.Variables("sContent").Value;</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>   }</ScriptLine>
+               <ScriptLine>}</ScriptLine>
+            </ScriptLines>
+         </Script>
+      </Form>
+   </Forms>
+</FormsAndObjectsExport>

@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FormsAndObjectsExport Version="010000">
+   <Strings Type="7">
+      <String Name="fue_AIR_IDOReplicationCredentials" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>IDO Replication Credentials (AIR)</String>
+      </String>
+      <String Name="fue_AIR_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>IDO Replication Rules (AIR)</String>
+      </String>
+      <String Name="sAIRActivateAll" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Activate All</String>
+      </String>
+      <String Name="sAIRAESTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>AES Triggers</String>
+      </String>
+      <String Name="sAIRAreSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Triggers Are Setup</String>
+      </String>
+      <String Name="sAIRConfigureRules" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Configure Rules</String>
+      </String>
+      <String Name="sAIRCreateTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Create Triggers</String>
+      </String>
+      <String Name="sAIRCredentialName" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Credential Name</String>
+      </String>
+      <String Name="sAIRDeactivateAll" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Deactivate All</String>
+      </String>
+      <String Name="sAIRDisableAll" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Disable All</String>
+      </String>
+      <String Name="sAIREHOnDeleteSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>On Delete Is Setup</String>
+      </String>
+      <String Name="sAIREHPostDeleteSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Delete Is Setup</String>
+      </String>
+      <String Name="sAIREHPostInsertSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Insert Is Setup</String>
+      </String>
+      <String Name="sAIREHPostUpdateSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Update Is Setup</String>
+      </String>
+      <String Name="sAIREnableAll" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Enable All</String>
+      </String>
+      <String Name="sAIRFixTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Fix Triggers</String>
+      </String>
+      <String Name="sAIRIDODetails" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>IDO Details</String>
+      </String>
+      <String Name="sAIRIsActive" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Is Active</String>
+      </String>
+      <String Name="sAIRIsSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Is Setup</String>
+      </String>
+      <String Name="sAIROnDelete" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>On Delete</String>
+      </String>
+      <String Name="sAIROutputReplicationRules" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Output Targets (Replication Rules)</String>
+      </String>
+      <String Name="sAIRPostDelete" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Delete</String>
+      </String>
+      <String Name="sAIRPostInsert" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Insert</String>
+      </String>
+      <String Name="sAIRPostUpdate" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Post Update</String>
+      </String>
+      <String Name="sAIRRemoveTrigger" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Remove Trigger</String>
+      </String>
+      <String Name="sAIRRemoveTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Remove Triggers</String>
+      </String>
+      <String Name="sAIRReplicationRules" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Replication Rules</String>
+      </String>
+      <String Name="sAIRRuleNum" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Rule Num</String>
+      </String>
+      <String Name="sAIRRuleTargetType" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Type</String>
+      </String>
+      <String Name="sAIRSetupActive" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Is Setup and Active</String>
+      </String>
+      <String Name="sAIRSetupTrigger" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Setup Trigger</String>
+      </String>
+      <String Name="sAIRSetupTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Setup Triggers</String>
+      </String>
+      <String Name="sAIRViewTriggerRecords" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>View Trigger Records</String>
+      </String>
+      <String Name="sRepaired" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Repaired</String>
+      </String>
+      <String Name="sue_AIR_AESRecords" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>AES Records</String>
+      </String>
+      <String Name="sue_AIR_CreateAESTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Create AES Records</String>
+      </String>
+      <String Name="sue_AIR_FieldMapping" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Field Mapping</String>
+      </String>
+      <String Name="sue_AIR_HandlersAreSetup" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Event Handlers Are Setup</String>
+      </String>
+      <String Name="sue_AIR_ImportJobInstructions" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>ue_ AIR_ Import Job Instructions</String>
+      </String>
+      <String Name="sue_AIR_ImportMap" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Import Map</String>
+      </String>
+      <String Name="sue_AIR_ImportRuleInstructions" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Paste the contents of a saved rule file</String>
+      </String>
+      <String Name="sue_AIR_JSON" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>JSON</String>
+      </String>
+      <String Name="sue_AIR_MapFieldSeq" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Field Seq</String>
+      </String>
+      <String Name="sue_AIR_MapFieldsSourceTransformation" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Transformation</String>
+      </String>
+      <String Name="sue_AIR_MapFieldsSourceType" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Source Type</String>
+      </String>
+      <String Name="sue_AIR_MapFieldsSourceValue" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Source Value</String>
+      </String>
+      <String Name="sue_AIR_Name" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Name</String>
+      </String>
+      <String Name="sue_AIR_OnInsertHandlerIsActive" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>PostInsert Handler Is Active</String>
+      </String>
+      <String Name="sue_AIR_OnUpdateHandlerIsActive" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>PostUpdate Handler Is Active</String>
+      </String>
+      <String Name="sue_AIR_OpenAESTriggers" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Open AES Records Details</String>
+      </String>
+      <String Name="sue_AIR_OutputTarget" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Output Target</String>
+      </String>
+      <String Name="sue_AIR_Parse" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Parse</String>
+      </String>
+      <String Name="sue_AIR_PasteJobFileTextHere" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Paste Job File Text Here</String>
+      </String>
+      <String Name="sue_AIR_RuleNum" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>RuleNum</String>
+      </String>
+      <String Name="sue_AIR_TargetCredentials" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Credentials</String>
+      </String>
+      <String Name="sue_AIR_TargetOptions" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Options</String>
+      </String>
+      <String Name="sue_AIR_TargetType" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Type</String>
+      </String>
+      <String Name="sue_AIR_Test" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Test</String>
+      </String>
+   </Strings>
+</FormsAndObjectsExport>

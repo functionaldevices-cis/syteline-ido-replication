@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FormsAndObjectsExport Version="010000">
+   <Forms Type="1">
+      <Form Name="ue_AIR_JobFileInputWindow" Scope="1" ScopeName="[NULL]">
+         <Caption />
+         <Type>100</Type>
+         <StandardOperations>1019</StandardOperations>
+         <Flags>3146632</Flags>
+         <Height>0</Height>
+         <LeftPos>0</LeftPos>
+         <TopPos>0</TopPos>
+         <Width>0</Width>
+         <HelpContextID>-1</HelpContextID>
+         <PaneZeroSize>0</PaneZeroSize>
+         <PrimaryDataSource />
+         <MasterDeviceID>0</MasterDeviceID>
+         <Components>
+            <Component Name="ContentTextArea">
+               <DeviceID>-1</DeviceID>
+               <Type>214</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>0</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>rootLayoutGridCell_00</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.Content</DataSource>
+               <Binding>6</Binding>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>CONFIG({"label-align-y":"center","label-break":"shrink-value","label-wrap":"ellipsis-no-stretch","text-align":"start","label-position":"Collapsed"})</LayoutAttributes>
+            </Component>
+            <Component Name="rootLayoutGrid">
+               <DeviceID>-1</DeviceID>
+               <Type>101</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>0</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>386</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>CONFIG({"cols":1,"align-items":"stretch","auto-fit":false,"auto-fill":false,"rows":1})</LayoutAttributes>
+            </Component>
+            <Component Name="rootLayoutGridCell_00">
+               <DeviceID>-1</DeviceID>
+               <Type>102</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>0</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>rootLayoutGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>0</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>CONFIG({"height":2,"min-height":40,"fill":false,"sticky":false})</LayoutAttributes>
+            </Component>
+         </Components>
+      </Form>
+   </Forms>
+</FormsAndObjectsExport>

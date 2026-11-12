@@ -1,0 +1,1238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FormsAndObjectsExport Version="010000">
+   <Forms Type="1">
+      <Form Name="ue_AIR_IDOReplicationConfigs" Scope="1" ScopeName="[NULL]">
+         <Caption />
+         <Type>0</Type>
+         <StandardOperations>1019</StandardOperations>
+         <Flags>1048778</Flags>
+         <Height>40</Height>
+         <LeftPos>0</LeftPos>
+         <TopPos>0</TopPos>
+         <Width>210</Width>
+         <HelpContextID>-1</HelpContextID>
+         <PaneZeroSize>53.625</PaneZeroSize>
+         <PrimaryDataSource>ue_AIR_IDOReplicationConfigs( LOCKMODE(Row) )  V(fds_SC2)</PrimaryDataSource>
+         <MasterDeviceID>0</MasterDeviceID>
+         <Components>
+            <Component Name="AccessAsEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>18</TabOrder>
+               <TopPos>7.66666666666667</TopPos>
+               <LeftPos>35</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>C(AccessAsStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout4_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.AccessAs</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>C(AccessAsStatic)</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(1) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="AccessAsGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>5</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sAccessAs</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
+               <DataSource>object.AccessAs</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>sAccessAs</EffectiveCaption>
+            </Component>
+            <Component Name="AccessAsStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>17</TabOrder>
+               <TopPos>7.94444444444444</TopPos>
+               <LeftPos>19</LeftPos>
+               <Height>0.722222222222222</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.125</Width>
+               <Caption>sAccessAs</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout4_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sAccessAs</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.4,0.6,0.4) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="AESTriggersGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>10</TopPos>
+               <LeftPos>4</LeftPos>
+               <Height>14</Height>
+               <ListHeight>0</ListHeight>
+               <Width>88</Width>
+               <Caption>sAIRAESTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sAIRAESTriggers</EffectiveCaption>
+            </Component>
+            <Component Name="CollectionDescEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>12</TabOrder>
+               <TopPos>4.44444444444444</TopPos>
+               <LeftPos>49.25</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>C(CollectionDescStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout2_SITE</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object.CollectionDesc</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>C(CollectionDescStatic)</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(2) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="CollectionDescGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>2</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sDescription</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.CollectionDesc</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>sDescription</EffectiveCaption>
+            </Component>
+            <Component Name="CollectionNameEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>10</TabOrder>
+               <TopPos>4.44444444444444</TopPos>
+               <LeftPos>33.25</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>C(CollectionNameStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout2_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.CollectionName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>IDONameBase</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(CollectionNameStatic)</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(1) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="CollectionNameEdit2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>10</TabOrder>
+               <TopPos>8.11111111111111</TopPos>
+               <LeftPos>95.125</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>C(CollectionNameStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>variables.ResultsByRef</DataSource>
+               <Binding>6</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>Description</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(CollectionNameStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="CollectionNameGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>1</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.CollectionName</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>IDONameBase</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="CollectionNameStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>9</TabOrder>
+               <TopPos>4.72222222222222</TopPos>
+               <LeftPos>17.25</LeftPos>
+               <Height>0.722222222222222</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.125</Width>
+               <Caption>sIDO</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout2_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sIDO</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.4,0.6,0.4) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="DisableAllTriggersButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>73</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>sAIRDeactivateAll</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>DeactivateAllTriggers</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(DisableAllTriggersButton), #P(ue_EventHandlersStatus) = "Setup", "True")</Post301Format>
+               <EffectiveCaption>sAIRDeactivateAll</EffectiveCaption>
+            </Component>
+            <Component Name="edit1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>3.38888888888889</TopPos>
+               <LeftPos>95.75</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>5.125</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.ue_EventHandlerDescription</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>Description</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sDescription</EffectiveCaption>
+            </Component>
+            <Component Name="EnableAllTriggersButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>57</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>sAIRActivateAll</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>ActivateAllTriggers</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(EnableAllTriggersButton), #P(ue_EventHandlersStatus) = "Setup", "True")</Post301Format>
+               <EffectiveCaption>sAIRActivateAll</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersActiveGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sAIRIsActive</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>5</ContainerSequence>
+               <DataSource>object2.Active</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRIsActive</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersDescriptionGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sDescription</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object2.Description</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>Description</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sDescription</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersEventNameGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>sEventName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>object2.EventName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>EventName</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sEventName</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersIDOCollectionsGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object2.IDOCollections</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>IDOCollections</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersIsSetupGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sAIRIsSetup</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object2.ue_IsSetup</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRIsSetup</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersRowPointerGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sRowPointer</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>6</ContainerSequence>
+               <DataSource>object2.RowPointer</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sRowPointer</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlersSequenceGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sSequence</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>grid1_SITE</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
+               <DataSource>object2.Sequence</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>EventSequence</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sSequence</EffectiveCaption>
+            </Component>
+            <Component Name="EventHandlerStatusComboBox">
+               <DeviceID>-1</DeviceID>
+               <Type>27</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.6111111111111</TopPos>
+               <LeftPos>24.375</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout7_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.ue_EventHandlersStatus</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(1) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="EventHandlerStatusStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>13</TabOrder>
+               <TopPos>11.8888888888889</TopPos>
+               <LeftPos>8.375</LeftPos>
+               <Height>0.722222222222222</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.125</Width>
+               <Caption>sStatus</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout7_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sStatus</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.4,0.6,0.4) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="ExtendsEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>5.88888888888889</TopPos>
+               <LeftPos>32.375</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>C(ExtendsStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout3_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.Extends</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>C(ExtendsStatic)</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(1) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="ExtendsGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>3</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sExtends</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object.Extends</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>sExtends</EffectiveCaption>
+            </Component>
+            <Component Name="ExtendsStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>13</TabOrder>
+               <TopPos>6.16666666666667</TopPos>
+               <LeftPos>16.375</LeftPos>
+               <Height>0.722222222222222</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.125</Width>
+               <Caption>sExtends</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout3_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sExtends</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.4,0.6,0.4) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="FixTriggersButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>41</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>sAIRFixTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>2</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>FixTriggers</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(FixTriggersButton), #P(ue_EventHandlersStatus) = "Broken", "True")</Post301Format>
+               <EffectiveCaption>sAIRFixTriggers</EffectiveCaption>
+            </Component>
+            <Component Name="flexLayout1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>24.4444444444444</TopPos>
+               <LeftPos>99.75</LeftPos>
+               <Height>4.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(VerticalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN4_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN5_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN6_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(0)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout2_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>4.33333333333333</TopPos>
+               <LeftPos>16.875</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout9_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN1_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN2_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION3(ID: UNKNOWN3_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION4(ID: UNKNOWN4_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout3_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>5.77777777777778</TopPos>
+               <LeftPos>16</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout9_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN1_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN2_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION3(ID: UNKNOWN3_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION4(ID: UNKNOWN4_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(1) TARGET(UNKNOWN1_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout4_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>7.55555555555555</TopPos>
+               <LeftPos>18.625</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout9_SITE</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN1_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN2_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION3(ID: UNKNOWN3_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION4(ID: UNKNOWN4_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(2) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout6_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.4444444444444</TopPos>
+               <LeftPos>95.75</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout1_SITE</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN2_SITE; VALUE: 4fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN3_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION3(ID: UNKNOWN4_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION4(ID: UNKNOWN0_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(0) TARGET(UNKNOWN4_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout7_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>8</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>32</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN2_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(1)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout8_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>14.4444444444444</TopPos>
+               <LeftPos>95.75</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout1_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(HorizontalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN2_SITE; VALUE: 4fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN3_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION3(ID: UNKNOWN4_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION4(ID: UNKNOWN0_SITE; VALUE: 3fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(2) TARGET(UNKNOWN6_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="flexLayout9_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>50</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>3.5</TopPos>
+               <LeftPos>8</LeftPos>
+               <Height>4.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <LayoutAttributes>TYPE(VerticalBox) AUTOSIZE(0) REGION0(ID: UNKNOWN0; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION1(ID: UNKNOWN1_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) REGION2(ID: UNKNOWN2_SITE; VALUE: 1fl; ORIEN: Fill; ; PACK: Start; BORDER: Enable) INDEX(0)</LayoutAttributes>
+            </Component>
+            <Component Name="FormCollectionGrid">
+               <DeviceID>-1</DeviceID>
+               <Type>14</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>40</Height>
+               <ListHeight>0</ListHeight>
+               <Width>100</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>objects</DataSource>
+               <Binding>3</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+            </Component>
+            <Component Name="grid1_SITE">
+               <DeviceID>-1</DeviceID>
+               <Type>14</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>13.5</TopPos>
+               <LeftPos>8</LeftPos>
+               <Height>9</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>objects2</DataSource>
+               <Binding>8</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+            </Component>
+            <Component Name="IDODetailsGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>2</TopPos>
+               <LeftPos>4</LeftPos>
+               <Height>7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>88</Width>
+               <Caption>sAIRIDODetails</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sAIRIDODetails</EffectiveCaption>
+            </Component>
+            <Component Name="OpenReplicationRulesButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>26.5</TopPos>
+               <LeftPos>8</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>16</Width>
+               <Caption>sAIRConfigureRules</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>OpenReplicationRules</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sAIRConfigureRules</EffectiveCaption>
+            </Component>
+            <Component Name="RemoveTriggersButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>41</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>sAIRRemoveTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>2</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>RemoveTriggers</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(RemoveTriggersButton), #P(ue_EventHandlersStatus) = "Setup", "True")</Post301Format>
+               <EffectiveCaption>sAIRRemoveTriggers</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(2) TARGET(UNKNOWN3_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="ReplaceFlagEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>16</TabOrder>
+               <TopPos>5.88888888888889</TopPos>
+               <LeftPos>48.375</LeftPos>
+               <Height>1.27777777777778</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15.375</Width>
+               <Caption>sReplace</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>flexLayout3_SITE</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object.ReplaceFlag</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>sReplace</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(2) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="ReplaceFlagGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>4</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sReplace</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>object.ReplaceFlag</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>sReplace</EffectiveCaption>
+            </Component>
+            <Component Name="ReplicationRulesCredentialNameGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>sAIRCredentialName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>ReplicationRulesSubcollectionGrid</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object.ue_ReplicationRules.CredentialName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRCredentialName</EffectiveCaption>
+            </Component>
+            <Component Name="ReplicationRulesGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>25</TopPos>
+               <LeftPos>4</LeftPos>
+               <Height>14</Height>
+               <ListHeight>0</ListHeight>
+               <Width>88</Width>
+               <Caption>sAIROutputReplicationRules</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sAIROutputReplicationRules</EffectiveCaption>
+            </Component>
+            <Component Name="ReplicationRulesRuleNumGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sAIRRuleNum</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>ReplicationRulesSubcollectionGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.ue_ReplicationRules.RuleNum</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRRuleNum</EffectiveCaption>
+            </Component>
+            <Component Name="ReplicationRulesSubcollectionGrid">
+               <DeviceID>-1</DeviceID>
+               <Type>14</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>28.5</TopPos>
+               <LeftPos>8</LeftPos>
+               <Height>9</Height>
+               <ListHeight>0</ListHeight>
+               <Width>80</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>V(cds_DataSourcegrid1_SITE)</DataSource>
+               <Binding>4</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <DefaultFrom>StdGridWithActions()</DefaultFrom>
+               <Post301Format />
+            </Component>
+            <Component Name="ReplicationRulesTargetTypeGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>sAIRRuleTargetType</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>ReplicationRulesSubcollectionGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.ue_ReplicationRules.TargetType</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRRuleTargetType</EffectiveCaption>
+            </Component>
+            <Component Name="SetupTriggersButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>41</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>sAIRSetupTriggers</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>SetupTriggers</EventToGenerate>
+               <Flags>4097</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>VISIBLEWHEN(Visible:#C(SetupTriggersButton), #P(ue_EventHandlersStatus) = "Not Setup", "True")</Post301Format>
+               <EffectiveCaption>sAIRSetupTriggers</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(1) TARGET(UNKNOWN2_SITE)</LayoutAttributes>
+            </Component>
+            <Component Name="ue_EventHandlersAreSetupGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>6</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sAIRAreSetup</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>5</ContainerSequence>
+               <DataSource>object.ue_EventHandlersAreSetup</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRAreSetup</EffectiveCaption>
+            </Component>
+            <Component Name="ue_EventHandlersPostInsertSetupEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>20</TabOrder>
+               <TopPos>5</TopPos>
+               <LeftPos>121.25</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>16</Width>
+               <Caption>sAIRAreSetup</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.ue_EventHandlersAreSetup</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sAIRAreSetup</EffectiveCaption>
+               <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
+            </Component>
+         </Components>
+         <EventHandlers>
+            <EventHandler Name="ActivateAllTriggers" Sequence="0">
+               <ResponseType>0</ResponseType>
+               <Response>ue_AIR_IDOReplicationConfigs.ue_UpdateAESTriggers( PARMS(VAR P(CollectionName), VAR ActivateAllTriggers, RVAR V(ResultsByRef)) ERRORMESSAGE(mBackEndMessage) )</Response>
+            </EventHandler>
+            <EventHandler Name="ActivateAllTriggers" Sequence="1">
+               <ResponseType>29</ResponseType>
+               <Response>object COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="ActivateAllTriggers" Sequence="2">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="DeactivateAllTriggers" Sequence="0">
+               <ResponseType>0</ResponseType>
+               <Response>ue_AIR_IDOReplicationConfigs.ue_UpdateAESTriggers( PARMS(VAR P(CollectionName), VAR DeactivateAllTriggers, RVAR V(ResultsByRef)) ERRORMESSAGE(mBackEndMessage) )</Response>
+            </EventHandler>
+            <EventHandler Name="DeactivateAllTriggers" Sequence="1">
+               <ResponseType>29</ResponseType>
+               <Response>object COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="DeactivateAllTriggers" Sequence="2">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="FixTriggers" Sequence="0">
+               <ResponseType>0</ResponseType>
+               <Response>ue_AIR_IDOReplicationConfigs.ue_UpdateAESTriggers( PARMS(VAR P(CollectionName), VAR FixTriggers, RVAR V(ResultsByRef)) ERRORMESSAGE(mBackEndMessage) )</Response>
+            </EventHandler>
+            <EventHandler Name="FixTriggers" Sequence="1">
+               <ResponseType>29</ResponseType>
+               <Response>object COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="FixTriggers" Sequence="2">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="OpenReplicationRules" Sequence="0">
+               <ResponseType>6</ResponseType>
+               <Response>ue_AIR_IDOReplicationRules( LINKBY(CollectionName=IDOName) )</Response>
+            </EventHandler>
+            <EventHandler Name="RemoveTriggers" Sequence="0">
+               <ResponseType>0</ResponseType>
+               <Response>ue_AIR_IDOReplicationConfigs.ue_UpdateAESTriggers( PARMS(VAR P(CollectionName), VAR RemoveTriggers, RVAR V(ResultsByRef)) ERRORMESSAGE(mBackEndMessage) )</Response>
+            </EventHandler>
+            <EventHandler Name="RemoveTriggers" Sequence="1">
+               <ResponseType>29</ResponseType>
+               <Response>object COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="RemoveTriggers" Sequence="2">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="SetupTriggers" Sequence="0">
+               <ResponseType>0</ResponseType>
+               <Response>ue_AIR_IDOReplicationConfigs.ue_UpdateAESTriggers( PARMS(VAR P(CollectionName), VAR SetupTriggers, RVAR V(ResultsByRef)) ERRORMESSAGE(mBackEndMessage) )</Response>
+            </EventHandler>
+            <EventHandler Name="SetupTriggers" Sequence="1">
+               <ResponseType>29</ResponseType>
+               <Response>object COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="SetupTriggers" Sequence="2">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormRefreshCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormRefreshCurrentCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+         </EventHandlers>
+         <Variables>
+            <Variable Name="cds_DataSourceEventActionsSubcollectionGrid">
+               <Value>object.ue_EventHandlers( CA(RNCSVI) OBJNAME(oEventHandlers) FILTERPERM(Description='ue_AIR_ReplicationTrigger') LOCKMODE(Row) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="cds_DataSourcegrid1_SITE">
+               <Value>object.ue_ReplicationRules( CA(RVI) OBJNAME(oReplicationRules) LOCKMODE(Row) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="cds_DataSourcegrid2_SITE">
+               <Value>object.ue_EventHandlers( CA(RVI) OBJNAME(oEventHandlers) LOCKMODE(Row) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="fds_SC2">
+               <Value>OBJECT2( ue_AIR_EventHandlers( CA(RSV) OBJNAME(oEventHandlersSecondary) FILTERPERM(Description='ue_AIR_ReplicationTrigger' AND IDOCollections = FP(CollectionName)) LOCKMODE(Row) ) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="InitialCommand">
+               <Value>Refresh</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+         </Variables>
+         <Script Language="Visual C#">
+            <ScriptLines>
+               <ScriptLine>using System;</ScriptLine>
+               <ScriptLine>using Mongoose.IDO.Protocol;</ScriptLine>
+               <ScriptLine>using Mongoose.Scripting;</ScriptLine>
+               <ScriptLine>using System.Collections.Generic;</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>namespace Mongoose.FormScripts</ScriptLine>
+               <ScriptLine>{</ScriptLine>
+               <ScriptLine>   public class ue_AIR_IDOReplicationConfigs : FormScript</ScriptLine>
+               <ScriptLine>   {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public void Test()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine>         Application.ShowMessage("Test");</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>   }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>}</ScriptLine>
+            </ScriptLines>
+         </Script>
+      </Form>
+   </Forms>
+</FormsAndObjectsExport>
