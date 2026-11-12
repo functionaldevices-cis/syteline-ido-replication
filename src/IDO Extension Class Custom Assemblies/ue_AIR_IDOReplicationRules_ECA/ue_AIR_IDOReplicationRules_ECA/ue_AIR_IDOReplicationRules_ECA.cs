@@ -401,7 +401,6 @@ namespace ue_AIR_IDOReplicationRules_ECA
             /********************************************************************/
 
             DataTable outputTable = new DataTable("FullTable");
-            Dictionary<string, int> itemIndices = new Dictionary<string, int>();
 
             // ADD COLUMN STRUCTURE
 
@@ -432,7 +431,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             /* LOAD USER INPUT FROM THE REQUEST OBJECT AND PARAMETERS IF SET
             /********************************************************************/
 
-            (bool haveBookmark, bool areCappingResults) flags = (false, false);
+            // THE PREVIEW SHOWS AT MOST 5 RECORDS AND DOESN'T PAGE, SO THE REQUEST'S BOOKMARK IS LEFT AS IT IS
 
             LoadRecordsRequestData userRequest = new LoadRecordsRequestData(
                 contextRequest: this.Context.Request as LoadCollectionRequestData,
@@ -440,86 +439,57 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 recordCapOverride: "5"
             );
 
-            flags.haveBookmark = userRequest.Bookmark != "<B/>";
-            flags.areCappingResults = userRequest.RecordCap != 0;
-                
-            List<Dictionary<string, object>> remappedReplicationRecords = new List<Dictionary<string, object>>();
+            // THE PREVIEW IS FOR ONE RULE. WITHOUT A RULE NUMBER THERE'S NOTHING TO SHOW.
 
-
-            /********************************************************************/
-            /* LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
-            /********************************************************************/
-
-            Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum);
-
-
-
-
-            /********************************************************************/
-            /* LOAD MATCHING RECORDS TO BE REPLICATED
-            /********************************************************************/
-
-
-            if (replicationRules.Keys.Count > 0)
+            if (string.IsNullOrWhiteSpace(ruleNum))
             {
-
-                // LOAD THE REPLICATION RECORD
-
-                LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
-                    IDOName: IDOName,
-                    properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
-                    filter: userRequest.Filter,
-                    orderBy: "",
-                    recordCap: userRequest.RecordCap
-                );
-
-                // STEP THROUGH EACH RULE
-                // REMAP THE RECORD(S) BASED ON THE MAP
-                // SEND
-
-                if (replicationRecordsResponse.Items.Count > 0)
-                {
-
-                    // SETUP RECORD STRUCTURE RECORD
-
-                    string currentRuleNum;
-                    List<ReplicationField> mapFields;
-                    ReplicationRule replicationRule;
-
-                    foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
-                    {
-
-                        // SETUP RULE STRUCTURE
-
-                        currentRuleNum = replicationRuleKeyValPair.Key;
-                        replicationRule = replicationRuleKeyValPair.Value;
-                        mapFields = replicationRule.MapFieldsList;
-
-                        // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
-
-                        // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
-
-                        remappedReplicationRecords = this.RemapRecords(
-                            fields: mapFields,
-                            recordsResponseData: replicationRecordsResponse
-                        );
-
-                    }
-
-                }
-
+                return outputTable;
             }
 
 
 
             /********************************************************************/
-            /* LOOP THROUGH THE ITEM PRICE RECORDS AND FILL IN THE DATA TABLE
+            /* LOAD THE REPLICATION RULE, INCLUDING AN INACTIVE ONE, SO A RULE CAN BE CHECKED BEFORE IT'S ENABLED
             /********************************************************************/
 
-            foreach(Dictionary<string, object> remappedRecord in remappedReplicationRecords)
-            {
+            Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactive: true);
 
-                // LOAD DATA FROM THE ITEM PRICE RECORD AND RUN CUSTOM LOGIC
+            // THE QUERY IS ALREADY FILTERED TO THIS RULE NUMBER, SO THERE'S AT MOST ONE RESULT
+
+            ReplicationRule replicationRule = replicationRules.Values.FirstOrDefault();
+
+            if (replicationRule == null)
+            {
+                return outputTable;
+            }
+
+
+
+            /********************************************************************/
+            /* LOAD MATCHING RECORDS AND REMAP THEM WITH THE RULE'S FIELD MAP
+            /********************************************************************/
+
+            LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
+                IDOName: IDOName,
+                properties: replicationRule.SourceIDOProperties,
+                filter: userRequest.Filter,
+                orderBy: "",
+                recordCap: userRequest.RecordCap
+            );
+
+            List<Dictionary<string, object>> remappedReplicationRecords = this.RemapRecords(
+                fields: replicationRule.MapFieldsList,
+                recordsResponseData: replicationRecordsResponse
+            );
+
+
+
+            /********************************************************************/
+            /* FILL IN THE DATA TABLE
+            /********************************************************************/
+
+            foreach (Dictionary<string, object> remappedRecord in remappedReplicationRecords)
+            {
 
                 int counter = 1;
                 DataRow outputRow = outputTable.NewRow();
@@ -529,22 +499,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 foreach (object item in remappedRecord.Values)
                 {
 
-                    outputRow[$"OutputPreviewField{counter:00}"] = item;
+                    outputRow["OutputPreviewField" + counter.ToString("00", CultureInfo.InvariantCulture)] = item != null ? (object)Convert.ToString(item, CultureInfo.InvariantCulture) : DBNull.Value;
                     counter++;
+
                     if (counter > 20)
                     {
                         break;
                     }
+
                 }
 
                 outputTable.Rows.Add(outputRow);
 
-            }
-
-            if (outputTable.Rows.Count > 0)
-            {
-                int bookmarkRowIndex = outputTable.Rows.Count > userRequest.RecordCap ? outputTable.Rows.Count - 2 : outputTable.Rows.Count - 1;
-                userRequest.Bookmark = outputTable.Rows[bookmarkRowIndex]["Item"].ToString();
             }
 
             return outputTable;
@@ -599,7 +565,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private Dictionary<string, ReplicationRule> LoadReplicationRulesAndMaps(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string ruleNum = null)
+        private Dictionary<string, ReplicationRule> LoadReplicationRulesAndMaps(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string ruleNum = null, bool includeInactive = false)
         {
 
             Dictionary<string, ReplicationRule> replicationRules = new Dictionary<string, ReplicationRule>();
@@ -632,7 +598,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "Option09" },
                     { "Option10" }
                 },
-                filter: "( IDOName = '" + IDOName + "') AND ( IsActive = 1 )" + (ruleNum != null ? "AND ( RuleNum = '" + ruleNum + "' )" : ""),
+                filter: "( IDOName = '" + IDOName + "')" + (includeInactive ? "" : " AND ( IsActive = 1 )") + (ruleNum != null ? " AND ( RuleNum = '" + ruleNum + "' )" : ""),
                 orderBy: "RuleNum ASC"
             );
 
