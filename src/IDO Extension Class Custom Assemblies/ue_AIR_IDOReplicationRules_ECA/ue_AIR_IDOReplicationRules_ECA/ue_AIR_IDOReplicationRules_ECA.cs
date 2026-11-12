@@ -512,30 +512,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     orderBy: "RuleNum ASC, FieldSeq ASC"
                 );
 
-                List<string> idoProperties = new List<string>();
-
                 replicationMapFieldRecordsResponse.Items.ForEach(replicationMapFieldRecord =>
                 {
 
                     string replicationMapFieldRecordRuleNum = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["RuleNum"]].Value;
                     string replicationMapFieldRecordFieldSeq = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["FieldSeq"]].Value;
-                    string replicationMapFieldRecordFieldName = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["FieldName"]].Value;
-                    string replicationMapFieldRecordType = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["Type"]].Value;
-                    string replicationMapFieldRecordValue = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["Value"]].Value;
+                    string replicationMapFieldRecordName = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["Name"]].Value;
+                    string replicationMapFieldRecordSourceType = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["SourceType"]].Value;
+                    string replicationMapFieldRecordSourceValue = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["SourceValue"]].Value;
+                    string replicationMapFieldRecordSourceTransformation = replicationMapFieldRecord.PropertyValues[replicationMapFieldRecordsResponse.PropertyKeys["SourceTransformation"]].Value;
 
-                    if ((replicationMapFieldRecordValue != null && replicationMapFieldRecordValue != "") || (replicationMapFieldRecordType == "Literal"))
+                    if ((replicationMapFieldRecordSourceValue != null && replicationMapFieldRecordSourceValue != "") || (replicationMapFieldRecordSourceType == "Literal"))
                     {
 
                         replicationRules[replicationMapFieldRecordRuleNum].MapFields[replicationMapFieldRecordFieldSeq] = new ReplicationField(
-                            outputFieldName: replicationMapFieldRecordFieldName,
-                            sourceType: replicationMapFieldRecordType,
-                            sourceValue: replicationMapFieldRecordValue
+                            outputFieldName: replicationMapFieldRecordName,
+                            sourceType: replicationMapFieldRecordSourceType,
+                            sourceValue: replicationMapFieldRecordSourceValue,
+                            transformationName: replicationMapFieldRecordSourceTransformation
                         );
-
-                        if (replicationMapFieldRecordType == "IDOProperty" && !idoProperties.Contains(replicationMapFieldRecordValue))
-                        {
-                            idoProperties.Add(replicationMapFieldRecordValue);
-                        }
 
                     }
 
