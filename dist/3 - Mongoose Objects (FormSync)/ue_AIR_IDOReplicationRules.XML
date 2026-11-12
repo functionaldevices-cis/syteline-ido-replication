@@ -1919,7 +1919,7 @@
                <ScriptLine>                     {</ScriptLine>
                <ScriptLine>                        "ConnectionString",</ScriptLine>
                <ScriptLine>                        "EventSource",</ScriptLine>
-               <ScriptLine>                        "MaxBatchKB"</ScriptLine>
+               <ScriptLine>                        "MaxBatchKBOverride"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  },</ScriptLine>
                <ScriptLine>                  {</ScriptLine>

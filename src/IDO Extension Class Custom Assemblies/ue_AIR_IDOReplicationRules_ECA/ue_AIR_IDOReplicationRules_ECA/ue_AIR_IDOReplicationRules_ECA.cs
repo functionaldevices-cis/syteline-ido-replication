@@ -220,7 +220,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     case "AzureEventHub":
 
-                        // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKB (OPTIONAL)
+                        // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
                         // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES)
                         // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
 
@@ -228,7 +228,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
                         FabricEventSchemaUri eventSchemaUri = null;
 
-                        // MaxBatchKB DEPENDS ON THE EVENT HUBS TIER. BLANK OR INVALID USES THE DEFAULT, WHICH IS SAFE FOR THE
+                        // MaxBatchKBOverride DEPENDS ON THE EVENT HUBS TIER. BLANK OR INVALID USES THE DEFAULT, WHICH IS SAFE FOR THE
                         // BASIC TIER'S 256 KB LIMIT. STANDARD AND HIGHER TIERS CAN SET UP TO 850.
 
                         int maxBatchKB;
