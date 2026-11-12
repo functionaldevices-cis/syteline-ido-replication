@@ -67,9 +67,9 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
             if (credential != null)
             {
 
-                // CHECK TO SEE IF WE NEED A NEW TOKEN
+                // CHECK TO SEE IF WE NEED A NEW TOKEN: THERE ISN'T ONE YET, OR THE CURRENT ONE EXPIRES WITHIN THE NEXT 10 MINUTES
 
-                if ((this.AccessTokenDetails.Token == "") || ((this.AccessTokenDetails.Expiration != null && this.AccessTokenDetails.Expiration >= DateTime.Now.AddMinutes(10))))
+                if ((this.AccessTokenDetails.Token == "") || (this.AccessTokenDetails.Expiration == null) || (this.AccessTokenDetails.Expiration.Value <= DateTime.Now.AddMinutes(10)))
                 {
 
                     // TRY TO GET THE TOKEN
@@ -115,7 +115,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
 
                             default:
 
-                                throw new Exception("");
+                                throw new Exception("Unknown Salesforce auth flow '" + credential.AuthFlow + "'. Expected 'UsernamePassword' or 'ClientCredentials'.");
 
                         }
 
