@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using ue_AIR_IDOReplicationRules_ECA.Helpers;
@@ -219,19 +220,57 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     case "AzureEventHub":
 
-                        bool eventHubPushSucceeded = AzureEventHubPusher.ExportToAzureEventHub(
-                            eventHubCredential: new AzureEventHubSASCredential(
-                                ConnectionString: replicationRule.CredentialValue01
-                            ),
-                            records: remappedReplicationRecords
-                        ).GetAwaiter().GetResult();
+                        // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
+                        // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES)
+                        // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
+
+                        string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
+                        string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
+                        FabricEventSchemaUri eventSchemaUri = null;
+
+                        // MaxBatchKBOverride DEPENDS ON THE EVENT HUBS TIER. BLANK OR INVALID USES THE DEFAULT, WHICH IS SAFE FOR THE
+                        // BASIC TIER'S 256 KB LIMIT. STANDARD AND HIGHER TIERS CAN SET UP TO 850.
+
+                        int maxBatchKB;
+                        int maxBatchBytes = int.TryParse((replicationRule.CredentialValue03 ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out maxBatchKB) && maxBatchKB > 0
+                            ? (int)Math.Min((long)maxBatchKB * 1000, AzureEventHubPusher.MaximumMaxBatchBytes)
+                            : AzureEventHubPusher.DefaultMaxBatchBytes;
+
+                        if (eventSchemaUriValue != "")
+                        {
+
+                            // FABRIC EVENT SCHEMA EVENTSTREAMS REJECT EVENTS WITHOUT A CLOUDEVENTS SOURCE, SO DON'T SEND ANYTHING
+
+                            if (eventSource == "")
+                            {
+                                return new ReplicationRuleResult(
+                                    ruleNum: replicationRule.RuleNum,
+                                    targetType: replicationRule.TargetType,
+                                    recordCount: recordCount,
+                                    success: false,
+                                    errorMessage: "The rule has an Event Schema URI, but its credential has no Event Source. Set Event Source on the credential (for example, your company's website URL)."
+                                );
+                            }
+
+                            eventSchemaUri = new FabricEventSchemaUri(eventSchemaUriValue);
+
+                        }
+
+                        AzureEventHubPushResult eventHubPushResult = AzureEventHubPusher.Push(
+                            credential: AzureEventHubPusher.GetCredential(replicationRule.CredentialValue01),
+                            records: remappedReplicationRecords,
+                            idFieldName: replicationRule.Option02,
+                            eventSchemaUri: eventSchemaUri,
+                            eventSource: eventSource,
+                            maxBatchBytes: maxBatchBytes
+                        );
 
                         return new ReplicationRuleResult(
                             ruleNum: replicationRule.RuleNum,
                             targetType: replicationRule.TargetType,
                             recordCount: recordCount,
-                            success: eventHubPushSucceeded,
-                            errorMessage: eventHubPushSucceeded ? "" : "Azure Event Hub rejected one or more batches."
+                            success: eventHubPushResult.Success,
+                            errorMessage: eventHubPushResult.ErrorSummary
                         );
 
                     case "SalesforceRESTAPI":

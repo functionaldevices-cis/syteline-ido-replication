@@ -93,6 +93,8 @@
     <Compile Include="Helpers\SalesforceRestAPI.cs" />
     <Compile Include="Helpers\Utilities.cs" />
     <Compile Include="Models\AzureEventHubAPI\AzureEventHubSASCredential.cs" />
+    <Compile Include="Models\AzureEventHubAPI\AzureEventHubPushResult.cs" />
+    <Compile Include="Models\AzureEventHubAPI\FabricEventSchemaUri.cs" />
     <Compile Include="Models\ReplicationFieldTransformTypes.cs" />
     <Compile Include="Models\ReplicationFieldTransformType.cs" />
     <Compile Include="Models\ReplicationFieldTransform.cs" />
