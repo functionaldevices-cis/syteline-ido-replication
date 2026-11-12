@@ -21,6 +21,8 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
         public static async Task<bool> ExportToAzureEventHub(AzureEventHubSASCredential eventHubCredential, List<Dictionary<string, object>> records)
         {
 
+            bool allBatchesSucceeded = true;
+
             if (records.Count > 0)
             {
 
@@ -30,14 +32,18 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
                 {
 
                     List<string> recordBatch = records.Skip(i).Take(500).Select(record => JsonConvert.SerializeObject(record)).ToList();
-                    Task<bool> task = SendBatch(httpClient, eventHubCredential.MessagesUri, eventHubCredential.Token, recordBatch);
-                    task.Wait();
+                    bool batchSucceeded = SendBatch(httpClient, eventHubCredential.MessagesUri, eventHubCredential.Token, recordBatch).GetAwaiter().GetResult();
+
+                    if (!batchSucceeded)
+                    {
+                        allBatchesSucceeded = false;
+                    }
 
                 }
 
             }
 
-            return true;
+            return allBatchesSucceeded;
 
         }
 

@@ -92,7 +92,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         [IDOMethod(MethodFlags.None, "Infobar")]
         public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null)
         {
- 
+
             // SETUP UTILITIES
 
             SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
@@ -104,104 +104,51 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 BGTaskNum: BGTaskNum
             );
 
-            //utils.WriteLogMessage("( IDOName = '" + IDOName + "') AND ( IsActive = 1 )" + (targetType != null ? "AND ( TargetType = '" + targetType + "' )" : ""));
+            List<ReplicationRuleResult> ruleResults = new List<ReplicationRuleResult>();
 
-            // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
+            // THIS METHOD RUNS INSIDE AES TRIGGERS ON THE SOURCE IDO, SO IT MUST NEVER THROW. AN UNHANDLED EXCEPTION
+            // WOULD FAIL THE EVENT ACTION AND ROLL BACK THE USER'S SAVE. EVERY ERROR IS CAUGHT, RECORDED AND LOGGED,
+            // AND THE METHOD ALWAYS RETURNS 0.
 
-            Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum);
-
-            if (replicationRules.Keys.Count > 0)
+            try
             {
 
-                // LOAD THE REPLICATION RECORD
+                // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
-                    IDOName: IDOName,
-                    properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
-                    filter: queryFilter,
-                    orderBy: "",
-                    recordCap: recordCap
-                );
+                Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum);
 
-                utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
-
-                // STEP THROUGH EACH RULE
-                // REMAP THE RECORD(S) BASED ON THE MAP
-                // SEND
-
-                if (replicationRecordsResponse.Items.Count > 0)
+                if (replicationRules.Keys.Count > 0)
                 {
 
-                    // SETUP RECORD STRUCTURE RECORD
+                    // LOAD THE REPLICATION RECORD
 
-                    List<Dictionary<string, object>> remappedReplicationRecords;
-                    string currentRuleNum;
-                    List<ReplicationField> mapFields;
-                    ReplicationRule replicationRule;
+                    LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
+                        IDOName: IDOName,
+                        properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
+                        filter: queryFilter,
+                        orderBy: "",
+                        recordCap: recordCap
+                    );
 
-                    foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                    utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
+
+                    // STEP THROUGH EACH RULE
+                    // REMAP THE RECORD(S) BASED ON THE MAP
+                    // SEND
+
+                    if (replicationRecordsResponse.Items.Count > 0)
                     {
 
-                        // SETUP RULE STRUCTURE
-
-                        currentRuleNum = replicationRuleKeyValPair.Key;
-                        replicationRule = replicationRuleKeyValPair.Value;
-                        mapFields = replicationRule.MapFieldsList;
-
-                        // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
-
-                        // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
-
-                        remappedReplicationRecords = this.RemapRecords(
-                            fields: mapFields,
-                            recordsResponseData: replicationRecordsResponse
-                        );
-
-                        // SEND RECORDS
-
-                        switch (replicationRule.TargetType)
+                        foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
                         {
 
-                            case "AzureEventHub":
+                            // EACH RULE IS ISOLATED, SO ONE FAILING TARGET DOESN'T STOP THE OTHERS
 
-                                // SEND THE RECORD
-
-                                Task<bool> eventHubPush = AzureEventHubPusher.ExportToAzureEventHub(
-                                    eventHubCredential: new AzureEventHubSASCredential(
-                                        ConnectionString: replicationRule.CredentialValue01
-                                    ),
-                                    records: remappedReplicationRecords
-                                );
-                                eventHubPush.Wait();
-
-                                break;
-
-                            case "SalesforceRESTAPI":
-
-                                // SEND THE RECORD
-
-                                SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
-                                    credential: new SalesforceAPICredential(
-                                        ClientId: replicationRule.CredentialValue01,
-                                        ClientSecret: replicationRule.CredentialValue02,
-                                        Username: replicationRule.CredentialValue03,
-                                        Password: replicationRule.CredentialValue04,
-                                        SecurityToken: replicationRule.CredentialValue05
-                                    )
-                                );
-
-                                utils.WriteLogMessage("Pushing " + replicationRecordsResponse.Items.Count + " records to Salesforce.");
-
-                                Task<SalesforceAPIUpsertResults> salesforceUpsert = salesforceRestAPI.UpsertRecords(
-                                    objectName: replicationRule.Option01,
-                                    externalIDFieldName: replicationRule.Option02,
-                                    records: remappedReplicationRecords,
-                                    onProgressCallback: (queryStatus) => { utils.WriteLogMessage(queryStatus.ErrorMessage); }
-                                );
-
-                                salesforceUpsert.Wait();
-
-                                break;
+                            ruleResults.Add(this.ReplicateRule(
+                                replicationRule: replicationRuleKeyValPair.Value,
+                                replicationRecordsResponse: replicationRecordsResponse,
+                                utils: utils
+                            ));
 
                         }
 
@@ -210,8 +157,168 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 }
 
             }
+            catch (Exception ex)
+            {
+
+                ruleResults.Add(new ReplicationRuleResult(
+                    ruleNum: ruleNum ?? "",
+                    targetType: "",
+                    recordCount: 0,
+                    success: false,
+                    errorMessage: "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex)
+                ));
+
+            }
+
+            // LOG THE OUTCOME OF EACH RULE
+
+            foreach (ReplicationRuleResult ruleResult in ruleResults)
+            {
+                utils.WriteLogMessage(ruleResult.ToString());
+            }
 
             return 0;
+
+        }
+
+
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
+        /* Name:     ReplicateRule
+        /* Purpose:  Remaps the loaded records for a single rule and sends them to the rule's target. Never
+        /*           throws. Any exception or rejected push is returned as a failed ReplicationRuleResult.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, Utilities utils)
+        {
+
+            int recordCount = 0;
+
+            try
+            {
+
+                // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
+
+                // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
+
+                List<Dictionary<string, object>> remappedReplicationRecords = this.RemapRecords(
+                    fields: replicationRule.MapFieldsList,
+                    recordsResponseData: replicationRecordsResponse
+                );
+
+                recordCount = remappedReplicationRecords.Count;
+
+                // SEND RECORDS
+
+                switch (replicationRule.TargetType)
+                {
+
+                    case "AzureEventHub":
+
+                        bool eventHubPushSucceeded = AzureEventHubPusher.ExportToAzureEventHub(
+                            eventHubCredential: new AzureEventHubSASCredential(
+                                ConnectionString: replicationRule.CredentialValue01
+                            ),
+                            records: remappedReplicationRecords
+                        ).GetAwaiter().GetResult();
+
+                        return new ReplicationRuleResult(
+                            ruleNum: replicationRule.RuleNum,
+                            targetType: replicationRule.TargetType,
+                            recordCount: recordCount,
+                            success: eventHubPushSucceeded,
+                            errorMessage: eventHubPushSucceeded ? "" : "Azure Event Hub rejected one or more batches."
+                        );
+
+                    case "SalesforceRESTAPI":
+
+                        SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
+                            credential: new SalesforceAPICredential(
+                                ClientId: replicationRule.CredentialValue01,
+                                ClientSecret: replicationRule.CredentialValue02,
+                                Username: replicationRule.CredentialValue03,
+                                Password: replicationRule.CredentialValue04,
+                                SecurityToken: replicationRule.CredentialValue05
+                            )
+                        );
+
+                        utils.WriteLogMessage("Pushing " + recordCount + " records to Salesforce.");
+
+                        SalesforceAPIUpsertResults salesforceUpsertResults = salesforceRestAPI.UpsertRecords(
+                            objectName: replicationRule.Option01,
+                            externalIDFieldName: replicationRule.Option02,
+                            records: remappedReplicationRecords
+                        ).GetAwaiter().GetResult();
+
+                        List<string> salesforceErrors = new List<string>();
+
+                        foreach (SalesforceAPIUpsertResponse response in salesforceUpsertResults.responses)
+                        {
+
+                            // A FAILED BATCH (AUTH, BAD OBJECT, HTTP ERROR) HAS NO RECORD RESULTS, ONLY AN ERROR CODE AND MESSAGE
+
+                            if (!response.success)
+                            {
+                                salesforceErrors.Add("Batch failed: " + (response.errorCode + " " + response.message).Trim());
+                            }
+
+                            // A SUCCESSFUL BATCH CAN STILL CONTAIN INDIVIDUAL RECORD FAILURES
+
+                            foreach (Dictionary<string, string> recordFailure in response.recordResultsFailures)
+                            {
+                                salesforceErrors.Add("Record '" + (recordFailure.ContainsKey("id") ? recordFailure["id"] : "") + "' failed: " + (recordFailure.ContainsKey("errorMessage") ? recordFailure["errorMessage"] : ""));
+                            }
+
+                        }
+
+                        return new ReplicationRuleResult(
+                            ruleNum: replicationRule.RuleNum,
+                            targetType: replicationRule.TargetType,
+                            recordCount: recordCount,
+                            success: salesforceErrors.Count == 0,
+                            errorMessage: string.Join(" | ", salesforceErrors)
+                        );
+
+                    default:
+
+                        return new ReplicationRuleResult(
+                            ruleNum: replicationRule.RuleNum,
+                            targetType: replicationRule.TargetType,
+                            recordCount: recordCount,
+                            success: false,
+                            errorMessage: "Unknown target type '" + replicationRule.TargetType + "'."
+                        );
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                return new ReplicationRuleResult(
+                    ruleNum: replicationRule.RuleNum,
+                    targetType: replicationRule.TargetType,
+                    recordCount: recordCount,
+                    success: false,
+                    errorMessage: this.DescribeException(ex)
+                );
+
+            }
+
+        }
+
+
+
+        private string DescribeException(Exception ex)
+        {
+
+            Exception baseException = ex.GetBaseException();
+
+            return baseException.GetType().Name + ": " + baseException.Message;
 
         }
 
