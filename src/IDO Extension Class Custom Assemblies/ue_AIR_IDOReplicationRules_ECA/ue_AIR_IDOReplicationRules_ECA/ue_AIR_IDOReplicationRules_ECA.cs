@@ -598,7 +598,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "Option09" },
                     { "Option10" }
                 },
-                filter: "( IDOName = '" + IDOName + "')" + (includeInactive ? "" : " AND ( IsActive = 1 )") + (ruleNum != null ? " AND ( RuleNum = '" + ruleNum + "' )" : ""),
+                filter: "( IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " )" + (includeInactive ? "" : " AND ( IsActive = 1 )") + (ruleNum != null ? " AND ( RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " )" : ""),
                 orderBy: "RuleNum ASC"
             );
 
@@ -620,7 +620,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         { "SourceValue" },
                         { "SourceTransformation" }
                     },
-                    filter: "( RuleNum IN (" + string.Join(",", replicationRules.Keys.Select(key => "'" + key + "'")) + ") )",
+                    filter: "( " + sytelineAPI.BuildInFilter("RuleNum", replicationRules.Keys) + " )",
                     orderBy: "RuleNum ASC, FieldSeq ASC"
                 );
 

@@ -233,7 +233,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 IDOName: "ue_AIR_EventHandlers",
                 filter: sytelineAPI.BuildFilterString(new List<string>(){
                     $"Description = 'ue_AIR_ReplicationTrigger'",
-                    $"IDOCollections = '{idoName}'"
+                    $"IDOCollections = {sytelineAPI.QuoteFilterValue(idoName)}"
                 }),
                 orderBy: "",
                 properties: new List<string>() { "RowPointer", "EventName", "Active", "ue_IsSetup" }
@@ -244,7 +244,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                 LoadRecordsResponseData eventActionResponse = sytelineAPI.LoadRecords(
                     IDOName: "EventActions",
-                    filter: $"EventHandlerRowPointer IN ( {string.Join(", ", eventHandlerResponse.Items.Select(eventHandler => $"'{eventHandler.PropertyValues[eventHandlerResponse.PropertyKeys["RowPointer"]].GetValue<string>()}'"))} )",
+                    filter: sytelineAPI.BuildInFilter("EventHandlerRowPointer", eventHandlerResponse.Items.Select(eventHandler => eventHandler.PropertyValues[eventHandlerResponse.PropertyKeys["RowPointer"]].GetValue<string>())),
                     orderBy: "",
                     properties: new List<string>() { "RowPointer" }
                 );
@@ -277,7 +277,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 IDOName: "ue_AIR_EventHandlers",
                 filter: sytelineAPI.BuildFilterString(new List<string>(){
                     $"Description = 'ue_AIR_ReplicationTrigger'",
-                    $"IDOCollections = '{idoName}'"
+                    $"IDOCollections = {sytelineAPI.QuoteFilterValue(idoName)}"
                 }),
                 orderBy: "",
                 properties: new List<string>() { "RowPointer", "EventName", "Active", "ue_IsSetup" }
