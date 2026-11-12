@@ -205,7 +205,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                         {"Description", "ue_AIR_ReplicationTrigger"},
                         {"Sequence", "10"},
                         {"ActionType", "21"},
-                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\")"},
+                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\")"},
                     }));
                 }
 
