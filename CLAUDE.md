@@ -36,16 +36,20 @@ Everything uses the `AIR` prefix: tables `ue_AIR_idorepl_*_mst`, IDOs `ue_AIR_*`
 2. `LoadReplicationRulesAndMaps` loads the active rules for that IDO along with their map fields. Each map field has a single source: `Name`, `SourceType` (`IDOProperty` or `Literal`), `SourceValue` and `SourceTransformation` on `ue_AIR_IDOReplicationMapFields`. Replication does not use the `Sources` subcollection or the derived `JSON` property.
 3. The union of each rule's source properties is loaded once through `SytelineInternalAPI.LoadRecords`, which wraps `this.Context.Commands`. Data access goes through IDOs, not direct SQL.
 4. For each rule, `RemapRecords` builds the output records from the field map. Transform types are defined in `Models/ReplicationFieldTransform*`. The result is sent based on `TargetType`:
-   - `AzureEventHub`: `AzureEventHubPusher`, using `CredentialValue01` as the connection string.
+   - `AzureEventHub`: `AzureEventHubPusher.Push`, using `CredentialValue01` as the connection string and `CredentialValue02` as the event source. `Option01` is an optional Fabric Event Schema URI and `Option02` is the field used as the record ID in failure messages. When `Option01` is set, each event carries CloudEvents user properties (`type` = schema name, `source`, `dataschema` = the URI), which Fabric Event Schema Eventstreams require. Without it, plain events are sent. Batches are capped at about 850 KB, and only `201 Created` counts as accepted.
    - `SalesforceRESTAPI`: `SalesforceRestAPI.UpsertRecords`, using `CredentialValue01`–`05` (client ID and secret, username, password, security token), `Option01` as the sObject, and `Option02` as the external ID field.
 5. Logging goes through `Utilities.WriteLogMessage`, tied to `BGTaskNum` when the method runs as a background task.
 
-A rule's `CredentialValue01`–`10` come from its linked credential record. What each credential value and option means for a target type is defined in the `config` dictionary in the Rules form script's `UpdateVariableUI` method (`CredentialKeys` and `OptionKeys` per target type), which also labels and shows or hides the form fields. The extension class must read the same positions.
+A rule's `CredentialValue01`–`10` come from its linked credential record. What each credential value and option means for a target type is defined in two form scripts, which also label and show or hide the form fields:
+- the Credentials form's `UpdateValueLabels` (credential keys)
+- the Rules form's `UpdateVariableUI` `config` dictionary (`CredentialKeys` and `OptionKeys`)
+
+Keep both in sync, and make the extension class read the same positions.
 
 To add a new target type:
 - add a `case` in that `switch`
 - add a helper, plus models under the target's own folder, in both projects
-- add an entry to that form-script `config` dictionary
+- add entries to both form-script lists
 
 ## Building
 

@@ -1917,7 +1917,8 @@
                <ScriptLine>                     "CredentialKeys",</ScriptLine>
                <ScriptLine>                     new List&lt;string&gt;()</ScriptLine>
                <ScriptLine>                     {</ScriptLine>
-               <ScriptLine>                        "ConnectionString"</ScriptLine>
+               <ScriptLine>                        "ConnectionString",</ScriptLine>
+               <ScriptLine>                        "EventSource"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  },</ScriptLine>
                <ScriptLine>                  {</ScriptLine>
