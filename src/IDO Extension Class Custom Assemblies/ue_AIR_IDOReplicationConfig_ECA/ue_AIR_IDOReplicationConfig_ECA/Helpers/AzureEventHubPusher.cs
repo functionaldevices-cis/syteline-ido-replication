@@ -28,9 +28,13 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
     public static class AzureEventHubPusher
     {
 
-        // THE BATCH ENDPOINT REJECTS REQUESTS OVER ABOUT 1 MB. STAY WELL UNDER THAT.
+        // THE BATCH SIZE LIMIT DEPENDS ON THE EVENT HUBS TIER: 256 KB FOR BASIC, 1 MB FOR STANDARD AND ABOVE. THE
+        // DEFAULT IS SAFE FOR EVERY TIER (ABOUT 15% UNDER 256 KB). CALLERS CAN RAISE IT FOR HIGHER TIERS, UP TO THE
+        // MAXIMUM, WHICH STAYS ABOUT 15% UNDER 1 MB.
 
-        private const int MaxBatchBytes = 850000;
+        public const int DefaultMaxBatchBytes = 220000;
+
+        public const int MaximumMaxBatchBytes = 850000;
 
         // ONE SHARED CLIENT FOR THE WHOLE APP DOMAIN. CREATING A CLIENT PER CALL EXHAUSTS SOCKETS UNDER LOAD.
 
@@ -49,10 +53,17 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
 
 
 
-        public static AzureEventHubPushResult Push(AzureEventHubSASCredential credential, List<Dictionary<string, object>> records, string idFieldName = null, FabricEventSchemaUri eventSchemaUri = null, string eventSource = null)
+        public static AzureEventHubPushResult Push(AzureEventHubSASCredential credential, List<Dictionary<string, object>> records, string idFieldName = null, FabricEventSchemaUri eventSchemaUri = null, string eventSource = null, int maxBatchBytes = AzureEventHubPusher.DefaultMaxBatchBytes)
         {
 
             AzureEventHubPushResult result = new AzureEventHubPushResult(records.Count);
+
+            if (maxBatchBytes <= 0)
+            {
+                maxBatchBytes = AzureEventHubPusher.DefaultMaxBatchBytes;
+            }
+
+            maxBatchBytes = Math.Min(maxBatchBytes, AzureEventHubPusher.MaximumMaxBatchBytes);
 
             if (eventSchemaUri != null && string.IsNullOrWhiteSpace(eventSource))
             {
@@ -91,9 +102,10 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
                 int serializedEventBytes = Encoding.UTF8.GetByteCount(serializedEvent) + 1; // + 1 FOR THE COMMA SEPARATOR
 
                 // SEND THE CURRENT BATCH FIRST IF THIS EVENT WOULD PUSH IT OVER THE LIMIT. A SINGLE EVENT LARGER THAN
-                // THE LIMIT IS STILL SENT ON ITS OWN, AND THE EVENT HUB'S REJECTION IS RECORDED AS A FAILURE.
+                // THE LIMIT IS STILL SENT ON ITS OWN. IF IT'S ALSO OVER THE TIER'S REAL LIMIT, THE EVENT HUB'S REJECTION
+                // IS RECORDED AS A FAILURE.
 
-                if (serializedEventBatch.Count > 0 && serializedEventBatchBytes + serializedEventBytes > AzureEventHubPusher.MaxBatchBytes)
+                if (serializedEventBatch.Count > 0 && serializedEventBatchBytes + serializedEventBytes > maxBatchBytes)
                 {
 
                     AzureEventHubPusher.SendBatch(credential, recordBatch, serializedEventBatch, idFieldName, result);

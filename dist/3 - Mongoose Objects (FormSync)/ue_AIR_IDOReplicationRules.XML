@@ -1918,7 +1918,8 @@
                <ScriptLine>                     new List&lt;string&gt;()</ScriptLine>
                <ScriptLine>                     {</ScriptLine>
                <ScriptLine>                        "ConnectionString",</ScriptLine>
-               <ScriptLine>                        "EventSource"</ScriptLine>
+               <ScriptLine>                        "EventSource",</ScriptLine>
+               <ScriptLine>                        "MaxBatchKB"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  },</ScriptLine>
                <ScriptLine>                  {</ScriptLine>
