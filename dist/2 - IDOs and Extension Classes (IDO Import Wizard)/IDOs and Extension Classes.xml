@@ -39,7 +39,13 @@
             EventAction.EventHandlerRowPointer = RowPointer AND
             EventAction.ActionType = 21 AND
             EventAction.Description = 'ue_AIR_ReplicationTrigger' AND
-            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '")'
+            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '", 1, "", "' +
+               CASE EventName
+                  WHEN 'IdoPostItemInsert' THEN 'Insert'
+                  WHEN 'IdoPostItemUpdate' THEN 'Update'
+                  WHEN 'IdoOnItemDelete' THEN 'Delete'
+                  ELSE ''
+               END + '")'
       ) = 1
    THEN
       1
@@ -130,7 +136,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Insert")'
       ) = 1) AND
       ((
          SELECT
@@ -142,7 +148,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Update")'
       ) = 1) AND
       ((
          SELECT
@@ -154,7 +160,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Delete")'
       ) = 1)
    THEN
       1
@@ -862,6 +868,11 @@ END</Expression>
                      <COMDataType>VARIANT</COMDataType>
                   </Parameter>
                   <Parameter Name="ruleNum" Sequence="5">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="operation" Sequence="6">
                      <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
                      <INPUT />
                      <COMDataType>VARIANT</COMDataType>

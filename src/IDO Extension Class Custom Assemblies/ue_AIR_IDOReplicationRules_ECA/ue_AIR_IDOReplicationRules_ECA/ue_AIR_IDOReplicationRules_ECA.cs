@@ -91,8 +91,20 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
 
         [IDOMethod(MethodFlags.None, "Infobar")]
-        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null)
+        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "")
         {
+
+            // TRIGGERS PASS A BLANK RULE NUMBER TO REACH THE OPERATION PARAMETER. BLANK MEANS EVERY ACTIVE RULE FOR THE IDO.
+
+            if (string.IsNullOrWhiteSpace(ruleNum))
+            {
+                ruleNum = null;
+            }
+
+            // THE OPERATION THAT CHANGED THE RECORD: Insert, Update OR Delete. BLANK (BACKGROUND TASKS, OR TRIGGERS SET
+            // UP BEFORE THIS PARAMETER EXISTED) MEANS UNKNOWN, AND TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
+
+            operation = NormalizeOperation(operation);
 
             // SETUP UTILITIES
 
@@ -148,6 +160,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             ruleResults.Add(this.ReplicateRule(
                                 replicationRule: replicationRuleKeyValPair.Value,
                                 replicationRecordsResponse: replicationRecordsResponse,
+                                operation: operation,
                                 utils: utils
                             ));
 
@@ -166,7 +179,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     targetType: "",
                     recordCount: 0,
                     success: false,
-                    errorMessage: "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex)
+                    errorMessage: "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex),
+                    operation: operation
                 ));
 
             }
@@ -194,7 +208,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, Utilities utils)
+        private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, Utilities utils)
+        {
+
+            ReplicationRuleResult ruleResult = this.SendRule(replicationRule, replicationRecordsResponse, operation, utils);
+            ruleResult.Operation = operation;
+            return ruleResult;
+
+        }
+
+
+
+        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, Utilities utils)
         {
 
             int recordCount = 0;
@@ -346,6 +371,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     errorMessage: this.DescribeException(ex)
                 );
 
+            }
+
+        }
+
+
+
+        private static string NormalizeOperation(string operation)
+        {
+
+            switch ((operation ?? "").Trim().ToLowerInvariant())
+            {
+                case "insert":
+                    return "Insert";
+                case "update":
+                    return "Update";
+                case "delete":
+                    return "Delete";
+                default:
+                    return "";
             }
 
         }

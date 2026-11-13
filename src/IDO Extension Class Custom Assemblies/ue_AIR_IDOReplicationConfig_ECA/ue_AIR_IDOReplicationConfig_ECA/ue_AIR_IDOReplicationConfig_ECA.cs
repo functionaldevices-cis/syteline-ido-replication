@@ -200,13 +200,24 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                 foreach (IDOUpdateItem eventHandler in insertedEventHandlers.Skip(1))
                 {
+
+                    // EACH TRIGGER PASSES ITS OWN OPERATION. THE RECORD CAP (1) AND A BLANK RULE NUMBER (EVERY RULE) ARE
+                    // PASSED ONLY TO REACH THE OPERATION PARAMETER.
+                    // TWO DERIVED PROPERTIES COMPARE THESE STRINGS EXACTLY, SO KEEP BOTH IN SYNC WITH ANY CHANGE HERE (AND
+                    // WITH OperationForEvent):
+                    //   - ue_AIR_IDOReplicationConfigs.ue_EventHandlersAreSetup (ONE COMPARISON PER EVENT)
+                    //   - ue_AIR_EventHandlers.ue_IsSetup (ONE COMPARISON, PICKING THE OPERATION FROM EventName)
+
+                    string operation = OperationForEvent(eventHandler.Properties["EventName"].GetValue<string>());
+
                     eventActions.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
                         {"EventHandlerRowPointer", eventHandler.Properties["RowPointer"].GetValue<string>()},
                         {"Description", "ue_AIR_ReplicationTrigger"},
                         {"Sequence", "10"},
                         {"ActionType", "21"},
-                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\")"},
+                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\", 1, \"\", \"" + operation + "\")"},
                     }));
+
                 }
 
                 insertedEventActions = sytelineAPI.CreateRecords(
@@ -224,6 +235,27 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             return result;
 
         }
+
+        // KEEP IN SYNC WITH THE CASE EventName IN THE ue_AIR_EventHandlers IDO'S ue_IsSetup DERIVED PROPERTY
+
+        private static string OperationForEvent(string eventName)
+        {
+
+            switch (eventName)
+            {
+                case "IdoPostItemInsert":
+                    return "Insert";
+                case "IdoPostItemUpdate":
+                    return "Update";
+                case "IdoOnItemDelete":
+                    return "Delete";
+                default:
+                    return "";
+            }
+
+        }
+
+
 
         private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName)
         {
