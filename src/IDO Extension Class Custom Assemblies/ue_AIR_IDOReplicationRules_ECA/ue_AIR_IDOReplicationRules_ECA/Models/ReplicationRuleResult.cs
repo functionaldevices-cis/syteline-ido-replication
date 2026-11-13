@@ -26,6 +26,10 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string ErrorMessage { get; set; }
 
+        // ONE OUTCOME PER REMAPPED RECORD, FOR THE REPLICATION LOG. EMPTY WHEN THE RULE FAILED BEFORE ITS RECORDS WERE REMAPPED.
+
+        public List<ReplicationRecordOutcome> RecordOutcomes { get; set; } = new List<ReplicationRecordOutcome>();
+
 
 
         /***********************************************************************************************************/

@@ -26,6 +26,11 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models.AzureEventHubAPI
 
         public List<string> ErrorMessages { get; set; }
 
+        // THE ERROR FOR EACH FAILED RECORD, KEYED BY ITS POSITION IN THE RECORDS PASSED TO Push. BATCHES ARE SENT IN ORDER, SO
+        // A FAILED BATCH COVERS THE POSITIONS FROM THE COUNT ALREADY PROCESSED ONWARD.
+
+        public Dictionary<int, string> FailedRecordErrors { get; set; }
+
         public bool Success => this.CountFailed == 0;
 
         public string ErrorSummary
@@ -63,6 +68,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models.AzureEventHubAPI
             this.CountBatches = 0;
             this.FailedRecordIDs = new List<string>();
             this.ErrorMessages = new List<string>();
+            this.FailedRecordErrors = new Dictionary<int, string>();
         }
 
 
@@ -76,12 +82,19 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models.AzureEventHubAPI
 
             this.CountBatches++;
 
+            int firstRecordIndex = this.CountSent + this.CountFailed;
+
             if (string.IsNullOrEmpty(failureMessage))
             {
                 this.CountSent += recordIDs.Count;
             }
             else
             {
+                for (int i = 0; i < recordIDs.Count; i++)
+                {
+                    this.FailedRecordErrors[firstRecordIndex + i] = failureMessage;
+                }
+
                 this.CountFailed += recordIDs.Count;
                 this.FailedRecordIDs.AddRange(recordIDs);
                 this.ErrorMessages.Add(failureMessage);

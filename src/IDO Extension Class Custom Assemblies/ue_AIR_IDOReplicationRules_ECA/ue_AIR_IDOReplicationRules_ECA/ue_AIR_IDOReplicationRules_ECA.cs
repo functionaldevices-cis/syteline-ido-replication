@@ -118,6 +118,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             );
 
             List<ReplicationRuleResult> ruleResults = new List<ReplicationRuleResult>();
+            int recordCountLoaded = 0;
 
             // THIS METHOD RUNS INSIDE AES TRIGGERS ON THE SOURCE IDO, SO IT MUST NEVER THROW. AN UNHANDLED EXCEPTION
             // WOULD FAIL THE EVENT ACTION AND ROLL BACK THE USER'S SAVE. EVERY ERROR IS CAUGHT, RECORDED AND LOGGED,
@@ -142,6 +143,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         orderBy: "",
                         recordCap: recordCap
                     );
+
+                    recordCountLoaded = replicationRecordsResponse.Items.Count;
 
                     utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
 
@@ -192,6 +195,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 utils.WriteLogMessage(ruleResult.ToString());
             }
 
+            // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
+
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, ruleResults, BGTaskNum > 0, recordCountLoaded);
+
             return 0;
 
         }
@@ -203,7 +210,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*
         /* Name:     ReplicateRule
         /* Purpose:  Remaps the loaded records for a single rule and sends them to the rule's target. Never
-        /*           throws. Any exception or rejected push is returned as a failed ReplicationRuleResult.
+        /*           throws. Any exception or rejected push is returned as a failed ReplicationRuleResult, with
+        /*           one outcome per remapped record for the replication log.
         /*
         /**********************************************************************************************************/
         /**********************************************************************************************************/
@@ -211,7 +219,45 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, Utilities utils)
         {
 
-            ReplicationRuleResult ruleResult = this.SendRule(replicationRule, replicationRecordsResponse, operation, utils);
+            List<Dictionary<string, object>> remappedReplicationRecords = null;
+            ReplicationRuleResult ruleResult;
+
+            try
+            {
+
+                // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
+
+                remappedReplicationRecords = this.RemapRecords(
+                    fields: replicationRule.MapFieldsList,
+                    recordsResponseData: replicationRecordsResponse
+                );
+
+                ruleResult = this.SendRule(replicationRule, remappedReplicationRecords, operation, utils);
+
+            }
+            catch (Exception ex)
+            {
+
+                // IF THE RECORDS WERE REMAPPED BEFORE THE FAILURE (FOR EXAMPLE A NETWORK ERROR WHILE SENDING), EACH ONE IS LOGGED AS
+                // FAILED WITH ITS PAYLOAD, SO THE RETRY TASK CAN RESEND IT
+
+                string errorMessage = this.DescribeException(ex);
+
+                ruleResult = new ReplicationRuleResult(
+                    ruleNum: replicationRule.RuleNum,
+                    targetType: replicationRule.TargetType,
+                    recordCount: remappedReplicationRecords != null ? remappedReplicationRecords.Count : 0,
+                    success: false,
+                    errorMessage: errorMessage
+                );
+
+                if (remappedReplicationRecords != null)
+                {
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, errorMessage);
+                }
+
+            }
+
             ruleResult.Operation = operation;
             return ruleResult;
 
@@ -219,197 +265,338 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, Utilities utils)
+        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, Utilities utils)
         {
 
-            int recordCount = 0;
+            int recordCount = remappedReplicationRecords.Count;
+            ReplicationRuleResult ruleResult;
+
+            switch (replicationRule.TargetType)
+            {
+
+                case "AzureEventHub":
+
+                    // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
+                    // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES),
+                    //                    03 = OperationFieldName (OPTIONAL: BODY FIELD THAT RECEIVES THE OPERATION)
+                    // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
+
+                    string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
+                    string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
+                    FabricEventSchemaUri eventSchemaUri = null;
+
+                    // MaxBatchKBOverride DEPENDS ON THE EVENT HUBS TIER. BLANK OR INVALID USES THE DEFAULT, WHICH IS SAFE FOR THE
+                    // BASIC TIER'S 256 KB LIMIT. STANDARD AND HIGHER TIERS CAN SET UP TO 850.
+
+                    int maxBatchKB;
+                    int maxBatchBytes = int.TryParse((replicationRule.CredentialValue03 ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out maxBatchKB) && maxBatchKB > 0
+                        ? (int)Math.Min((long)maxBatchKB * 1000, AzureEventHubPusher.MaximumMaxBatchBytes)
+                        : AzureEventHubPusher.DefaultMaxBatchBytes;
+
+                    if (eventSchemaUriValue != "")
+                    {
+
+                        // FABRIC EVENT SCHEMA EVENTSTREAMS REJECT EVENTS WITHOUT A CLOUDEVENTS SOURCE, SO DON'T SEND ANYTHING
+
+                        if (eventSource == "")
+                        {
+                            string missingSourceMessage = "The rule has an Event Schema URI, but its credential has no Event Source. Set Event Source on the credential (for example, your company's website URL).";
+                            ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, missingSourceMessage);
+                            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, missingSourceMessage);
+                            return ruleResult;
+                        }
+
+                        eventSchemaUri = new FabricEventSchemaUri(eventSchemaUriValue);
+
+                    }
+
+                    AzureEventHubPushResult eventHubPushResult = AzureEventHubPusher.Push(
+                        credential: AzureEventHubPusher.GetCredential(replicationRule.CredentialValue01),
+                        records: remappedReplicationRecords,
+                        idFieldName: replicationRule.Option02,
+                        eventSchemaUri: eventSchemaUri,
+                        eventSource: eventSource,
+                        maxBatchBytes: maxBatchBytes,
+                        operation: operation,
+                        operationFieldName: replicationRule.Option03
+                    );
+
+                    ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, eventHubPushResult.Success, eventHubPushResult.ErrorSummary);
+
+                    for (int i = 0; i < recordCount; i++)
+                    {
+                        string recordError = "";
+                        bool recordFailed = eventHubPushResult.FailedRecordErrors.TryGetValue(i, out recordError);
+                        ruleResult.RecordOutcomes.Add(this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordFailed ? recordError : ""));
+                    }
+
+                    return ruleResult;
+
+                case "SalesforceRESTAPI":
+
+                    // RULE OPTIONS: 01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
+                    // THESE POSITIONS MUST MATCH THE OptionKeys LIST IN THE RULES FORM SCRIPT.
+
+                    bool isDelete = operation == "Delete";
+                    bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
+
+                    // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
+
+                    if (isDelete && !deleteInSalesforce)
+                    {
+                        string skippedMessage = "Delete skipped, because the rule's DeleteBehavior isn't Delete.";
+                        ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, true, skippedMessage);
+                        ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage);
+                        return ruleResult;
+                    }
+
+                    SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
+                        credential: new SalesforceAPICredential(
+                            ClientId: replicationRule.CredentialValue01,
+                            ClientSecret: replicationRule.CredentialValue02,
+                            Username: replicationRule.CredentialValue03,
+                            Password: replicationRule.CredentialValue04,
+                            SecurityToken: replicationRule.CredentialValue05
+                        )
+                    );
+
+                    utils.WriteLogMessage((isDelete ? "Deleting " : "Pushing ") + recordCount + " records " + (isDelete ? "from" : "to") + " Salesforce.");
+
+                    SalesforceAPIUpsertResults salesforceUpsertResults = isDelete
+                        ? salesforceRestAPI.DeleteRecords(
+                            objectName: replicationRule.Option01,
+                            externalIDFieldName: replicationRule.Option02,
+                            records: remappedReplicationRecords
+                        ).GetAwaiter().GetResult()
+                        : salesforceRestAPI.UpsertRecords(
+                            objectName: replicationRule.Option01,
+                            externalIDFieldName: replicationRule.Option02,
+                            records: remappedReplicationRecords
+                        ).GetAwaiter().GetResult();
+
+                    // BATCHES ARE SENT IN ORDER: UPSERTS 200 RECORDS AT A TIME, DELETES 25 (THE COMPOSITE API'S SUBREQUEST LIMIT)
+
+                    int batchSize = isDelete ? 25 : 200;
+                    List<string> salesforceErrors = new List<string>();
+                    List<ReplicationRecordOutcome> salesforceOutcomes = new List<ReplicationRecordOutcome>();
+
+                    for (int batchIndex = 0; batchIndex < salesforceUpsertResults.responses.Count; batchIndex++)
+                    {
+
+                        SalesforceAPIUpsertResponse response = salesforceUpsertResults.responses[batchIndex];
+                        int firstRecordIndex = batchIndex * batchSize;
+                        int lastRecordIndex = Math.Min(firstRecordIndex + batchSize, recordCount);
+
+                        // A FAILED BATCH (AUTH, BAD OBJECT, HTTP ERROR) HAS NO RECORD RESULTS, ONLY AN ERROR CODE AND MESSAGE.
+                        // EVERY RECORD IN IT FAILED.
+
+                        string batchError = response.success ? "" : "Batch failed: " + (response.errorCode + " " + response.message).Trim();
+
+                        if (batchError != "")
+                        {
+                            salesforceErrors.Add(batchError);
+                        }
+
+                        // A SUCCESSFUL BATCH CAN STILL CONTAIN INDIVIDUAL RECORD FAILURES, MATCHED BACK BY EXTERNAL ID
+
+                        Dictionary<string, string> recordErrors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                        foreach (Dictionary<string, string> recordFailure in response.recordResultsFailures)
+                        {
+
+                            // A RECORD THAT'S ALREADY GONE FROM SALESFORCE COUNTS AS DELETED, SO A RETRY OR A SECOND DELETE ISN'T A FAILURE
+
+                            string failureCode = recordFailure.ContainsKey("errorCode") ? recordFailure["errorCode"] : "";
+
+                            if (isDelete && (failureCode == "NOT_FOUND" || failureCode == "ENTITY_IS_DELETED"))
+                            {
+                                continue;
+                            }
+
+                            string failedExternalID = recordFailure.ContainsKey("externalID") ? recordFailure["externalID"] : (recordFailure.ContainsKey("id") ? recordFailure["id"] : "");
+                            string failureMessage = recordFailure.ContainsKey("errorMessage") ? recordFailure["errorMessage"] : "";
+
+                            recordErrors[failedExternalID ?? ""] = failureMessage;
+                            salesforceErrors.Add("Record '" + failedExternalID + "' failed: " + failureMessage);
+
+                        }
+
+                        for (int i = firstRecordIndex; i < lastRecordIndex; i++)
+                        {
+                            string recordError = "";
+                            bool recordFailed = batchError != "" || recordErrors.TryGetValue(GetRecordID(remappedReplicationRecords[i], replicationRule.Option02), out recordError);
+                            salesforceOutcomes.Add(this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, batchError != "" ? batchError : (recordFailed ? recordError : "")));
+                        }
+
+                    }
+
+                    ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, salesforceErrors.Count == 0, string.Join(" | ", salesforceErrors));
+                    ruleResult.RecordOutcomes = salesforceOutcomes;
+                    return ruleResult;
+
+                default:
+
+                    string unknownTargetMessage = "Unknown target type '" + replicationRule.TargetType + "'.";
+                    ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, unknownTargetMessage);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, unknownTargetMessage);
+                    return ruleResult;
+
+            }
+
+        }
+
+
+
+        private List<ReplicationRecordOutcome> BuildOutcomes(ReplicationRule replicationRule, List<Dictionary<string, object>> records, string status, string errorMessage)
+        {
+            return records.Select(record => this.BuildOutcome(replicationRule, record, status, errorMessage)).ToList();
+        }
+
+
+
+        private ReplicationRecordOutcome BuildOutcome(ReplicationRule replicationRule, Dictionary<string, object> record, string status, string errorMessage)
+        {
+            return new ReplicationRecordOutcome(
+                recordID: GetRecordID(record, replicationRule.Option02),
+                payload: JsonConvert.SerializeObject(record),
+                status: status,
+                errorMessage: errorMessage
+            );
+        }
+
+
+
+        // THE RECORD'S VALUE FOR THE RULE'S ID FIELD (Option02 FOR BOTH TARGETS), MATCHED WITHOUT REGARD TO CASE. BLANK WHEN THE
+        // RULE HAS NO ID FIELD OR THE RECORD DOESN'T MAP IT.
+
+        private static string GetRecordID(Dictionary<string, object> record, string idFieldName)
+        {
+
+            if (!string.IsNullOrWhiteSpace(idFieldName))
+            {
+                foreach (KeyValuePair<string, object> field in record)
+                {
+                    if (string.Equals(field.Key, idFieldName.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return (Convert.ToString(field.Value, CultureInfo.InvariantCulture) ?? "").Trim();
+                    }
+                }
+            }
+
+            return "";
+
+        }
+
+
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
+        /* Name:     WriteReplicationLog
+        /* Purpose:  Writes the outcomes to ue_AIR_IDOReplicationLogs. Trigger runs log every record. Background
+        /*           task runs log every record when the run loaded LogAllRecordsLimit records or fewer, and only
+        /*           failed records above that. A rule that failed before its records were remapped gets one row
+        /*           with no payload. Never throws: a logging problem must not fail the user's save.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        private const int LogAllRecordsLimit = 100;
+
+        private const int MaxPayloadLength = 4000;
+
+        private const int MaxErrorMessageLength = 2000;
+
+        private const int DefaultRetries = 3;
+
+        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
+        {
 
             try
             {
 
-                // LOOP THROUGH RECORDS AND GET REMAPPED RECORDS
+                bool logEveryRecord = !isBackgroundTask || recordCountLoaded <= LogAllRecordsLimit;
+                List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
+                DateTime attemptDate = DateTime.Now;
 
-                // @todo, need to extract this from the Rules loop, then I can loop through the records once, rather than rule count times. Should give major performance increase if you have lots of rules for a single IDO.
-
-                List<Dictionary<string, object>> remappedReplicationRecords = this.RemapRecords(
-                    fields: replicationRule.MapFieldsList,
-                    recordsResponseData: replicationRecordsResponse
-                );
-
-                recordCount = remappedReplicationRecords.Count;
-
-                // SEND RECORDS
-
-                switch (replicationRule.TargetType)
+                foreach (ReplicationRuleResult ruleResult in ruleResults)
                 {
 
-                    case "AzureEventHub":
+                    if (ruleResult.RecordOutcomes.Count == 0)
+                    {
 
-                        // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
-                        // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES),
-                        //                    03 = OperationFieldName (OPTIONAL: BODY FIELD THAT RECEIVES THE OPERATION)
-                        // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
-
-                        string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
-                        string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
-                        FabricEventSchemaUri eventSchemaUri = null;
-
-                        // MaxBatchKBOverride DEPENDS ON THE EVENT HUBS TIER. BLANK OR INVALID USES THE DEFAULT, WHICH IS SAFE FOR THE
-                        // BASIC TIER'S 256 KB LIMIT. STANDARD AND HIGHER TIERS CAN SET UP TO 850.
-
-                        int maxBatchKB;
-                        int maxBatchBytes = int.TryParse((replicationRule.CredentialValue03 ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out maxBatchKB) && maxBatchKB > 0
-                            ? (int)Math.Min((long)maxBatchKB * 1000, AzureEventHubPusher.MaximumMaxBatchBytes)
-                            : AzureEventHubPusher.DefaultMaxBatchBytes;
-
-                        if (eventSchemaUriValue != "")
+                        if (!ruleResult.Success)
                         {
-
-                            // FABRIC EVENT SCHEMA EVENTSTREAMS REJECT EVENTS WITHOUT A CLOUDEVENTS SOURCE, SO DON'T SEND ANYTHING
-
-                            if (eventSource == "")
-                            {
-                                return new ReplicationRuleResult(
-                                    ruleNum: replicationRule.RuleNum,
-                                    targetType: replicationRule.TargetType,
-                                    recordCount: recordCount,
-                                    success: false,
-                                    errorMessage: "The rule has an Event Schema URI, but its credential has no Event Source. Set Event Source on the credential (for example, your company's website URL)."
-                                );
-                            }
-
-                            eventSchemaUri = new FabricEventSchemaUri(eventSchemaUriValue);
-
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusFailed, ruleResult.ErrorMessage), attemptDate));
                         }
 
-                        AzureEventHubPushResult eventHubPushResult = AzureEventHubPusher.Push(
-                            credential: AzureEventHubPusher.GetCredential(replicationRule.CredentialValue01),
-                            records: remappedReplicationRecords,
-                            idFieldName: replicationRule.Option02,
-                            eventSchemaUri: eventSchemaUri,
-                            eventSource: eventSource,
-                            maxBatchBytes: maxBatchBytes,
-                            operation: operation,
-                            operationFieldName: replicationRule.Option03
-                        );
+                        continue;
 
-                        return new ReplicationRuleResult(
-                            ruleNum: replicationRule.RuleNum,
-                            targetType: replicationRule.TargetType,
-                            recordCount: recordCount,
-                            success: eventHubPushResult.Success,
-                            errorMessage: eventHubPushResult.ErrorSummary
-                        );
+                    }
 
-                    case "SalesforceRESTAPI":
-
-                        // RULE OPTIONS: 01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
-                        // THESE POSITIONS MUST MATCH THE OptionKeys LIST IN THE RULES FORM SCRIPT.
-
-                        bool isDelete = operation == "Delete";
-                        bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
-
-                        // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
-
-                        if (isDelete && !deleteInSalesforce)
+                    foreach (ReplicationRecordOutcome outcome in ruleResult.RecordOutcomes)
+                    {
+                        if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed)
                         {
-                            return new ReplicationRuleResult(
-                                ruleNum: replicationRule.RuleNum,
-                                targetType: replicationRule.TargetType,
-                                recordCount: recordCount,
-                                success: true,
-                                errorMessage: "Delete skipped, because the rule's DeleteBehavior isn't Delete."
-                            );
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, outcome, attemptDate));
                         }
+                    }
 
-                        SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
-                            credential: new SalesforceAPICredential(
-                                ClientId: replicationRule.CredentialValue01,
-                                ClientSecret: replicationRule.CredentialValue02,
-                                Username: replicationRule.CredentialValue03,
-                                Password: replicationRule.CredentialValue04,
-                                SecurityToken: replicationRule.CredentialValue05
-                            )
-                        );
+                }
 
-                        utils.WriteLogMessage((isDelete ? "Deleting " : "Pushing ") + recordCount + " records " + (isDelete ? "from" : "to") + " Salesforce.");
-
-                        SalesforceAPIUpsertResults salesforceUpsertResults = isDelete
-                            ? salesforceRestAPI.DeleteRecords(
-                                objectName: replicationRule.Option01,
-                                externalIDFieldName: replicationRule.Option02,
-                                records: remappedReplicationRecords
-                            ).GetAwaiter().GetResult()
-                            : salesforceRestAPI.UpsertRecords(
-                                objectName: replicationRule.Option01,
-                                externalIDFieldName: replicationRule.Option02,
-                                records: remappedReplicationRecords
-                            ).GetAwaiter().GetResult();
-
-                        List<string> salesforceErrors = new List<string>();
-
-                        foreach (SalesforceAPIUpsertResponse response in salesforceUpsertResults.responses)
-                        {
-
-                            // A FAILED BATCH (AUTH, BAD OBJECT, HTTP ERROR) HAS NO RECORD RESULTS, ONLY AN ERROR CODE AND MESSAGE
-
-                            if (!response.success)
-                            {
-                                salesforceErrors.Add("Batch failed: " + (response.errorCode + " " + response.message).Trim());
-                            }
-
-                            // A SUCCESSFUL BATCH CAN STILL CONTAIN INDIVIDUAL RECORD FAILURES
-
-                            foreach (Dictionary<string, string> recordFailure in response.recordResultsFailures)
-                            {
-
-                                // A RECORD THAT'S ALREADY GONE FROM SALESFORCE COUNTS AS DELETED, SO A RETRY OR A SECOND DELETE ISN'T A FAILURE
-
-                                string failureCode = recordFailure.ContainsKey("errorCode") ? recordFailure["errorCode"] : "";
-
-                                if (isDelete && (failureCode == "NOT_FOUND" || failureCode == "ENTITY_IS_DELETED"))
-                                {
-                                    continue;
-                                }
-
-                                salesforceErrors.Add("Record '" + (recordFailure.ContainsKey("id") ? recordFailure["id"] : "") + "' failed: " + (recordFailure.ContainsKey("errorMessage") ? recordFailure["errorMessage"] : ""));
-                            }
-
-                        }
-
-                        return new ReplicationRuleResult(
-                            ruleNum: replicationRule.RuleNum,
-                            targetType: replicationRule.TargetType,
-                            recordCount: recordCount,
-                            success: salesforceErrors.Count == 0,
-                            errorMessage: string.Join(" | ", salesforceErrors)
-                        );
-
-                    default:
-
-                        return new ReplicationRuleResult(
-                            ruleNum: replicationRule.RuleNum,
-                            targetType: replicationRule.TargetType,
-                            recordCount: recordCount,
-                            success: false,
-                            errorMessage: "Unknown target type '" + replicationRule.TargetType + "'."
-                        );
-
+                for (int i = 0; i < logRows.Count; i += 200)
+                {
+                    sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList());
                 }
 
             }
             catch (Exception ex)
             {
-
-                return new ReplicationRuleResult(
-                    ruleNum: replicationRule.RuleNum,
-                    targetType: replicationRule.TargetType,
-                    recordCount: recordCount,
-                    success: false,
-                    errorMessage: this.DescribeException(ex)
-                );
-
+                utils.WriteLogMessage("Couldn't write the replication log: " + this.DescribeException(ex));
             }
+
+        }
+
+
+
+        private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, ReplicationRecordOutcome outcome, DateTime attemptDate)
+        {
+
+            string payload = outcome.Payload;
+            string errorMessage = outcome.ErrorMessage ?? "";
+
+            // A PAYLOAD OVER THE COLUMN'S 4,000 CHARACTERS ISN'T STORED, BECAUSE A CUT-OFF PAYLOAD COULDN'T BE RESENT
+
+            if (payload != null && payload.Length > MaxPayloadLength)
+            {
+                payload = null;
+                errorMessage = (errorMessage + " The payload is over 4,000 characters, so it wasn't stored and can't be retried.").Trim();
+            }
+
+            if (errorMessage.Length > MaxErrorMessageLength)
+            {
+                errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
+            }
+
+            // ONLY A FAILED RECORD WITH A STORED PAYLOAD CAN BE RETRIED
+
+            bool canRetry = outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null;
+            int ruleNumber;
+
+            return sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
+            {
+                { "RuleNum", int.TryParse(ruleResult.RuleNum, NumberStyles.Integer, CultureInfo.InvariantCulture, out ruleNumber) ? (object)ruleNumber : null },
+                { "IDOName", IDOName },
+                { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
+                { "Operation", operation != "" ? operation : null },
+                { "RecordID", outcome.RecordID != "" ? outcome.RecordID : null },
+                { "Payload", payload },
+                { "Status", outcome.Status },
+                { "ErrorMessage", errorMessage != "" ? errorMessage : null },
+                { "RetriesRemaining", canRetry ? DefaultRetries : 0 },
+                { "AttemptCount", 1 },
+                { "LastAttemptDate", attemptDate }
+            });
 
         }
 
