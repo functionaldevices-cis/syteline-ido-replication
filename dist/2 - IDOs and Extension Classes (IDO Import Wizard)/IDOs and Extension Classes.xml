@@ -415,6 +415,187 @@ END</Expression>
          <DataRules />
          <CachedSettings />
       </IDODefinition>
+      <IDODefinition Name="ue_AIR_IDOReplicationLogs">
+         <ServerName>ue_AIR</ServerName>
+         <AccessAs>ue_</AccessAs>
+         <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
+         <RevisionNo>1</RevisionNo>
+         <RevisionDate>2026-11-13T11:08:46</RevisionDate>
+         <ReplaceFlag>0</ReplaceFlag>
+         <QuoteTableAliases>0</QuoteTableAliases>
+         <IDOOpInsert>1</IDOOpInsert>
+         <IDOOpUpdate>1</IDOOpUpdate>
+         <IDOOpDelete>1</IDOOpDelete>
+         <FormOpNavigate>1</FormOpNavigate>
+         <FormOpRefresh>1</FormOpRefresh>
+         <FormOpFilter>1</FormOpFilter>
+         <FormOpNewCopy>1</FormOpNewCopy>
+         <FormOpSave>1</FormOpSave>
+         <FormOpDelete>1</FormOpDelete>
+         <FormOpNotes>1</FormOpNotes>
+         <FormOpGraph>1</FormOpGraph>
+         <FormOpSpreadsheetDisabled>0</FormOpSpreadsheetDisabled>
+         <Tables>
+            <Table Name="ue_AIR_idorepl_log" Alias="log" Type="PRIMARY" />
+         </Tables>
+         <Methods />
+         <Properties>
+            <Property Name="AttemptCount" Key="0" Binding="BOUND" Sequence="16">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>attempt_count</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CreateDate" Key="0" Binding="BOUND" Sequence="3">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreateDate</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="CreatedBy" Key="0" Binding="BOUND" Sequence="1">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>CreatedBy</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="ErrorMessage" Key="0" Binding="BOUND" Sequence="14">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>error_message</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="IDOName" Key="0" Binding="BOUND" Sequence="9">
+               <PropertyClass>IDOName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>ido_name</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="InWorkflow" Key="0" Binding="BOUND" Sequence="7">
+               <PropertyClass>InWorkflowBase</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>InWorkflow</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>tinyint</ColumnDataType>
+                  <IsRORecordFlag>1</IsRORecordFlag>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="LastAttemptDate" Key="0" Binding="BOUND" Sequence="17">
+               <PropertyClass>DateTime</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>last_attempt_date</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="NoteExistsFlag" Key="0" Binding="BOUND" Sequence="6">
+               <PropertyClass>FlagNy</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>NoteExistsFlag</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Operation" Key="0" Binding="BOUND" Sequence="11">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>operation</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Payload" Key="0" Binding="BOUND" Sequence="13">
+               <PropertyClass>LongerDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>payload</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <ColumnDataType>LongListType</ColumnDataType>
+                  <DataLength>4000</DataLength>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RecordDate" Key="0" Binding="BOUND" Sequence="4">
+               <PropertyClass>CurrentDate</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RecordDate</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RecordID" Key="0" Binding="BOUND" Sequence="12">
+               <PropertyClass>LongDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>record_id</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="RetriesRemaining" Key="0" Binding="BOUND" Sequence="15">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>retries_remaining</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RowPointer" Key="0" Binding="BOUND" Sequence="5">
+               <PropertyClass>RowPointer</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>RowPointer</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="RuleNum" Key="0" Binding="BOUND" Sequence="8">
+               <PropertyClass>GenericInt</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>rule_num</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="Status" Key="0" Binding="BOUND" Sequence="18">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>status</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+                  <InlineList>ENTRIES(Succeeded,Failed,Skipped) DISPLAY(1) VALUE(1)</InlineList>
+               </PropertyAttributes>
+            </Property>
+            <Property Name="TargetType" Key="0" Binding="BOUND" Sequence="10">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>target_type</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes />
+            </Property>
+            <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
+               <PropertyClass>UserName</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>UpdatedBy</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsReadOnly>1</IsReadOnly>
+               </PropertyAttributes>
+            </Property>
+         </Properties>
+         <Rules />
+         <DataRules />
+         <CachedSettings />
+      </IDODefinition>
       <IDODefinition Name="ue_AIR_IDOReplicationMapFields">
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
