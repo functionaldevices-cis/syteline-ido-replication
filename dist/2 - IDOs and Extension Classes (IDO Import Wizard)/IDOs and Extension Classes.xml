@@ -39,7 +39,13 @@
             EventAction.EventHandlerRowPointer = RowPointer AND
             EventAction.ActionType = 21 AND
             EventAction.Description = 'ue_AIR_ReplicationTrigger' AND
-            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '")'
+            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '", 1, "", "' +
+               CASE EventName
+                  WHEN 'IdoPostItemInsert' THEN 'Insert'
+                  WHEN 'IdoPostItemUpdate' THEN 'Update'
+                  WHEN 'IdoOnItemDelete' THEN 'Delete'
+                  ELSE ''
+               END + '")'
       ) = 1
    THEN
       1

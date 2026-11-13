@@ -203,8 +203,10 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                     // EACH TRIGGER PASSES ITS OWN OPERATION. THE RECORD CAP (1) AND A BLANK RULE NUMBER (EVERY RULE) ARE
                     // PASSED ONLY TO REACH THE OPERATION PARAMETER.
-                    // THE ue_AIR_IDOReplicationConfigs IDO'S ue_EventHandlersAreSetup PROPERTY COMPARES THESE STRINGS
-                    // EXACTLY, SO KEEP IT IN SYNC WITH ANY CHANGE HERE.
+                    // TWO DERIVED PROPERTIES COMPARE THESE STRINGS EXACTLY, SO KEEP BOTH IN SYNC WITH ANY CHANGE HERE (AND
+                    // WITH OperationForEvent):
+                    //   - ue_AIR_IDOReplicationConfigs.ue_EventHandlersAreSetup (ONE COMPARISON PER EVENT)
+                    //   - ue_AIR_EventHandlers.ue_IsSetup (ONE COMPARISON, PICKING THE OPERATION FROM EventName)
 
                     string operation = OperationForEvent(eventHandler.Properties["EventName"].GetValue<string>());
 
@@ -233,6 +235,8 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             return result;
 
         }
+
+        // KEEP IN SYNC WITH THE CASE EventName IN THE ue_AIR_EventHandlers IDO'S ue_IsSetup DERIVED PROPERTY
 
         private static string OperationForEvent(string eventName)
         {
