@@ -94,6 +94,8 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
         /***********************************************************************************************************/
 
         // THE IDO USUALLY RETURNS A DateTime. STRINGS ARE READ IN MONGOOSE'S yyyyMMdd FORMAT OR ISO FORMATS, WITH INVARIANT CULTURE.
+        // STRINGS ARE PARSED AS A DateTimeOffset AND ITS CLOCK TIME IS KEPT, SO A "Z" OR "+hh:mm" VALUE ISN'T SHIFTED INTO THE SERVER'S
+        // TIME ZONE (WHICH COULD MOVE THE DATE BY A DAY).
 
         private static DateTime ToDateTime(object input)
         {
@@ -103,15 +105,20 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
                 return (DateTime)input;
             }
 
-            string text = (Convert.ToString(input, CultureInfo.InvariantCulture) ?? "").Trim();
-            DateTime parsed;
-
-            if (DateTime.TryParseExact(text, ReplicationFieldTransformTypes.DateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+            if (input is DateTimeOffset)
             {
-                return parsed;
+                return ((DateTimeOffset)input).DateTime;
             }
 
-            return DateTime.Parse(text, CultureInfo.InvariantCulture);
+            string text = (Convert.ToString(input, CultureInfo.InvariantCulture) ?? "").Trim();
+            DateTimeOffset parsed;
+
+            if (DateTimeOffset.TryParseExact(text, ReplicationFieldTransformTypes.DateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+            {
+                return parsed.DateTime;
+            }
+
+            return DateTimeOffset.Parse(text, CultureInfo.InvariantCulture).DateTime;
 
         }
 

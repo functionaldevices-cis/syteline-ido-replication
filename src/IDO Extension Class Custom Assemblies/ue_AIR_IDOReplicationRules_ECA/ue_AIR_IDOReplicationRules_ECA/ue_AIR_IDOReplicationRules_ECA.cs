@@ -227,6 +227,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
             List<Dictionary<string, object>> remappedReplicationRecords = null;
             ReplicationRuleResult ruleResult;
 
+            // WARNINGS FROM TRANSFORMATIONS THAT COULDN'T CONVERT A VALUE, KEYED BY THE REMAPPED RECORD (REFERENCE EQUALITY)
+
+            Dictionary<Dictionary<string, object>, string> transformWarnings = new Dictionary<Dictionary<string, object>, string>();
+
             try
             {
 
@@ -234,10 +238,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 remappedReplicationRecords = this.RemapRecords(
                     fields: replicationRule.MapFieldsList,
-                    recordsResponseData: replicationRecordsResponse
+                    recordsResponseData: replicationRecordsResponse,
+                    transformWarnings: transformWarnings
                 );
 
-                ruleResult = this.SendRule(replicationRule, remappedReplicationRecords, operation, logEveryRecord, utils);
+                if (transformWarnings.Count > 0)
+                {
+                    utils.WriteLogMessage("Rule '" + replicationRule.RuleNum + "': " + transformWarnings.Count + " record(s) had a value a transformation couldn't convert, which was sent unchanged. The replication log rows say which.");
+                }
+
+                ruleResult = this.SendRule(replicationRule, remappedReplicationRecords, operation, logEveryRecord, utils, transformWarnings);
 
             }
             catch (Exception ex)
@@ -258,7 +268,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 if (remappedReplicationRecords != null)
                 {
-                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, errorMessage, logEveryRecord);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, errorMessage, logEveryRecord, transformWarnings);
                 }
 
             }
@@ -270,7 +280,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, bool logEveryRecord, Utilities utils)
+        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, bool logEveryRecord, Utilities utils, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
         {
 
             int recordCount = remappedReplicationRecords.Count;
@@ -307,7 +317,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         {
                             string missingSourceMessage = "The rule has an Event Schema URI, but its credential has no Event Source. Set Event Source on the credential (for example, your company's website URL).";
                             ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, missingSourceMessage);
-                            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, missingSourceMessage, logEveryRecord);
+                            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, missingSourceMessage, logEveryRecord, transformWarnings);
                             return ruleResult;
                         }
 
@@ -332,7 +342,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         string recordError = "";
                         bool recordFailed = eventHubPushResult.FailedRecordErrors.TryGetValue(i, out recordError);
-                        ReplicationRecordOutcome eventHubOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordFailed ? recordError : "", logEveryRecord);
+                        ReplicationRecordOutcome eventHubOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordFailed ? recordError : "", logEveryRecord, transformWarnings);
 
                         if (eventHubOutcome != null)
                         {
@@ -356,7 +366,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         string skippedMessage = "Delete skipped, because the rule's DeleteBehavior isn't Delete.";
                         ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, true, skippedMessage);
-                        ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage, logEveryRecord);
+                        ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage, logEveryRecord, transformWarnings);
                         return ruleResult;
                     }
 
@@ -474,7 +484,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                                 }
                             }
 
-                            ReplicationRecordOutcome salesforceOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordError != "" ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordError, logEveryRecord);
+                            ReplicationRecordOutcome salesforceOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordError != "" ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordError, logEveryRecord, transformWarnings);
 
                             if (salesforceOutcome != null)
                             {
@@ -493,7 +503,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     string unknownTargetMessage = "Unknown target type '" + replicationRule.TargetType + "'.";
                     ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, unknownTargetMessage);
-                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, unknownTargetMessage, logEveryRecord);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, unknownTargetMessage, logEveryRecord, transformWarnings);
                     return ruleResult;
 
             }
@@ -502,9 +512,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private List<ReplicationRecordOutcome> BuildOutcomes(ReplicationRule replicationRule, List<Dictionary<string, object>> records, string status, string errorMessage, bool logEveryRecord)
+        private List<ReplicationRecordOutcome> BuildOutcomes(ReplicationRule replicationRule, List<Dictionary<string, object>> records, string status, string errorMessage, bool logEveryRecord, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
         {
-            return records.Select(record => this.BuildOutcome(replicationRule, record, status, errorMessage, logEveryRecord)).Where(outcome => outcome != null).ToList();
+            return records.Select(record => this.BuildOutcome(replicationRule, record, status, errorMessage, logEveryRecord, transformWarnings)).Where(outcome => outcome != null).ToList();
         }
 
 
@@ -512,20 +522,33 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // RETURNS NULL FOR A RECORD THAT WON'T BE LOGGED (A SUCCEEDED OR SKIPPED RECORD IN A RUN THAT ONLY LOGS FAILURES), SO
         // LARGE BACKGROUND RUNS DON'T SERIALIZE AND HOLD A PAYLOAD FOR EVERY RECORD
 
-        private ReplicationRecordOutcome BuildOutcome(ReplicationRule replicationRule, Dictionary<string, object> record, string status, string errorMessage, bool logEveryRecord)
+        private ReplicationRecordOutcome BuildOutcome(ReplicationRule replicationRule, Dictionary<string, object> record, string status, string errorMessage, bool logEveryRecord, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
         {
 
-            if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed)
+            string warning;
+
+            if (transformWarnings == null || !transformWarnings.TryGetValue(record, out warning))
+            {
+                warning = "";
+            }
+
+            // A RECORD WITH A WARNING IS ALWAYS LOGGED, EVEN IN A RUN THAT ONLY LOGS FAILURES, SO THE PROBLEM IS VISIBLE
+
+            if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed && warning == "")
             {
                 return null;
             }
 
-            return new ReplicationRecordOutcome(
+            ReplicationRecordOutcome outcome = new ReplicationRecordOutcome(
                 recordID: GetRecordID(record, replicationRule.Option02),
                 payload: JsonConvert.SerializeObject(record),
                 status: status,
                 errorMessage: errorMessage
             );
+
+            outcome.Warning = warning;
+            return outcome;
+
         }
 
 
@@ -602,7 +625,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     foreach (ReplicationRecordOutcome outcome in ruleResult.RecordOutcomes)
                     {
-                        if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed)
+                        if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed || outcome.Warning != "")
                         {
                             logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, outcome, attemptDate));
                         }
@@ -639,6 +662,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             string payload = outcome.Payload;
             string errorMessage = outcome.ErrorMessage ?? "";
+
+            if (!string.IsNullOrEmpty(outcome.Warning))
+            {
+                errorMessage = (errorMessage + " Warning: " + outcome.Warning).Trim();
+            }
 
             // A PAYLOAD OVER THE COLUMN'S 4,000 CHARACTERS ISN'T STORED, BECAUSE A CUT-OFF PAYLOAD COULDN'T BE RESENT
 
@@ -1269,7 +1297,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData)
+        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
         {
 
             Dictionary<string, object> remappedRecord;
@@ -1299,10 +1327,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     }
 
-                    // APPLY THE FIELD'S TRANSFORMATION (SourceTransformation), IF IT HAS ONE. NULLS STAY NULL, AND A VALUE THE
-                    // TRANSFORMATION CAN'T CONVERT IS SENT UNCHANGED.
+                    // APPLY THE FIELD'S TRANSFORMATION (SourceTransformation), IF IT HAS ONE. NULLS STAY NULL. A VALUE THE
+                    // TRANSFORMATION CAN'T CONVERT IS SENT UNCHANGED, AND THE WARNING IS KEPT FOR THE RECORD'S LOG ROW.
 
-                    remappedRecord[field.OutputFieldName] = field.Transformation.Convert(value);
+                    string transformWarning;
+                    remappedRecord[field.OutputFieldName] = field.Transformation.Convert(value, out transformWarning);
+
+                    if (transformWarning != "" && transformWarnings != null)
+                    {
+                        string fieldWarning = "Field '" + field.OutputFieldName + "': " + transformWarning + ".";
+                        string existingWarnings;
+                        transformWarnings[remappedRecord] = transformWarnings.TryGetValue(remappedRecord, out existingWarnings) ? existingWarnings + " " + fieldWarning : fieldWarning;
+                    }
 
                 }
 
