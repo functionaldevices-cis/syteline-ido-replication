@@ -246,7 +246,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     case "AzureEventHub":
 
                         // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
-                        // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES)
+                        // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES),
+                        //                    03 = OperationFieldName (OPTIONAL: BODY FIELD THAT RECEIVES THE OPERATION)
                         // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
 
                         string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
@@ -287,7 +288,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             idFieldName: replicationRule.Option02,
                             eventSchemaUri: eventSchemaUri,
                             eventSource: eventSource,
-                            maxBatchBytes: maxBatchBytes
+                            maxBatchBytes: maxBatchBytes,
+                            operation: operation,
+                            operationFieldName: replicationRule.Option03
                         );
 
                         return new ReplicationRuleResult(

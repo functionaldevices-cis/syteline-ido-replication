@@ -1927,7 +1927,8 @@
                <ScriptLine>                     new List&lt;string&gt;()</ScriptLine>
                <ScriptLine>                     {</ScriptLine>
                <ScriptLine>                        "EventSchemaUri",</ScriptLine>
-               <ScriptLine>                        "UpsertFieldName"</ScriptLine>
+               <ScriptLine>                        "UpsertFieldName",</ScriptLine>
+               <ScriptLine>                        "OperationFieldName"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  }</ScriptLine>
                <ScriptLine>               }</ScriptLine>

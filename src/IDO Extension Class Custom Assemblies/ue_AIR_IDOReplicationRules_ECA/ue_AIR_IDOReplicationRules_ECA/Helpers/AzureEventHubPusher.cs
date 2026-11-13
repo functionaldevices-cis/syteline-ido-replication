@@ -53,8 +53,16 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers
 
 
 
-        public static AzureEventHubPushResult Push(AzureEventHubSASCredential credential, List<Dictionary<string, object>> records, string idFieldName = null, FabricEventSchemaUri eventSchemaUri = null, string eventSource = null, int maxBatchBytes = AzureEventHubPusher.DefaultMaxBatchBytes)
+        // operation IS Insert, Update, Delete OR BLANK (UNKNOWN). WHEN SET, EVERY EVENT CARRIES IT AS THE "operation" USER
+        // PROPERTY, WHICH FABRIC EVENTSTREAMS KEEP IN EVENT METADATA WHEN THE SOURCE USES EXTENDED FEATURES.
+        // operationFieldName IS OPTIONAL. WHEN SET, THE OPERATION IS ALSO WRITTEN INTO EVERY EVENT BODY UNDER THAT NAME (BLANK
+        // WHEN UNKNOWN), SO DESTINATIONS THAT ONLY READ THE BODY SEE IT. AN EVENT SCHEMA MUST THEN INCLUDE THAT FIELD.
+
+        public static AzureEventHubPushResult Push(AzureEventHubSASCredential credential, List<Dictionary<string, object>> records, string idFieldName = null, FabricEventSchemaUri eventSchemaUri = null, string eventSource = null, int maxBatchBytes = AzureEventHubPusher.DefaultMaxBatchBytes, string operation = null, string operationFieldName = null)
         {
+
+            operation = (operation ?? "").Trim();
+            operationFieldName = (operationFieldName ?? "").Trim();
 
             AzureEventHubPushResult result = new AzureEventHubPushResult(records.Count);
 
@@ -79,23 +87,42 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers
             foreach (Dictionary<string, object> record in records)
             {
 
+                // THE BODY IS THE RECORD, PLUS THE OPERATION FIELD WHEN THE RULE NAMES ONE. THE RECORD ITSELF ISN'T CHANGED.
+
+                Dictionary<string, object> body = record;
+
+                if (operationFieldName != "")
+                {
+                    body = new Dictionary<string, object>(record);
+                    body[operationFieldName] = operation;
+                }
+
                 Dictionary<string, object> eventEnvelope = new Dictionary<string, object>()
                 {
-                    { "Body", JsonConvert.SerializeObject(record) }
+                    { "Body", JsonConvert.SerializeObject(body) }
                 };
+
+                Dictionary<string, string> userProperties = new Dictionary<string, string>();
 
                 if (eventSchemaUri != null)
                 {
-                    eventEnvelope["UserProperties"] = new Dictionary<string, string>()
-                    {
-                        { "cloudEvents:specversion", "1.0" },
-                        { "cloudEvents:type", eventSchemaUri.SchemaName },
-                        { "cloudEvents:source", eventSource.Trim() },
-                        { "cloudEvents:id", Guid.NewGuid().ToString() },
-                        { "cloudEvents:time", pushTimestamp },
-                        { "cloudEvents:datacontenttype", "application/json" },
-                        { "cloudEvents:dataschema", eventSchemaUri.Url }
-                    };
+                    userProperties["cloudEvents:specversion"] = "1.0";
+                    userProperties["cloudEvents:type"] = eventSchemaUri.SchemaName;
+                    userProperties["cloudEvents:source"] = eventSource.Trim();
+                    userProperties["cloudEvents:id"] = Guid.NewGuid().ToString();
+                    userProperties["cloudEvents:time"] = pushTimestamp;
+                    userProperties["cloudEvents:datacontenttype"] = "application/json";
+                    userProperties["cloudEvents:dataschema"] = eventSchemaUri.Url;
+                }
+
+                if (operation != "")
+                {
+                    userProperties["operation"] = operation;
+                }
+
+                if (userProperties.Count > 0)
+                {
+                    eventEnvelope["UserProperties"] = userProperties;
                 }
 
                 string serializedEvent = JsonConvert.SerializeObject(eventEnvelope);
