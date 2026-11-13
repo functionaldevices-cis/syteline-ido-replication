@@ -32,9 +32,28 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
             this.Type = ReplicationFieldTransformTypes.Values.Contains(Type) ? Type : "";
         }
 
-        public object Convert(string input)
+        public bool IsNone => this.Type == "";
+
+        // CONVERTS A NON-NULL VALUE. NULL STAYS NULL. A VALUE THE TRANSFORMATION CAN'T CONVERT IS RETURNED UNCHANGED, SO ONE BAD
+        // VALUE DOESN'T FAIL EVERY RECORD IN THE RULE.
+
+        public object Convert(object input)
         {
-            return ReplicationFieldTransformTypes.GetLogic(this.Type)(input);
+
+            if (input == null || this.IsNone)
+            {
+                return input;
+            }
+
+            try
+            {
+                return ReplicationFieldTransformTypes.GetLogic(this.Type)(input);
+            }
+            catch (Exception)
+            {
+                return input;
+            }
+
         }
 
     }

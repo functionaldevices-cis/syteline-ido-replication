@@ -1283,25 +1283,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 foreach (ReplicationField field in fields)
                 {
 
+                    object value;
+
                     if (field.SourceType == "IDOProperty")
                     {
 
-                        if (!record.PropertyValues[recordsResponseData.PropertyKeys[field.SourceValue]].IsNull)
-                        {
-                            remappedRecord[field.OutputFieldName] = record.PropertyValues[recordsResponseData.PropertyKeys[field.SourceValue]].GetValue<object>();
-                        }
-                        else
-                        {
-                            remappedRecord[field.OutputFieldName] = null;
-                        }
+                        IDOPropertyValue propertyValue = record.PropertyValues[recordsResponseData.PropertyKeys[field.SourceValue]];
+                        value = propertyValue.IsNull ? null : propertyValue.GetValue<object>();
 
                     }
                     else
                     {
 
-                        remappedRecord[field.OutputFieldName] = field.SourceValue;
+                        value = field.SourceValue;
 
                     }
+
+                    // APPLY THE FIELD'S TRANSFORMATION (SourceTransformation), IF IT HAS ONE. NULLS STAY NULL, AND A VALUE THE
+                    // TRANSFORMATION CAN'T CONVERT IS SENT UNCHANGED.
+
+                    remappedRecord[field.OutputFieldName] = field.Transformation.Convert(value);
 
                 }
 

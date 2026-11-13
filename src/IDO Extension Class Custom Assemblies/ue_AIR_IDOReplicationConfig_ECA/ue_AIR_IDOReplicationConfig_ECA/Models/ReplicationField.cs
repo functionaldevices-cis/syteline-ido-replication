@@ -19,7 +19,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
 
         public string SourceValue { get; set; }
 
-        public ReplicationFieldTransform Transformaton { get; set; } = new ReplicationFieldTransform();
+        public ReplicationFieldTransform Transformation { get; set; } = new ReplicationFieldTransform();
 
 
 
@@ -42,7 +42,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
                 this.SourceValue = encodedValue;
             }
 
-            this.Transformaton = new ReplicationFieldTransform(transformationName ?? "");
+            this.Transformation = new ReplicationFieldTransform(transformationName ?? "");
 
         }
 
@@ -53,7 +53,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
             this.SourceType = sourceType;
             this.SourceValue = sourceValue;
 
-            this.Transformaton = new ReplicationFieldTransform(transformationName ?? "");
+            this.Transformation = new ReplicationFieldTransform(transformationName ?? "");
 
         }
 
