@@ -43,6 +43,28 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers {
 
         }
 
+        // QUOTES A VALUE FOR AN IDO FILTER. SINGLE QUOTES ARE DOUBLED SO A VALUE CAN'T END THE STRING EARLY AND CHANGE
+        // THE FILTER.
+
+        public string QuoteFilterValue(string value)
+        {
+
+            return "'" + (value ?? "").Replace("'", "''") + "'";
+
+        }
+
+        // BUILDS "<property> IN ('a', 'b', ...)" WITH EVERY VALUE QUOTED. AN EMPTY LIST MATCHES NOTHING, BECAUSE "IN ()"
+        // ISN'T VALID.
+
+        public string BuildInFilter(string propertyName, IEnumerable<string> values)
+        {
+
+            List<string> quotedValues = (values ?? Enumerable.Empty<string>()).Select(value => this.QuoteFilterValue(value)).ToList();
+
+            return quotedValues.Count > 0 ? propertyName + " IN (" + string.Join(", ", quotedValues) + ")" : "1 = 0";
+
+        }
+
         public LoadRecordsResponseData LoadRecords(string IDOName, string filter, string orderBy, List<string> properties, int recordCap = 0)
         {
 
