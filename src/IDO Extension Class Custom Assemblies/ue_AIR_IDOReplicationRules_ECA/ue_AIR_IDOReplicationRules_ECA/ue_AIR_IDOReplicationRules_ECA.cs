@@ -742,12 +742,34 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private void RetryFailedReplications(SytelineInternalAPI sytelineAPI, Utilities utils)
         {
 
+            // ONLY ROWS FOR CURRENTLY ACTIVE RULES ARE LOADED, SO ROWS LEFT FOR INACTIVE OR DELETED RULES CAN'T FILL THE
+            // RetryRowLimit WINDOW AND STOP ACTIVE RULES FROM BEING RETRIED
+
+            LoadRecordsResponseData activeRulesResponse = sytelineAPI.LoadRecords(
+                IDOName: "ue_AIR_IDOReplicationRules",
+                properties: new List<string>() { "RuleNum" },
+                filter: "IsActive = 1",
+                orderBy: "RuleNum ASC",
+                recordCap: 10000
+            );
+
+            List<string> activeRuleNums = activeRulesResponse.Items
+                .Select(item => item.PropertyValues[activeRulesResponse.PropertyKeys["RuleNum"]].Value ?? "")
+                .Where(ruleNum => ruleNum != "")
+                .ToList();
+
+            if (activeRuleNums.Count == 0)
+            {
+                utils.WriteLogMessage("There are no active replication rules, so nothing was retried.");
+                return;
+            }
+
             // OLDEST FIRST, AT MOST RetryRowLimit ROWS PER RUN. ROWS WITHOUT A PAYLOAD CAN'T BE RESENT, AND ARE WRITTEN WITH NO RETRIES.
 
             LoadRecordsResponseData logResponse = sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_IDOReplicationLogs",
-                properties: new List<string>() { "RowPointer", "RuleNum", "IDOName", "Operation", "Payload", "RetriesRemaining", "AttemptCount" },
-                filter: "Status = 'Failed' AND RetriesRemaining > 0 AND Payload IS NOT NULL",
+                properties: new List<string>() { "RowPointer", "RuleNum", "IDOName", "Operation", "RecordID", "Payload", "RetriesRemaining", "AttemptCount" },
+                filter: "Status = 'Failed' AND RetriesRemaining > 0 AND Payload IS NOT NULL AND " + sytelineAPI.BuildInFilter("RuleNum", activeRuleNums),
                 orderBy: "CreateDate ASC",
                 recordCap: RetryRowLimit
             );
@@ -772,10 +794,53 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 RuleNum = ReadValue(item, "RuleNum"),
                 IDOName = ReadValue(item, "IDOName"),
                 Operation = NormalizeOperation(ReadValue(item, "Operation")),
+                RecordID = ReadValue(item, "RecordID"),
+                RowPointer = ReadValue(item, "RowPointer"),
                 Payload = ReadValue(item, "Payload"),
                 RetriesRemaining = ReadInt(item, "RetriesRemaining"),
                 AttemptCount = ReadInt(item, "AttemptCount")
             }).ToList();
+
+            // A FAILED ROW IS SUPERSEDED WHEN THE SAME RECORD WAS REPLICATED AGAIN BY THE SAME RULE LATER (WHATEVER THAT ROW'S
+            // STATUS). RESENDING IT WOULD OVERWRITE NEWER DATA, OR RE-CREATE A RECORD THAT WAS DELETED SINCE. SUPERSEDED ROWS ARE
+            // MARKED SKIPPED, WHICH ALSO COLLAPSES SEVERAL FAILED ROWS FOR ONE RECORD DOWN TO THE NEWEST.
+
+            HashSet<string> supersededRowPointers = this.FindSupersededLogRows(
+                sytelineAPI,
+                logRows.Where(logRow => logRow.RecordID != "").Select(logRow => new KeyValuePair<string, string>(logRow.IDOName + "|" + logRow.RuleNum, logRow.RecordID)).ToList(),
+                logRows.Where(logRow => logRow.RecordID != "").Select(logRow => logRow.RowPointer).ToList()
+            );
+
+            if (supersededRowPointers.Count > 0)
+            {
+
+                List<IDOUpdateItem> supersededUpdates = logRows
+                    .Where(logRow => supersededRowPointers.Contains(logRow.RowPointer))
+                    .Select(logRow => sytelineAPI.BuildUpdateItem(logRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    {
+                        new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
+                        new IDOUpdateProperty("ErrorMessage", "Superseded by a newer replication of this record, so it wasn't resent.", true),
+                        new IDOUpdateProperty("RetriesRemaining", 0, true)
+                    }))
+                    .ToList();
+
+                for (int i = 0; i < supersededUpdates.Count; i += 200)
+                {
+                    try
+                    {
+                        sytelineAPI.UpdateRecords("ue_AIR_IDOReplicationLogs", supersededUpdates.Skip(i).Take(200).ToList());
+                    }
+                    catch (Exception ex)
+                    {
+                        utils.WriteLogMessage("Couldn't mark superseded replication log rows: " + this.DescribeException(ex));
+                    }
+                }
+
+                utils.WriteLogMessage("Skipped " + supersededUpdates.Count + " failed row(s) superseded by a newer replication of the same record.");
+
+                logRows = logRows.Where(logRow => !supersededRowPointers.Contains(logRow.RowPointer)).ToList();
+
+            }
 
             // EACH GROUP SHARES A RULE AND AN OPERATION, SO IT CAN BE SENT TOGETHER
 
@@ -886,6 +951,63 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // RETURNS THE ROWPOINTERS OF CANDIDATE ROWS THAT AREN'T THE NEWEST LOG ROW FOR THEIR RECORD. candidateKeys PAIRS
+        // "IDOName|RuleNum" WITH THE RECORD ID. ALL LOG ROWS FOR THOSE RECORDS ARE LOADED NEWEST FIRST, SO THE FIRST ROW SEEN FOR
+        // EACH RECORD IS THE NEWEST, WITHOUT HAVING TO PARSE DATES.
+
+        private HashSet<string> FindSupersededLogRows(SytelineInternalAPI sytelineAPI, List<KeyValuePair<string, string>> candidateKeys, List<string> candidateRowPointers)
+        {
+
+            HashSet<string> superseded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> newestRowPointerByRecord = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var ruleGroup in candidateKeys.GroupBy(candidateKey => candidateKey.Key))
+            {
+
+                string[] keyParts = ruleGroup.Key.Split('|');
+                List<string> recordIDs = ruleGroup.Select(candidateKey => candidateKey.Value).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                for (int i = 0; i < recordIDs.Count; i += 200)
+                {
+
+                    LoadRecordsResponseData historyResponse = sytelineAPI.LoadRecords(
+                        IDOName: "ue_AIR_IDOReplicationLogs",
+                        properties: new List<string>() { "RowPointer", "RecordID" },
+                        filter: "IDOName = " + sytelineAPI.QuoteFilterValue(keyParts[0]) + " AND RuleNum = " + sytelineAPI.QuoteFilterValue(keyParts[1]) + " AND " + sytelineAPI.BuildInFilter("RecordID", recordIDs.Skip(i).Take(200)),
+                        orderBy: "CreateDate DESC",
+                        recordCap: 100000
+                    );
+
+                    foreach (IDOItem historyItem in historyResponse.Items)
+                    {
+                        string recordKey = ruleGroup.Key + "|" + (historyItem.PropertyValues[historyResponse.PropertyKeys["RecordID"]].Value ?? "");
+
+                        if (!newestRowPointerByRecord.ContainsKey(recordKey))
+                        {
+                            newestRowPointerByRecord[recordKey] = historyItem.PropertyValues[historyResponse.PropertyKeys["RowPointer"]].Value ?? "";
+                        }
+                    }
+
+                }
+
+            }
+
+            for (int i = 0; i < candidateKeys.Count; i++)
+            {
+                string newestRowPointer;
+
+                if (newestRowPointerByRecord.TryGetValue(candidateKeys[i].Key + "|" + candidateKeys[i].Value, out newestRowPointer) && !string.Equals(newestRowPointer, candidateRowPointers[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    superseded.Add(candidateRowPointers[i]);
+                }
+            }
+
+            return superseded;
+
+        }
+
+
+
         private IDOUpdateItem BuildLogRetryUpdate(SytelineInternalAPI sytelineAPI, string itemID, string status, string errorMessage, int retriesRemaining, int previousAttemptCount, DateTime attemptDate)
         {
 
@@ -919,7 +1041,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // SUCCEEDED AND SKIPPED ROWS OLDER THAN THE CUTOFF ARE DELETED. FAILED ROWS ARE KEPT, FOR INVESTIGATION.
 
-            string cutoffDate = DateTime.Now.AddDays(-purgeAfterDays).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            // yyyyMMdd IS READ THE SAME WAY UNDER EVERY SQL SERVER DATEFORMAT. yyyy-MM-dd ISN'T: DMY LOGINS READ IT AS YEAR-DAY-MONTH.
+
+            DateTime cutoff = DateTime.Now.AddDays(-purgeAfterDays);
+            string cutoffDate = cutoff.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             int countPurged = 0;
 
             for (int batch = 0; batch < PurgeMaxBatches; batch++)
@@ -952,7 +1077,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             }
 
-            utils.WriteLogMessage("Purged " + countPurged + " succeeded or skipped replication log row(s) created before " + cutoffDate + ".");
+            utils.WriteLogMessage("Purged " + countPurged + " succeeded or skipped replication log row(s) created before " + cutoff.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".");
 
         }
 
