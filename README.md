@@ -100,7 +100,7 @@ Each map field has an output name, a source type (`IDOProperty` or `Literal`), a
 | Checkbox (Byte) to True/False String | `"True"` / `"False"` |
 | Checkbox (Byte) to Yes/No String | `"Yes"` / `"No"` |
 
-Empty values stay empty. A value a transformation can't convert is sent unchanged.
+Empty values stay empty. A value a transformation can't convert is sent unchanged, and the record's replication log row gets a warning naming the field and value.
 
 ## Replication log and retries
 
