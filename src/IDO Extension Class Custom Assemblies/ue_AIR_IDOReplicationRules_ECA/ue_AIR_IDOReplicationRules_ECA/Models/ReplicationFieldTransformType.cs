@@ -24,16 +24,16 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
             get; set;
         }
 
-        public Func<string, object> Logic
+        public Func<object, object> Logic
         {
             get; set;
         }
 
-        public ReplicationFieldTransformType(string Value, string Label = null, Func<string, object> Logic = null)
+        public ReplicationFieldTransformType(string Value, string Label = null, Func<object, object> Logic = null)
         {
             this.Value = Value;
             this.Label = Label ?? Value;
-            this.Logic = Logic ?? ((string input) => (input));
+            this.Logic = Logic ?? ((object input) => input);
         }
 
     }

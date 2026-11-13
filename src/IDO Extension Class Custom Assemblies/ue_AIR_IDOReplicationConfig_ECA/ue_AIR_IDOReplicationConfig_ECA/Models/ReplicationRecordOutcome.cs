@@ -31,6 +31,10 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
 
         public string ErrorMessage { get; set; }
 
+        // A PROBLEM THAT DIDN'T STOP THE RECORD BEING SENT, SUCH AS A VALUE A TRANSFORMATION COULDN'T CONVERT. "" WHEN THERE'S NONE.
+
+        public string Warning { get; set; } = "";
+
         public ReplicationRecordOutcome(string recordID, string payload, string status, string errorMessage = "")
         {
             this.RecordID = recordID ?? "";
