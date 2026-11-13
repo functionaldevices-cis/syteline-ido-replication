@@ -17,11 +17,12 @@ Everything uses the `AIR` prefix: tables `ue_AIR_idorepl_*_mst`, IDOs `ue_AIR_*`
 ## Layout
 
 - `dist/` holds the install package. The numbered folders are the install order:
-  1. `1 - SQL (Paste Rows Append)/`: `SQL Tables.csv` and `SQL Columns.csv`, pasted as appended rows into Syteline's SQL Tables/Columns forms to create the four `_mst` tables.
+  1. `1 - SQL (Paste Rows Append)/`: `SQL Tables.csv` and `SQL Columns.csv`, pasted as appended rows into Syteline's SQL Tables/Columns forms to create the five `_mst` tables. Each table also gets a view of the same name without `_mst`, and that view is what the IDO binds as its table.
   2. `2 - IDOs and Extension Classes (IDO Import Wizard)/IDOs and Extension Classes.xml`: an `<ObjectStudioExport>` with the IDOs. The `<CustomAssemblies>` section at the end embeds both compiled extension class DLLs as base64 (`<AssemblyImage>`), so this file changes whenever an assembly is re-uploaded. Never edit those images by hand.
      - `ue_AIR_IDOReplicationRules` binds `ue_AIR_IDOReplicationRules_ECA` and exposes `ue_ReplicateRecordToExternalSystems` and the custom-load `ue_LoadOutputPreview`.
      - `ue_AIR_IDOReplicationConfigs` extends the standard `IdoCollections` IDO (no table of its own, one row per IDO collection). It binds `ue_AIR_IDOReplicationConfig_ECA` and exposes `ue_UpdateAESTriggers`.
-     - `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationMapFields`, `ue_AIR_IDOReplicationMapFieldSources` and `ue_AIR_EventHandlers` have no extension class.
+     - `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationMapFields`, `ue_AIR_IDOReplicationMapFieldSources`, `ue_AIR_IDOReplicationLogs` and `ue_AIR_EventHandlers` have no extension class.
+     - `ue_AIR_IDOReplicationLogs` (table `ue_AIR_idorepl_log_mst`) is the replication log: one row per record per rule, with the operation, the payload as sent (JSON, up to 4,000 characters), the status (`Succeeded`, `Failed`, `Skipped`), the error, and `retries_remaining` (default 3) for the retry task. Nothing writes to it yet.
   3. `3 - Mongoose Objects (FormSync)/*.XML`: FormSync exports of the forms (`ue_AIR_IDOReplicationRules`, `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationConfigs`, `ue_AIR_ImportJob`, `ue_AIR_JobFileInputWindow`) plus `Strings.XML`. Form scripts are embedded as `<ScriptLine>` elements.
 
   These files come from Mongoose export tools. Edit them minimally and keep the exporter's formatting: 3-space indentation, element order, and any UTF-8 BOM.
