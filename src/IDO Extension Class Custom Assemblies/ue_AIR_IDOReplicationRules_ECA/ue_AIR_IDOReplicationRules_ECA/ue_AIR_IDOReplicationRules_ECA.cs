@@ -146,6 +146,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     recordCountLoaded = replicationRecordsResponse.Items.Count;
 
+                    // TRIGGER RUNS LOG EVERY RECORD. BACKGROUND TASK RUNS LOG EVERY RECORD UP TO LogAllRecordsLimit, AND ONLY FAILURES ABOVE IT.
+
+                    bool logEveryRecord = BGTaskNum <= 0 || recordCountLoaded <= LogAllRecordsLimit;
+
                     utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
 
                     // STEP THROUGH EACH RULE
@@ -164,6 +168,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                                 replicationRule: replicationRuleKeyValPair.Value,
                                 replicationRecordsResponse: replicationRecordsResponse,
                                 operation: operation,
+                                logEveryRecord: logEveryRecord,
                                 utils: utils
                             ));
 
@@ -216,7 +221,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, Utilities utils)
+        private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, bool logEveryRecord, Utilities utils)
         {
 
             List<Dictionary<string, object>> remappedReplicationRecords = null;
@@ -232,7 +237,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     recordsResponseData: replicationRecordsResponse
                 );
 
-                ruleResult = this.SendRule(replicationRule, remappedReplicationRecords, operation, utils);
+                ruleResult = this.SendRule(replicationRule, remappedReplicationRecords, operation, logEveryRecord, utils);
 
             }
             catch (Exception ex)
@@ -253,7 +258,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 if (remappedReplicationRecords != null)
                 {
-                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, errorMessage);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, errorMessage, logEveryRecord);
                 }
 
             }
@@ -265,7 +270,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, Utilities utils)
+        private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, bool logEveryRecord, Utilities utils)
         {
 
             int recordCount = remappedReplicationRecords.Count;
@@ -302,7 +307,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         {
                             string missingSourceMessage = "The rule has an Event Schema URI, but its credential has no Event Source. Set Event Source on the credential (for example, your company's website URL).";
                             ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, missingSourceMessage);
-                            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, missingSourceMessage);
+                            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, missingSourceMessage, logEveryRecord);
                             return ruleResult;
                         }
 
@@ -327,7 +332,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         string recordError = "";
                         bool recordFailed = eventHubPushResult.FailedRecordErrors.TryGetValue(i, out recordError);
-                        ruleResult.RecordOutcomes.Add(this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordFailed ? recordError : ""));
+                        ReplicationRecordOutcome eventHubOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordFailed ? recordError : "", logEveryRecord);
+
+                        if (eventHubOutcome != null)
+                        {
+                            ruleResult.RecordOutcomes.Add(eventHubOutcome);
+                        }
                     }
 
                     return ruleResult;
@@ -346,7 +356,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         string skippedMessage = "Delete skipped, because the rule's DeleteBehavior isn't Delete.";
                         ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, true, skippedMessage);
-                        ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage);
+                        ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage, logEveryRecord);
                         return ruleResult;
                     }
 
@@ -397,7 +407,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             salesforceErrors.Add(batchError);
                         }
 
-                        // A SUCCESSFUL BATCH CAN STILL CONTAIN INDIVIDUAL RECORD FAILURES, MATCHED BACK BY EXTERNAL ID
+                        // A SUCCESSFUL BATCH CAN STILL CONTAIN INDIVIDUAL RECORD FAILURES. COLLECT THEIR MESSAGES FOR THE RULE'S SUMMARY,
+                        // AND KEY DELETE FAILURES BY EXTERNAL ID FOR MATCHING BELOW.
 
                         Dictionary<string, string> recordErrors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -423,9 +434,53 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         for (int i = firstRecordIndex; i < lastRecordIndex; i++)
                         {
-                            string recordError = "";
-                            bool recordFailed = batchError != "" || recordErrors.TryGetValue(GetRecordID(remappedReplicationRecords[i], replicationRule.Option02), out recordError);
-                            salesforceOutcomes.Add(this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordFailed ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, batchError != "" ? batchError : (recordFailed ? recordError : "")));
+
+                            string recordError = batchError;
+
+                            if (recordError == "")
+                            {
+                                if (isDelete)
+                                {
+
+                                    // DELETE RESULTS ARE KEYED BY EXTERNAL ID (RECORDS WITHOUT ONE COME BACK LAST), AND DeleteRecordBatch
+                                    // READS THE ID WITH THE SAME CASE-INSENSITIVE, TRIMMED LOOKUP AS GetRecordID
+
+                                    string deleteError;
+
+                                    if (recordErrors.TryGetValue(GetRecordID(remappedReplicationRecords[i], replicationRule.Option02), out deleteError))
+                                    {
+                                        recordError = deleteError != "" ? deleteError : "Delete failed.";
+                                    }
+
+                                }
+                                else
+                                {
+
+                                    // UPSERT RESULTS COME BACK IN THE ORDER SENT, SO MATCH BY POSITION IN THE BATCH, NOT BY EXTERNAL ID,
+                                    // WHICH UpsertRecordBatch READS CASE-SENSITIVELY AND UNTRIMMED
+
+                                    int resultIndex = i - firstRecordIndex;
+
+                                    if (resultIndex >= response.recordResults.Count)
+                                    {
+                                        recordError = "Salesforce returned no result for this record.";
+                                    }
+                                    else if (response.recordResults[resultIndex].ContainsKey("success") && response.recordResults[resultIndex]["success"] == "False")
+                                    {
+                                        string upsertError = response.recordResults[resultIndex].ContainsKey("errorMessage") ? response.recordResults[resultIndex]["errorMessage"] : "";
+                                        recordError = upsertError != "" ? upsertError : "Upsert failed.";
+                                    }
+
+                                }
+                            }
+
+                            ReplicationRecordOutcome salesforceOutcome = this.BuildOutcome(replicationRule, remappedReplicationRecords[i], recordError != "" ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, recordError, logEveryRecord);
+
+                            if (salesforceOutcome != null)
+                            {
+                                salesforceOutcomes.Add(salesforceOutcome);
+                            }
+
                         }
 
                     }
@@ -438,7 +493,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     string unknownTargetMessage = "Unknown target type '" + replicationRule.TargetType + "'.";
                     ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, false, unknownTargetMessage);
-                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, unknownTargetMessage);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusFailed, unknownTargetMessage, logEveryRecord);
                     return ruleResult;
 
             }
@@ -447,15 +502,24 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private List<ReplicationRecordOutcome> BuildOutcomes(ReplicationRule replicationRule, List<Dictionary<string, object>> records, string status, string errorMessage)
+        private List<ReplicationRecordOutcome> BuildOutcomes(ReplicationRule replicationRule, List<Dictionary<string, object>> records, string status, string errorMessage, bool logEveryRecord)
         {
-            return records.Select(record => this.BuildOutcome(replicationRule, record, status, errorMessage)).ToList();
+            return records.Select(record => this.BuildOutcome(replicationRule, record, status, errorMessage, logEveryRecord)).Where(outcome => outcome != null).ToList();
         }
 
 
 
-        private ReplicationRecordOutcome BuildOutcome(ReplicationRule replicationRule, Dictionary<string, object> record, string status, string errorMessage)
+        // RETURNS NULL FOR A RECORD THAT WON'T BE LOGGED (A SUCCEEDED OR SKIPPED RECORD IN A RUN THAT ONLY LOGS FAILURES), SO
+        // LARGE BACKGROUND RUNS DON'T SERIALIZE AND HOLD A PAYLOAD FOR EVERY RECORD
+
+        private ReplicationRecordOutcome BuildOutcome(ReplicationRule replicationRule, Dictionary<string, object> record, string status, string errorMessage, bool logEveryRecord)
         {
+
+            if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed)
+            {
+                return null;
+            }
+
             return new ReplicationRecordOutcome(
                 recordID: GetRecordID(record, replicationRule.Option02),
                 payload: JsonConvert.SerializeObject(record),
@@ -507,6 +571,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int MaxErrorMessageLength = 2000;
 
+        private const int MaxRecordIDLength = 255;
+
         private const int DefaultRetries = 3;
 
         private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
@@ -544,9 +610,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 }
 
+                // EACH GROUP OF 200 IS INSERTED ON ITS OWN, SO ONE BAD ROW CAN'T STOP THE GROUPS AFTER IT
+
                 for (int i = 0; i < logRows.Count; i += 200)
                 {
-                    sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList());
+                    try
+                    {
+                        sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList());
+                    }
+                    catch (Exception ex)
+                    {
+                        utils.WriteLogMessage("Couldn't write replication log rows " + (i + 1) + " to " + Math.Min(i + 200, logRows.Count) + ": " + this.DescribeException(ex));
+                    }
                 }
 
             }
@@ -573,6 +648,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = (errorMessage + " The payload is over 4,000 characters, so it wasn't stored and can't be retried.").Trim();
             }
 
+            string recordID = outcome.RecordID ?? "";
+
+            if (recordID.Length > MaxRecordIDLength)
+            {
+                recordID = recordID.Substring(0, MaxRecordIDLength);
+            }
+
             if (errorMessage.Length > MaxErrorMessageLength)
             {
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
@@ -589,7 +671,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "IDOName", IDOName },
                 { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
                 { "Operation", operation != "" ? operation : null },
-                { "RecordID", outcome.RecordID != "" ? outcome.RecordID : null },
+                { "RecordID", recordID != "" ? recordID : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
                 { "ErrorMessage", errorMessage != "" ? errorMessage : null },
