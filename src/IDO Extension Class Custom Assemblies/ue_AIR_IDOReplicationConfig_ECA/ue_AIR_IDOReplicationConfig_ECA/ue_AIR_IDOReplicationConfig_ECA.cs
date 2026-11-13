@@ -200,13 +200,22 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                 foreach (IDOUpdateItem eventHandler in insertedEventHandlers.Skip(1))
                 {
+
+                    // EACH TRIGGER PASSES ITS OWN OPERATION. THE RECORD CAP (1) AND A BLANK RULE NUMBER (EVERY RULE) ARE
+                    // PASSED ONLY TO REACH THE OPERATION PARAMETER.
+                    // THE ue_AIR_IDOReplicationConfigs IDO'S ue_EventHandlersAreSetup PROPERTY COMPARES THESE STRINGS
+                    // EXACTLY, SO KEEP IT IN SYNC WITH ANY CHANGE HERE.
+
+                    string operation = OperationForEvent(eventHandler.Properties["EventName"].GetValue<string>());
+
                     eventActions.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
                         {"EventHandlerRowPointer", eventHandler.Properties["RowPointer"].GetValue<string>()},
                         {"Description", "ue_AIR_ReplicationTrigger"},
                         {"Sequence", "10"},
                         {"ActionType", "21"},
-                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\")"},
+                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\", 1, \"\", \"" + operation + "\")"},
                     }));
+
                 }
 
                 insertedEventActions = sytelineAPI.CreateRecords(
@@ -224,6 +233,25 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             return result;
 
         }
+
+        private static string OperationForEvent(string eventName)
+        {
+
+            switch (eventName)
+            {
+                case "IdoPostItemInsert":
+                    return "Insert";
+                case "IdoPostItemUpdate":
+                    return "Update";
+                case "IdoOnItemDelete":
+                    return "Delete";
+                default:
+                    return "";
+            }
+
+        }
+
+
 
         private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName)
         {

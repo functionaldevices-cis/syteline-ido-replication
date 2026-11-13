@@ -18,6 +18,8 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string TargetType { get; set; }
 
+        public string Operation { get; set; }
+
         public int RecordCount { get; set; }
 
         public bool Success { get; set; }
@@ -30,10 +32,11 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
         /*********************************************** COue_AIR_IDOReplicationRules_ECATRUCTOR ***********************************************/
         /***********************************************************************************************************/
 
-        public ReplicationRuleResult(string ruleNum, string targetType, int recordCount, bool success, string errorMessage = "")
+        public ReplicationRuleResult(string ruleNum, string targetType, int recordCount, bool success, string errorMessage = "", string operation = "")
         {
             this.RuleNum = ruleNum;
             this.TargetType = targetType;
+            this.Operation = operation ?? "";
             this.RecordCount = recordCount;
             this.Success = success;
             this.ErrorMessage = errorMessage ?? "";
@@ -47,7 +50,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public override string ToString()
         {
-            return "Rule '" + this.RuleNum + "' (" + this.TargetType + "): " + (this.Success ? "succeeded" : "FAILED") + " for " + this.RecordCount + " record(s)." + (this.ErrorMessage != "" ? " " + this.ErrorMessage : "");
+            return "Rule '" + this.RuleNum + "' (" + this.TargetType + (this.Operation != "" ? ", " + this.Operation : "") + "): " + (this.Success ? "succeeded" : "FAILED") + " for " + this.RecordCount + " record(s)." + (this.ErrorMessage != "" ? " " + this.ErrorMessage : "");
         }
 
     }
