@@ -48,7 +48,9 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models.SalesforceRestAPI
 
                     });
 
-                    foreach (string key in record.Keys)
+                    // ITERATE OVER A COPY OF THE KEYS: ON .NET FRAMEWORK, SETTING A VALUE WHILE ENUMERATING THE DICTIONARY THROWS
+
+                    foreach (string key in record.Keys.ToList())
                     {
                         if ((record[key] ?? "").ToString() == "")
                         {

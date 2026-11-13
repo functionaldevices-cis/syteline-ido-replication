@@ -303,6 +303,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     case "SalesforceRESTAPI":
 
+                        // RULE OPTIONS: 01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
+                        // THESE POSITIONS MUST MATCH THE OptionKeys LIST IN THE RULES FORM SCRIPT.
+
+                        bool isDelete = operation == "Delete";
+                        bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
+
+                        // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
+
+                        if (isDelete && !deleteInSalesforce)
+                        {
+                            return new ReplicationRuleResult(
+                                ruleNum: replicationRule.RuleNum,
+                                targetType: replicationRule.TargetType,
+                                recordCount: recordCount,
+                                success: true,
+                                errorMessage: "Delete skipped, because the rule's DeleteBehavior isn't Delete."
+                            );
+                        }
+
                         SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
                             credential: new SalesforceAPICredential(
                                 ClientId: replicationRule.CredentialValue01,
@@ -313,13 +332,19 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             )
                         );
 
-                        utils.WriteLogMessage("Pushing " + recordCount + " records to Salesforce.");
+                        utils.WriteLogMessage((isDelete ? "Deleting " : "Pushing ") + recordCount + " records " + (isDelete ? "from" : "to") + " Salesforce.");
 
-                        SalesforceAPIUpsertResults salesforceUpsertResults = salesforceRestAPI.UpsertRecords(
-                            objectName: replicationRule.Option01,
-                            externalIDFieldName: replicationRule.Option02,
-                            records: remappedReplicationRecords
-                        ).GetAwaiter().GetResult();
+                        SalesforceAPIUpsertResults salesforceUpsertResults = isDelete
+                            ? salesforceRestAPI.DeleteRecords(
+                                objectName: replicationRule.Option01,
+                                externalIDFieldName: replicationRule.Option02,
+                                records: remappedReplicationRecords
+                            ).GetAwaiter().GetResult()
+                            : salesforceRestAPI.UpsertRecords(
+                                objectName: replicationRule.Option01,
+                                externalIDFieldName: replicationRule.Option02,
+                                records: remappedReplicationRecords
+                            ).GetAwaiter().GetResult();
 
                         List<string> salesforceErrors = new List<string>();
 
@@ -337,6 +362,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                             foreach (Dictionary<string, string> recordFailure in response.recordResultsFailures)
                             {
+
+                                // A RECORD THAT'S ALREADY GONE FROM SALESFORCE COUNTS AS DELETED, SO A RETRY OR A SECOND DELETE ISN'T A FAILURE
+
+                                string failureCode = recordFailure.ContainsKey("errorCode") ? recordFailure["errorCode"] : "";
+
+                                if (isDelete && (failureCode == "NOT_FOUND" || failureCode == "ENTITY_IS_DELETED"))
+                                {
+                                    continue;
+                                }
+
                                 salesforceErrors.Add("Record '" + (recordFailure.ContainsKey("id") ? recordFailure["id"] : "") + "' failed: " + (recordFailure.ContainsKey("errorMessage") ? recordFailure["errorMessage"] : ""));
                             }
 
