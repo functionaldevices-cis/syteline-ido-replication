@@ -5,8 +5,8 @@
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_EventHandlers</LabelStringID>
-         <RevisionNo>3</RevisionNo>
-         <RevisionDate>2026-05-07T10:33:28</RevisionDate>
+         <RevisionNo>4</RevisionNo>
+         <RevisionDate>2026-11-13T13:22:13</RevisionDate>
          <Extends>EventHandlers</Extends>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>1</QuoteTableAliases>
@@ -39,7 +39,13 @@
             EventAction.EventHandlerRowPointer = RowPointer AND
             EventAction.ActionType = 21 AND
             EventAction.Description = 'ue_AIR_ReplicationTrigger' AND
-            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '")'
+            EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '", 1, "", "' +
+               CASE EventName
+                  WHEN 'IdoPostItemInsert' THEN 'Insert'
+                  WHEN 'IdoPostItemUpdate' THEN 'Update'
+                  WHEN 'IdoOnItemDelete' THEN 'Delete'
+                  ELSE ''
+               END + '")'
       ) = 1
    THEN
       1
@@ -769,8 +775,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>23</RevisionNo>
-         <RevisionDate>2026-11-13T13:16:30</RevisionDate>
+         <RevisionNo>24</RevisionNo>
+         <RevisionDate>2026-11-13T13:20:45</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -847,6 +853,11 @@ END</Expression>
                      <COMDataType>VARIANT</COMDataType>
                   </Parameter>
                   <Parameter Name="IDOName" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="operation" Sequence="6">
                      <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
                      <INPUT />
                      <COMDataType>VARIANT</COMDataType>
