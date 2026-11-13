@@ -1953,7 +1953,8 @@
                <ScriptLine>                     new List&lt;string&gt;()</ScriptLine>
                <ScriptLine>                     {</ScriptLine>
                <ScriptLine>                        "DestinationName",</ScriptLine>
-               <ScriptLine>                        "ExternalIDFieldName"</ScriptLine>
+               <ScriptLine>                        "ExternalIDFieldName",</ScriptLine>
+               <ScriptLine>                        "DeleteBehavior"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  }</ScriptLine>
                <ScriptLine>               }</ScriptLine>
