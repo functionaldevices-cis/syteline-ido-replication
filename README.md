@@ -5,6 +5,8 @@
 
 An event-driven data replication system for Infor CloudSuite Industrial (Syteline), built on the Mongoose framework. Administrators set up replication rules in Syteline forms: which IDO to watch, which external system to send to, and how each field maps and transforms. When a record is inserted, updated or deleted, an Application Event System (AES) trigger replicates it. Failures are logged and retried automatically.
 
+Full documentation for administrators and developers is in the [wiki](../../wiki).
+
 ## Targets
 
 | Target | Status | Details |

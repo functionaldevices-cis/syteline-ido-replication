@@ -1,0 +1,57 @@
+# Publishes the wiki/ folder to this repository's GitHub wiki.
+#
+# One-time setup: enable Wikis in the repository settings, then create and save any first page in the wiki's web
+# editor. GitHub only creates the wiki's git repository when its first page is saved. This workflow replaces that page.
+#
+# The wiki mirrors wiki/ exactly, so a page edited in the web editor is overwritten on the next publish.
+
+name: Publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+      - ".github/workflows/publish-wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # Always publish main, even when the workflow is run by hand from another branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Mirror wiki/ to the wiki repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if ! git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki-repo; then
+            echo "::error::Couldn't clone the wiki. Enable Wikis in the repository settings and save a first page in the web editor, then re-run this workflow."
+            exit 1
+          fi
+
+          rsync --archive --delete --exclude ".git" wiki/ wiki-repo/
+
+          cd wiki-repo
+          git add --all
+
+          if git diff --cached --quiet; then
+            echo "The wiki is already up to date."
+            exit 0
+          fi
+
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --message "Publish wiki from ${GITHUB_SHA}"
+          git push
