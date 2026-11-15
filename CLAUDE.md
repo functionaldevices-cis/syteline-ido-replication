@@ -22,7 +22,7 @@ Everything uses the `AIR` prefix: tables `ue_AIR_idorepl_*_mst`, IDOs `ue_AIR_*`
      - `ue_AIR_IDOReplicationRules` binds `ue_AIR_IDOReplicationRules_ECA` and exposes `ue_ReplicateRecordToExternalSystems`, the custom-load `ue_LoadOutputPreview` and `ue_RetryFailedReplications`.
      - `ue_AIR_IDOReplicationConfigs` extends the standard `IdoCollections` IDO (no table of its own, one row per IDO collection). It binds `ue_AIR_IDOReplicationConfig_ECA` and exposes `ue_UpdateAESTriggers`.
      - `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationMapFields`, `ue_AIR_IDOReplicationMapFieldSources`, `ue_AIR_IDOReplicationLogs` and `ue_AIR_EventHandlers` have no extension class.
-     - `ue_AIR_IDOReplicationLogs` (table `ue_AIR_idorepl_log_mst`) is the replication log: one row per record per rule, with the operation, the payload as sent (JSON, up to 4,000 characters), the status (`Succeeded`, `Failed`, `Skipped`), the error, and `retries_remaining` (default 3) for the retry task. `WriteReplicationLog` in the Rules ECA writes it at the end of every run: trigger runs (`BGTaskNum` -1) log every record, and background task runs log every record when they loaded 100 or fewer and only failed records above that. A rule that failed before its records were remapped gets one row without a payload. Only a failed row with a stored payload gets retries; a payload over 4,000 characters isn't stored. `ue_RetryFailedReplications(BGTaskNum, purgeAfterDays = 90)`, run as a scheduled background task, resends up to 500 `Failed` rows with retries left from their stored payloads (oldest first, grouped by IDO, rule and operation, through the same `SendRule`), updates each row, and then deletes `Succeeded` and `Skipped` rows older than `purgeAfterDays` (0 turns the purge off). Rows for an inactive or deleted rule are left alone. `Failed` rows are never purged.
+     - `ue_AIR_IDOReplicationLogs` (table `ue_AIR_idorepl_log_mst`) is the replication log: one row per record per rule, with the operation, the payload as sent (JSON, up to 4,000 characters), the status (`Succeeded`, `Failed`, `Skipped`), the error, and `retries_remaining` (default 3) for the retry task. `WriteReplicationLog` in the Rules ECA writes it at the end of every run: trigger runs (`BGTaskNum` -1) log every record, and background task runs log every record when they loaded 100 or fewer and only failed records above that. A rule that failed before its records were remapped gets one row without a payload. Only a failed row with a stored payload gets retries; a payload over 4,000 characters isn't stored. `ue_RetryFailedReplications(BGTaskNum, purgeAfterDays = 90)`, run as a scheduled background task, first marks `Skipped` any `Failed` row whose record the same rule replicated again later (so old data never overwrites newer data or re-creates a deleted record), then resends up to 500 `Failed` rows with retries left from their stored payloads (oldest first, grouped by IDO, rule and operation, through the same `SendRule`), updates each row, and then deletes `Succeeded` and `Skipped` rows older than `purgeAfterDays` (0 turns the purge off). Rows for an inactive or deleted rule are left alone. `Failed` rows are never purged.
   3. `3 - Mongoose Objects (FormSync)/*.XML`: FormSync exports of the forms (`ue_AIR_IDOReplicationRules`, `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationConfigs`, `ue_AIR_ImportJob`, `ue_AIR_JobFileInputWindow`) plus `Strings.XML`. Form scripts are embedded as `<ScriptLine>` elements.
 
   These files come from Mongoose export tools. Edit them minimally and keep the exporter's formatting: 3-space indentation, element order, and any UTF-8 BOM.
@@ -37,6 +37,8 @@ Everything uses the `AIR` prefix: tables `ue_AIR_idorepl_*_mst`, IDOs `ue_AIR_*`
 
 ## How replication works (Rules ECA)
 
+Replication runs inside the user's save, so it must never throw out of the trigger and block that save. Every error is caught, turned into a `ReplicationRuleResult` or log row, and the transaction commits. Keep that true in new code paths. The delete trigger (`IdoOnItemDelete`) runs before the row is removed, so the record can still be loaded.
+
 1. A trigger created by the Config assembly calls `ue_ReplicateRecordToExternalSystems` with the IDO name, a query filter, a record cap, an optional rule number (blank means every active rule) and an optional operation (`Insert`, `Update`, `Delete`, or blank when unknown, as from background tasks). It returns early when there are no active rules.
 2. `LoadReplicationRulesAndMaps` loads the active rules for that IDO along with their map fields. Each map field has a single source: `Name`, `SourceType` (`IDOProperty` or `Literal`), `SourceValue` and `SourceTransformation` on `ue_AIR_IDOReplicationMapFields`. Replication does not use the `Sources` subcollection or the derived `JSON` property.
 3. The union of each rule's source properties is loaded once through `SytelineInternalAPI.LoadRecords`, which wraps `this.Context.Commands`. Data access goes through IDOs, not direct SQL.
@@ -49,7 +51,7 @@ A rule's `CredentialValue01`–`10` come from its linked credential record. What
 - the Credentials form's `UpdateValueLabels` (credential keys)
 - the Rules form's `UpdateVariableUI` `config` dictionary (`CredentialKeys` and `OptionKeys`)
 
-Keep both in sync, and make the extension class read the same positions.
+Keep both in sync, and make the extension class read the same positions. `README.md` documents the same credential values, rule options, transformations and log behavior for administrators, so update its tables when these change.
 
 To add a new target type:
 - add a `case` in that `switch`
@@ -68,3 +70,7 @@ msbuild "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationRules_EC
 Upload the built DLL to Syteline (IDO Extension Class Assemblies). Then re-export the IDOs to refresh `dist/`, which picks up the new assembly image and any method signature changes. `bin/` and `obj/` are gitignored, so don't commit build output.
 
 An IDO method's name in the IDO must exactly match the C# method name, `ue_` prefix included. That applies to strings that reference a method, like the `METHOD("...")` in trigger `EventActions`.
+
+## Pull requests
+
+After pushing changes to a branch, always open a pull request against `main` without asking first. If the branch already has an open pull request, the push updates it.
