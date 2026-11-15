@@ -70,3 +70,7 @@ msbuild "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationRules_EC
 Upload the built DLL to Syteline (IDO Extension Class Assemblies). Then re-export the IDOs to refresh `dist/`, which picks up the new assembly image and any method signature changes. `bin/` and `obj/` are gitignored, so don't commit build output.
 
 An IDO method's name in the IDO must exactly match the C# method name, `ue_` prefix included. That applies to strings that reference a method, like the `METHOD("...")` in trigger `EventActions`.
+
+## Pull requests
+
+After pushing changes to a branch, always open a pull request against `main` without asking first. If the branch already has an open pull request, the push updates it.
