@@ -8,11 +8,8 @@ You need:
 - An Infor CloudSuite Industrial (Syteline) environment where you can add SQL tables, import IDOs, import forms, and define background tasks.
 - Outbound HTTPS from the Syteline application server to each target (your Event Hubs namespace, or Salesforce).
 
-> [!IMPORTANT]
-> **Check the packaged assemblies before you rely on them.** The two extension class assemblies are embedded in the IDO export, and they are only refreshed when someone rebuilds and re-exports them. As of November 15, 2026, the packaged Rules assembly is older than the source: it has no replication log, no retry method and no Salesforce deletes, and the IDO export doesn't define the `ue_RetryFailedReplications` method. Until the package is refreshed:
-> 1. Build both assemblies from source (see [Development](Development)).
-> 2. Upload them on the IDO Extension Class Assemblies form.
-> 3. Add a method named `ue_RetryFailedReplications` to the `ue_AIR_IDOReplicationRules` IDO, set up like `ue_ReplicateRecordToExternalSystems`, and use **Resync Parameters** on it.
+> [!NOTE]
+> The two extension class assemblies are embedded in the IDO export. They match the source only as of the last time someone built them and re-exported the IDOs. If you build from a newer commit, upload your own DLLs after the import (see [Development](Development#deploying-a-change)).
 
 ## 1. SQL tables
 
