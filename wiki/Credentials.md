@@ -10,6 +10,8 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 2. Choose or type the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`, spelled exactly, including capitals. The form then shows and labels only the values that target uses. If no value fields appear, the Target Type is misspelled.
 3. Fill in the values and save.
 
+Set the Target Type in the field beside the grid. It can only be set on a new credential. Once the credential is saved, the Target Type is locked.
+
 **Sensitive values can only be seen while you enter a new credential.** Once the credential is saved, the form hides a sensitive value's input and shows a preview to its right: the first 6 and last 6 characters, such as `Endpoi ... ubname`. Check sensitive values before you save.
 
 | Target type | Sensitive | Not sensitive |
@@ -21,7 +23,7 @@ A value of 12 characters or fewer previews as `...`, so the preview never shows 
 
 ## Changing a credential
 
-Values that aren't sensitive stay editable on a saved credential.
+Values that aren't sensitive stay editable on a saved credential. The Target Type doesn't: to use a different target type, add a new credential.
 
 A sensitive value can't be edited once it is saved, unless it was left blank. A blank one keeps its input until you fill it in and save. To change a saved one, for example after rotating a secret:
 
