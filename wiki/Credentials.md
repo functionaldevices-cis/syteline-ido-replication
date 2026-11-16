@@ -10,11 +10,20 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 2. Choose the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`. The form then shows and labels only the values that target uses.
 3. Fill in the values and save.
 
-**The values are only shown while you enter a new credential.** Once it is saved, the form hides them, and the grid never shows them. Check them before you save.
+**Sensitive values can only be seen while you enter a new credential.** Once the credential is saved, the form hides a sensitive value's input and shows a preview to its right: the first 6 and last 6 characters, such as `Endpoi ...ubname`. Check sensitive values before you save.
+
+| Target type | Sensitive | Not sensitive |
+| --- | --- | --- |
+| `AzureEventHub` | Connection String | Event Source, Max Batch KB Override |
+| `SalesforceRESTAPI` | Client ID, Client Secret | Domain |
+
+A value of 12 characters or fewer previews as `...`, so the preview never shows a whole value.
 
 ## Changing a credential
 
-The form doesn't show a saved credential's values, so they can't be edited there. To change one, for example after rotating a secret:
+Values that aren't sensitive stay editable on a saved credential.
+
+A sensitive value can't be edited once it is saved. To change one, for example after rotating a secret:
 
 1. Add a new credential with the new values.
 2. On the Rules form, point each rule that used the old credential at the new one.
@@ -34,7 +43,7 @@ What each value means is on the target's page:
 ## Keeping credentials safe
 
 > [!WARNING]
-> Credential values are stored as plain text in `ue_AIR_idorepl_cred_mst`. The Credentials form hides them after saving, but they are still shown on the Rules form and can be read through the `ue_AIR_IDOReplicationCredentials` and `ue_AIR_IDOReplicationRules` IDOs.
+> Credential values are stored as plain text in `ue_AIR_idorepl_cred_mst`. The Credentials form hides the sensitive ones after saving, but they are all still shown on the Rules form and can be read through the `ue_AIR_IDOReplicationCredentials` and `ue_AIR_IDOReplicationRules` IDOs.
 
 - Give access to the Credentials and Rules forms, and to those two IDOs, only to the administrators who need it.
 - Use a credential with the least access that works. For Event Hubs, use a shared access policy on the one event hub with only the **Send** claim. For Salesforce, set the external client app to run as a dedicated integration user limited to the objects you replicate.

@@ -228,8 +228,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationCredentials</LabelStringID>
-         <RevisionNo>4</RevisionNo>
-         <RevisionDate>2025-04-23T00:24:58</RevisionDate>
+         <RevisionNo>5</RevisionNo>
+         <RevisionDate>2026-11-16T16:14:42</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -347,12 +347,38 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
             </Property>
+            <Property Name="Value01Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value01 IS NULL OR LEN(Value01) = 0 THEN NULL
+   WHEN LEN(Value01) &lt;= 12 THEN '...'
+   ELSE LEFT(Value01, 6) + ' ...' + RIGHT(RTRIM(Value01), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
             <Property Name="Value02" Key="0" Binding="BOUND" Sequence="13">
                <PropertyClass>LongerDesc</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>value02</BoundToColumn>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Value02Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value02 IS NULL OR LEN(Value02) = 0 THEN NULL
+   WHEN LEN(Value02) &lt;= 12 THEN '...'
+   ELSE LEFT(Value02, 6) + ' ...' + RIGHT(RTRIM(Value02), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
             </Property>
             <Property Name="Value03" Key="0" Binding="BOUND" Sequence="14">
                <PropertyClass>LongerDesc</PropertyClass>
@@ -361,12 +387,38 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
             </Property>
+            <Property Name="Value03Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value03 IS NULL OR LEN(Value03) = 0 THEN NULL
+   WHEN LEN(Value03) &lt;= 12 THEN '...'
+   ELSE LEFT(Value03, 6) + ' ...' + RIGHT(RTRIM(Value03), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
             <Property Name="Value04" Key="0" Binding="BOUND" Sequence="15">
                <PropertyClass>LongerDesc</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>value04</BoundToColumn>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Value04Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value04 IS NULL OR LEN(Value04) = 0 THEN NULL
+   WHEN LEN(Value04) &lt;= 12 THEN '...'
+   ELSE LEFT(Value04, 6) + ' ...' + RIGHT(RTRIM(Value04), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
             </Property>
             <Property Name="Value05" Key="0" Binding="BOUND" Sequence="16">
                <PropertyClass>LongerDesc</PropertyClass>
@@ -375,12 +427,38 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
             </Property>
+            <Property Name="Value05Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value05 IS NULL OR LEN(Value05) = 0 THEN NULL
+   WHEN LEN(Value05) &lt;= 12 THEN '...'
+   ELSE LEFT(Value05, 6) + ' ...' + RIGHT(RTRIM(Value05), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
             <Property Name="Value06" Key="0" Binding="BOUND" Sequence="17">
                <PropertyClass>LongerDesc</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>value06</BoundToColumn>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Value06Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value06 IS NULL OR LEN(Value06) = 0 THEN NULL
+   WHEN LEN(Value06) &lt;= 12 THEN '...'
+   ELSE LEFT(Value06, 6) + ' ...' + RIGHT(RTRIM(Value06), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
             </Property>
             <Property Name="Value07" Key="0" Binding="BOUND" Sequence="18">
                <PropertyClass>LongerDesc</PropertyClass>
@@ -389,12 +467,38 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
             </Property>
+            <Property Name="Value07Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value07 IS NULL OR LEN(Value07) = 0 THEN NULL
+   WHEN LEN(Value07) &lt;= 12 THEN '...'
+   ELSE LEFT(Value07, 6) + ' ...' + RIGHT(RTRIM(Value07), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
             <Property Name="Value08" Key="0" Binding="BOUND" Sequence="19">
                <PropertyClass>LongerDesc</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>value08</BoundToColumn>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Value08Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value08 IS NULL OR LEN(Value08) = 0 THEN NULL
+   WHEN LEN(Value08) &lt;= 12 THEN '...'
+   ELSE LEFT(Value08, 6) + ' ...' + RIGHT(RTRIM(Value08), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
             </Property>
             <Property Name="Value09" Key="0" Binding="BOUND" Sequence="20">
                <PropertyClass>LongerDesc</PropertyClass>
@@ -403,12 +507,38 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
             </Property>
+            <Property Name="Value09Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value09 IS NULL OR LEN(Value09) = 0 THEN NULL
+   WHEN LEN(Value09) &lt;= 12 THEN '...'
+   ELSE LEFT(Value09, 6) + ' ...' + RIGHT(RTRIM(Value09), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
+            </Property>
             <Property Name="Value10" Key="0" Binding="BOUND" Sequence="21">
                <PropertyClass>LongerDesc</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>value10</BoundToColumn>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Value10Preview" Key="0" Binding="DERIVED" Sequence="0">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <Expression>CASE
+   WHEN Value10 IS NULL OR LEN(Value10) = 0 THEN NULL
+   WHEN LEN(Value10) &lt;= 12 THEN '...'
+   ELSE LEFT(Value10, 6) + ' ...' + RIGHT(RTRIM(Value10), 6)
+END</Expression>
+               <PropertyAttributes>
+                  <ColumnDataType>ShortDescType</ColumnDataType>
+                  <DataLength>36</DataLength>
+                  <DataType>String</DataType>
+               </PropertyAttributes>
             </Property>
          </Properties>
          <Rules />
