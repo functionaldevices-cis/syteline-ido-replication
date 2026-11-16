@@ -37,7 +37,7 @@ Replication runs during the save, so the save waits for the target to answer. If
 - The row has `RetriesRemaining` of 0. See [When retries run out](Replication-Log-and-Retries#when-retries-run-out).
 - The row has no stored payload.
 - The row's rule is inactive or deleted.
-- The background task isn't scheduled, or the Rules IDO doesn't have the `ue_RetryFailedReplications` method. See the note on [Installation](Installation).
+- The background task isn't scheduled, or its definition doesn't call `ue_RetryFailedReplications` on the `ue_AIR_IDOReplicationRules` IDO. See [Installation](Installation#4-background-tasks).
 
 ## Known limitations
 
