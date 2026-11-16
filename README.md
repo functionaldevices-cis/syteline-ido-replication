@@ -77,10 +77,12 @@ The install package is in `dist/`. Its folders are numbered in install order.
 
 ### Credentials
 
-| Target type | Value 1 | Value 2 | Value 3 | Values 4–5 |
-| --- | --- | --- | --- | --- |
-| `AzureEventHub` | Connection string (from a shared access policy on the event hub itself, including `EntityPath`) | Event Source: a URL identifying your organization, required for Event Schema Eventstreams | Max Batch KB Override (optional). Leave blank for the default of about 220 KB, safe for every tier; Standard tier and above can use up to 850. | |
-| `SalesforceRESTAPI` | Client ID | Client secret | Username | Password, security token |
+| Target type | Value 1 | Value 2 | Value 3 | Values 4–5 | Values 6–7 |
+| --- | --- | --- | --- | --- | --- |
+| `AzureEventHub` | Connection string (from a shared access policy on the event hub itself, including `EntityPath`) | Event Source: a URL identifying your organization, required for Event Schema Eventstreams | Max Batch KB Override (optional). Leave blank for the default of about 220 KB, safe for every tier; Standard tier and above can use up to 850. | | |
+| `SalesforceRESTAPI` | Client ID | Client secret | Username | Password, security token | Domain (optional): your My Domain name, `mycompany` for production or `mycompany--sandboxname.sandbox` for a sandbox. Auth Flow (optional): `UsernamePassword` (default) or `ClientCredentials`. |
+
+For Salesforce, a blank Domain signs in at `login.salesforce.com`, which works only for production with the username-password flow. `ClientCredentials` needs a Domain and no username, password or security token.
 
 ### Rules
 

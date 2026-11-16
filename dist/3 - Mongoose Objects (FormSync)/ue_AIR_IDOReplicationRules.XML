@@ -1945,7 +1945,9 @@
                <ScriptLine>                        "ClientSecret",</ScriptLine>
                <ScriptLine>                        "Username",</ScriptLine>
                <ScriptLine>                        "Password",</ScriptLine>
-               <ScriptLine>                        "SecurityToken"</ScriptLine>
+               <ScriptLine>                        "SecurityToken",</ScriptLine>
+               <ScriptLine>                        "Domain",</ScriptLine>
+               <ScriptLine>                        "AuthFlow"</ScriptLine>
                <ScriptLine>                     }</ScriptLine>
                <ScriptLine>                  },</ScriptLine>
                <ScriptLine>                  {</ScriptLine>

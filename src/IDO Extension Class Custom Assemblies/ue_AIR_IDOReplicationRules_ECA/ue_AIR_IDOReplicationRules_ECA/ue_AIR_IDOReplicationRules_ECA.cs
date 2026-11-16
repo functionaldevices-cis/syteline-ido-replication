@@ -354,8 +354,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 case "SalesforceRESTAPI":
 
-                    // RULE OPTIONS: 01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
-                    // THESE POSITIONS MUST MATCH THE OptionKeys LIST IN THE RULES FORM SCRIPT.
+                    // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Username, 04 = Password, 05 = SecurityToken,
+                    //                    06 = Domain (OPTIONAL), 07 = AuthFlow (OPTIONAL: UsernamePassword OR ClientCredentials)
+                    // RULE OPTIONS:      01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
+                    // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
 
                     bool isDelete = operation == "Delete";
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
@@ -370,13 +372,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         return ruleResult;
                     }
 
+                    // Domain AND AuthFlow WORK AS THEY DO IN SyteBridge AND THE Bridjer SALESFORCE LIBRARY. Domain IS THE ORG'S MY DOMAIN
+                    // NAME: "mycompany" FOR PRODUCTION, "mycompany--sandboxname.sandbox" FOR A SANDBOX. SIGN-IN THEN GOES TO
+                    // https://<Domain>.my.salesforce.com. A BLANK Domain SIGNS IN AT login.salesforce.com, WHICH ONLY WORKS FOR
+                    // UsernamePassword AND ONLY FOR PRODUCTION. ClientCredentials NEEDS A Domain, AND NO USERNAME, PASSWORD OR
+                    // SECURITY TOKEN. SalesforceAPICredential THROWS WHEN THE VALUES DON'T FIT THE FLOW, AND THE CALLER LOGS THAT.
+
                     SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
                         credential: new SalesforceAPICredential(
                             ClientId: replicationRule.CredentialValue01,
                             ClientSecret: replicationRule.CredentialValue02,
+                            AuthFlow: NormalizeSalesforceAuthFlow(replicationRule.CredentialValue07),
                             Username: replicationRule.CredentialValue03,
                             Password: replicationRule.CredentialValue04,
-                            SecurityToken: replicationRule.CredentialValue05
+                            SecurityToken: replicationRule.CredentialValue05,
+                            Domain: NormalizeSalesforceDomain(replicationRule.CredentialValue06)
                         )
                     );
 
@@ -548,6 +558,83 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             outcome.Warning = warning;
             return outcome;
+
+        }
+
+
+
+        // THE SALESFORCE CREDENTIAL'S AuthFlow. BLANK MEANS UsernamePassword, THE DEFAULT. A KNOWN FLOW IS MATCHED WITHOUT REGARD
+        // TO CASE. ANYTHING ELSE IS PASSED ON AS IT IS, SO SalesforceAPICredential REJECTS IT WITH ITS OWN MESSAGE.
+
+        private static string NormalizeSalesforceAuthFlow(string authFlow)
+        {
+
+            string trimmed = (authFlow ?? "").Trim();
+
+            if (trimmed == "")
+            {
+                return "UsernamePassword";
+            }
+
+            foreach (string knownAuthFlow in new string[] { "UsernamePassword", "ClientCredentials" })
+            {
+                if (string.Equals(trimmed, knownAuthFlow, StringComparison.OrdinalIgnoreCase))
+                {
+                    return knownAuthFlow;
+                }
+            }
+
+            return trimmed;
+
+        }
+
+
+
+        // THE SALESFORCE CREDENTIAL'S Domain, AS THE MY DOMAIN NAME SalesforceAPICredential EXPECTS ("mycompany", OR
+        // "mycompany--sandboxname.sandbox" FOR A SANDBOX), OR NULL WHEN BLANK. A PASTED URL OR HOST NAME, SUCH AS
+        // "https://mycompany.my.salesforce.com/", IS CUT DOWN TO THAT NAME. THE NAME BECOMES PART OF THE HOST THE CLIENT SECRET IS
+        // SENT TO, SO ANYTHING BUT LETTERS, DIGITS, HYPHENS AND DOTS IS REJECTED.
+
+        private static string NormalizeSalesforceDomain(string domain)
+        {
+
+            const string myDomainSuffix = ".my.salesforce.com";
+            string trimmed = (domain ?? "").Trim();
+            int schemeIndex = trimmed.IndexOf("://", StringComparison.Ordinal);
+
+            if (schemeIndex >= 0)
+            {
+                trimmed = trimmed.Substring(schemeIndex + 3);
+            }
+
+            int pathIndex = trimmed.IndexOf('/');
+
+            if (pathIndex >= 0)
+            {
+                trimmed = trimmed.Substring(0, pathIndex);
+            }
+
+            if (trimmed.EndsWith(myDomainSuffix, StringComparison.OrdinalIgnoreCase))
+            {
+                trimmed = trimmed.Substring(0, trimmed.Length - myDomainSuffix.Length);
+            }
+
+            if (trimmed == "")
+            {
+                return null;
+            }
+
+            foreach (char character in trimmed)
+            {
+                bool isAllowed = (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '-' || character == '.';
+
+                if (!isAllowed)
+                {
+                    throw new ArgumentException("The Salesforce credential's Domain '" + trimmed + "' isn't a My Domain name. Enter only the name, for example 'mycompany', or 'mycompany--sandboxname.sandbox' for a sandbox.");
+                }
+            }
+
+            return trimmed;
 
         }
 
