@@ -229,7 +229,7 @@ END</Expression>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationCredentials</LabelStringID>
          <RevisionNo>5</RevisionNo>
-         <RevisionDate>2026-11-16T16:14:42</RevisionDate>
+         <RevisionDate>2026-11-16T16:18:27</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -352,7 +352,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value01 IS NULL OR LEN(Value01) = 0 THEN NULL
    WHEN LEN(Value01) &lt;= 12 THEN '...'
-   ELSE LEFT(Value01, 6) + ' ...' + RIGHT(RTRIM(Value01), 6)
+   ELSE LEFT(Value01, 6) + ' ... ' + RIGHT(RTRIM(Value01), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -372,7 +372,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value02 IS NULL OR LEN(Value02) = 0 THEN NULL
    WHEN LEN(Value02) &lt;= 12 THEN '...'
-   ELSE LEFT(Value02, 6) + ' ...' + RIGHT(RTRIM(Value02), 6)
+   ELSE LEFT(Value02, 6) + ' ... ' + RIGHT(RTRIM(Value02), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -392,7 +392,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value03 IS NULL OR LEN(Value03) = 0 THEN NULL
    WHEN LEN(Value03) &lt;= 12 THEN '...'
-   ELSE LEFT(Value03, 6) + ' ...' + RIGHT(RTRIM(Value03), 6)
+   ELSE LEFT(Value03, 6) + ' ... ' + RIGHT(RTRIM(Value03), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -412,7 +412,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value04 IS NULL OR LEN(Value04) = 0 THEN NULL
    WHEN LEN(Value04) &lt;= 12 THEN '...'
-   ELSE LEFT(Value04, 6) + ' ...' + RIGHT(RTRIM(Value04), 6)
+   ELSE LEFT(Value04, 6) + ' ... ' + RIGHT(RTRIM(Value04), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -432,7 +432,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value05 IS NULL OR LEN(Value05) = 0 THEN NULL
    WHEN LEN(Value05) &lt;= 12 THEN '...'
-   ELSE LEFT(Value05, 6) + ' ...' + RIGHT(RTRIM(Value05), 6)
+   ELSE LEFT(Value05, 6) + ' ... ' + RIGHT(RTRIM(Value05), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -452,7 +452,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value06 IS NULL OR LEN(Value06) = 0 THEN NULL
    WHEN LEN(Value06) &lt;= 12 THEN '...'
-   ELSE LEFT(Value06, 6) + ' ...' + RIGHT(RTRIM(Value06), 6)
+   ELSE LEFT(Value06, 6) + ' ... ' + RIGHT(RTRIM(Value06), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -472,7 +472,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value07 IS NULL OR LEN(Value07) = 0 THEN NULL
    WHEN LEN(Value07) &lt;= 12 THEN '...'
-   ELSE LEFT(Value07, 6) + ' ...' + RIGHT(RTRIM(Value07), 6)
+   ELSE LEFT(Value07, 6) + ' ... ' + RIGHT(RTRIM(Value07), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -492,7 +492,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value08 IS NULL OR LEN(Value08) = 0 THEN NULL
    WHEN LEN(Value08) &lt;= 12 THEN '...'
-   ELSE LEFT(Value08, 6) + ' ...' + RIGHT(RTRIM(Value08), 6)
+   ELSE LEFT(Value08, 6) + ' ... ' + RIGHT(RTRIM(Value08), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -512,7 +512,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value09 IS NULL OR LEN(Value09) = 0 THEN NULL
    WHEN LEN(Value09) &lt;= 12 THEN '...'
-   ELSE LEFT(Value09, 6) + ' ...' + RIGHT(RTRIM(Value09), 6)
+   ELSE LEFT(Value09, 6) + ' ... ' + RIGHT(RTRIM(Value09), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>
@@ -532,7 +532,7 @@ END</Expression>
                <Expression>CASE
    WHEN Value10 IS NULL OR LEN(Value10) = 0 THEN NULL
    WHEN LEN(Value10) &lt;= 12 THEN '...'
-   ELSE LEFT(Value10, 6) + ' ...' + RIGHT(RTRIM(Value10), 6)
+   ELSE LEFT(Value10, 6) + ' ... ' + RIGHT(RTRIM(Value10), 6)
 END</Expression>
                <PropertyAttributes>
                   <ColumnDataType>ShortDescType</ColumnDataType>

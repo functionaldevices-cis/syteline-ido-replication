@@ -10,7 +10,7 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 2. Choose the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`. The form then shows and labels only the values that target uses.
 3. Fill in the values and save.
 
-**Sensitive values can only be seen while you enter a new credential.** Once the credential is saved, the form hides a sensitive value's input and shows a preview to its right: the first 6 and last 6 characters, such as `Endpoi ...ubname`. Check sensitive values before you save.
+**Sensitive values can only be seen while you enter a new credential.** Once the credential is saved, the form hides a sensitive value's input and shows a preview to its right: the first 6 and last 6 characters, such as `Endpoi ... ubname`. Check sensitive values before you save.
 
 | Target type | Sensitive | Not sensitive |
 | --- | --- | --- |
