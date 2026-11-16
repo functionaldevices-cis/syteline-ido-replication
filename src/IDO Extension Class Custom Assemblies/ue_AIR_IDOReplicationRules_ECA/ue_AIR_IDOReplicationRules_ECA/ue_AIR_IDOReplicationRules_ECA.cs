@@ -354,8 +354,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 case "SalesforceRESTAPI":
 
-                    // RULE OPTIONS: 01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
-                    // THESE POSITIONS MUST MATCH THE OptionKeys LIST IN THE RULES FORM SCRIPT.
+                    // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Username, 04 = Password, 05 = SecurityToken,
+                    //                    06 = Domain (OPTIONAL), 07 = AuthFlow (OPTIONAL: UsernamePassword OR ClientCredentials)
+                    // RULE OPTIONS:      01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
+                    // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
 
                     bool isDelete = operation == "Delete";
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
@@ -370,13 +372,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         return ruleResult;
                     }
 
+                    // Domain AND AuthFlow WORK AS THEY DO IN SyteBridge AND THE Bridjer SALESFORCE LIBRARY. Domain IS THE ORG'S MY DOMAIN
+                    // NAME: "mycompany" FOR PRODUCTION, "mycompany--sandboxname.sandbox" FOR A SANDBOX. SIGN-IN THEN GOES TO
+                    // https://<Domain>.my.salesforce.com. A BLANK Domain SIGNS IN AT login.salesforce.com, WHICH ONLY WORKS FOR
+                    // UsernamePassword AND ONLY FOR PRODUCTION. ClientCredentials NEEDS A Domain, AND NO USERNAME, PASSWORD OR
+                    // SECURITY TOKEN. SalesforceAPICredential THROWS WHEN THE VALUES DON'T FIT THE FLOW, AND THE CALLER LOGS THAT.
+
                     SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
                         credential: new SalesforceAPICredential(
                             ClientId: replicationRule.CredentialValue01,
                             ClientSecret: replicationRule.CredentialValue02,
+                            AuthFlow: NormalizeSalesforceAuthFlow(replicationRule.CredentialValue07),
                             Username: replicationRule.CredentialValue03,
                             Password: replicationRule.CredentialValue04,
-                            SecurityToken: replicationRule.CredentialValue05
+                            SecurityToken: replicationRule.CredentialValue05,
+                            Domain: NormalizeSalesforceDomain(replicationRule.CredentialValue06)
                         )
                     );
 
@@ -548,6 +558,93 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             outcome.Warning = warning;
             return outcome;
+
+        }
+
+
+
+        // THE SALESFORCE CREDENTIAL'S AuthFlow. BLANK MEANS UsernamePassword, THE DEFAULT. A KNOWN FLOW IS MATCHED WITHOUT REGARD
+        // TO CASE. ANYTHING ELSE IS PASSED ON AS IT IS, SO SalesforceAPICredential REJECTS IT WITH ITS OWN MESSAGE.
+
+        private static string NormalizeSalesforceAuthFlow(string authFlow)
+        {
+
+            string trimmed = (authFlow ?? "").Trim();
+
+            if (trimmed == "")
+            {
+                return "UsernamePassword";
+            }
+
+            foreach (string knownAuthFlow in new string[] { "UsernamePassword", "ClientCredentials" })
+            {
+                if (string.Equals(trimmed, knownAuthFlow, StringComparison.OrdinalIgnoreCase))
+                {
+                    return knownAuthFlow;
+                }
+            }
+
+            return trimmed;
+
+        }
+
+
+
+        // THE SALESFORCE CREDENTIAL'S Domain, AS THE MY DOMAIN NAME SalesforceAPICredential EXPECTS, OR NULL WHEN BLANK. A MY DOMAIN
+        // NAME IS ONE LABEL ("mycompany"), OR A LABEL AND A PARTITION ("mycompany--sandboxname.sandbox" FOR A SANDBOX,
+        // "mycompany-dev-ed.develop" FOR A DEVELOPER EDITION ORG). A PASTED URL OR HOST NAME THAT CONTAINS THE NAME, SUCH AS
+        // "https://mycompany.my.salesforce.com/" OR "mycompany.lightning.force.com", IS CUT DOWN TO IT.
+        //
+        // ANYTHING ELSE IS REJECTED HERE WITH A MESSAGE THAT SAYS WHAT TO ENTER, BECAUSE THE NAME BECOMES PART OF THE HOST THE
+        // CLIENT SECRET IS SENT TO, AND BECAUSE A HOST SUCH AS "test.salesforce.com" WOULD OTHERWISE ONLY FAIL LATER, AS A
+        // CONNECTION ERROR TO A HOST THAT DOESN'T EXIST.
+
+        private static string NormalizeSalesforceDomain(string domain)
+        {
+
+            string trimmed = (domain ?? "").Trim();
+            int schemeIndex = trimmed.IndexOf("://", StringComparison.Ordinal);
+
+            if (schemeIndex >= 0)
+            {
+                trimmed = trimmed.Substring(schemeIndex + 3);
+            }
+
+            int pathIndex = trimmed.IndexOf('/');
+
+            if (pathIndex >= 0)
+            {
+                trimmed = trimmed.Substring(0, pathIndex);
+            }
+
+            foreach (string hostSuffix in new string[] { ".my.salesforce.com", ".lightning.force.com" })
+            {
+                if (trimmed.EndsWith(hostSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    trimmed = trimmed.Substring(0, trimmed.Length - hostSuffix.Length);
+                    break;
+                }
+            }
+
+            if (trimmed == "")
+            {
+                return null;
+            }
+
+            // ONE OR TWO LABELS OF LETTERS, DIGITS AND HYPHENS. A SECOND LABEL OF "com" MEANS A HOST NAME WAS ENTERED.
+
+            string[] labels = trimmed.Split('.');
+
+            bool isMyDomainName = labels.Length <= 2
+                && labels.All(label => label != "" && label.All(character => (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '-'))
+                && !(labels.Length == 2 && string.Equals(labels[1], "com", StringComparison.OrdinalIgnoreCase));
+
+            if (!isMyDomainName)
+            {
+                throw new ArgumentException("The Salesforce credential's Domain '" + trimmed + "' isn't a My Domain name. Enter only the name, for example 'mycompany', or 'mycompany--sandboxname.sandbox' for a sandbox. Don't enter a sign-in host such as test.salesforce.com.");
+            }
+
+            return trimmed;
 
         }
 

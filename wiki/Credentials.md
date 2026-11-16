@@ -12,10 +12,10 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 
 ## Values by target type
 
-| Target type | Value 1 | Value 2 | Value 3 | Value 4 | Value 5 |
-| --- | --- | --- | --- | --- | --- |
-| `AzureEventHub` | Connection String | Event Source | Max Batch KB Override (optional) | | |
-| `SalesforceRESTAPI` | Client ID | Client Secret | Username | Password | Security Token |
+| Target type | Value 1 | Value 2 | Value 3 | Value 4 | Value 5 | Value 6 | Value 7 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `AzureEventHub` | Connection String | Event Source | Max Batch KB Override (optional) | | | | |
+| `SalesforceRESTAPI` | Client ID | Client Secret | Username | Password | Security Token | Domain (optional) | Auth Flow (optional) |
 
 What each value means is on the target's page:
 - [Azure Event Hubs](Target-Azure-Event-Hubs)
