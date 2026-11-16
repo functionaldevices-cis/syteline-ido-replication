@@ -29,8 +29,9 @@ The Domain decides where sign-in goes: `https://<Domain>.my.salesforce.com`. Ent
 | Blank | | `https://login.salesforce.com` (production only, `UsernamePassword` only) |
 
 - To replicate to a sandbox, set the Domain to the sandbox's My Domain name. This is the way to test a rule before pointing it at production: make one credential for the sandbox and one for production, and switch the rule's credential.
-- If you paste the full URL or host name, such as `https://mycompany.my.salesforce.com/`, it is cut down to the name.
-- Only letters, digits, hyphens and dots are allowed.
+- If you paste a URL or host name that contains the name, such as `https://mycompany.my.salesforce.com/` or `mycompany.lightning.force.com`, it is cut down to the name.
+- A name is one word (`mycompany`), or a word and a suffix (`mycompany--partial.sandbox`, or `mycompany-dev-ed.develop` for a Developer Edition org). Only letters, digits and hyphens are allowed in each part.
+- Don't enter a sign-in host such as `test.salesforce.com` or `login.salesforce.com`. Those are rejected with a message that says what to enter.
 
 Domain works the same way as the `Domain` property of the Salesforce credential in SyteBridge and the Bridjer Salesforce library, so a value that works there works here.
 
@@ -80,7 +81,7 @@ To delete in Salesforce, set the rule's Delete Behavior to `Delete`. Then:
 | `Unable to load access token. Server Error: ...` | Check the credential values, and that the connected app allows the Auth Flow you chose. For a sandbox, check that the Domain is the sandbox's My Domain name. |
 | `The salesforce authentication flow is set to ClientCredentials, but the credentials are missing a domain.` | Set the Domain. `ClientCredentials` can't sign in without it. |
 | `The AuthFlow config must be set to either UsernamePassword or ClientCredentials.` | Fix the Auth Flow value, or leave it blank for `UsernamePassword` |
-| `The Salesforce credential's Domain '...' isn't a My Domain name.` | Enter only the My Domain name, for example `mycompany` or `mycompany--partial.sandbox` |
+| `The Salesforce credential's Domain '...' isn't a My Domain name.` | Enter only the My Domain name, for example `mycompany` or `mycompany--partial.sandbox`, not a host such as `test.salesforce.com` |
 | `Batch failed: ...` | The whole batch was rejected. Check the sObject name and the external ID field name. |
 | `The external ID matches N records, so none were deleted` | Make the external ID unique in Salesforce |
 | `Delete skipped, because the rule's DeleteBehavior isn't Delete.` | Expected with the default. Set Delete Behavior to `Delete` if you want deletes. |

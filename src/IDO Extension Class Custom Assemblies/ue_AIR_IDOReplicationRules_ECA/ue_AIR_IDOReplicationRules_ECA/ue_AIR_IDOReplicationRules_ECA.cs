@@ -590,15 +590,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        // THE SALESFORCE CREDENTIAL'S Domain, AS THE MY DOMAIN NAME SalesforceAPICredential EXPECTS ("mycompany", OR
-        // "mycompany--sandboxname.sandbox" FOR A SANDBOX), OR NULL WHEN BLANK. A PASTED URL OR HOST NAME, SUCH AS
-        // "https://mycompany.my.salesforce.com/", IS CUT DOWN TO THAT NAME. THE NAME BECOMES PART OF THE HOST THE CLIENT SECRET IS
-        // SENT TO, SO ANYTHING BUT LETTERS, DIGITS, HYPHENS AND DOTS IS REJECTED.
+        // THE SALESFORCE CREDENTIAL'S Domain, AS THE MY DOMAIN NAME SalesforceAPICredential EXPECTS, OR NULL WHEN BLANK. A MY DOMAIN
+        // NAME IS ONE LABEL ("mycompany"), OR A LABEL AND A PARTITION ("mycompany--sandboxname.sandbox" FOR A SANDBOX,
+        // "mycompany-dev-ed.develop" FOR A DEVELOPER EDITION ORG). A PASTED URL OR HOST NAME THAT CONTAINS THE NAME, SUCH AS
+        // "https://mycompany.my.salesforce.com/" OR "mycompany.lightning.force.com", IS CUT DOWN TO IT.
+        //
+        // ANYTHING ELSE IS REJECTED HERE WITH A MESSAGE THAT SAYS WHAT TO ENTER, BECAUSE THE NAME BECOMES PART OF THE HOST THE
+        // CLIENT SECRET IS SENT TO, AND BECAUSE A HOST SUCH AS "test.salesforce.com" WOULD OTHERWISE ONLY FAIL LATER, AS A
+        // CONNECTION ERROR TO A HOST THAT DOESN'T EXIST.
 
         private static string NormalizeSalesforceDomain(string domain)
         {
 
-            const string myDomainSuffix = ".my.salesforce.com";
             string trimmed = (domain ?? "").Trim();
             int schemeIndex = trimmed.IndexOf("://", StringComparison.Ordinal);
 
@@ -614,9 +617,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 trimmed = trimmed.Substring(0, pathIndex);
             }
 
-            if (trimmed.EndsWith(myDomainSuffix, StringComparison.OrdinalIgnoreCase))
+            foreach (string hostSuffix in new string[] { ".my.salesforce.com", ".lightning.force.com" })
             {
-                trimmed = trimmed.Substring(0, trimmed.Length - myDomainSuffix.Length);
+                if (trimmed.EndsWith(hostSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    trimmed = trimmed.Substring(0, trimmed.Length - hostSuffix.Length);
+                    break;
+                }
             }
 
             if (trimmed == "")
@@ -624,14 +631,17 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return null;
             }
 
-            foreach (char character in trimmed)
-            {
-                bool isAllowed = (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '-' || character == '.';
+            // ONE OR TWO LABELS OF LETTERS, DIGITS AND HYPHENS. A SECOND LABEL OF "com" MEANS A HOST NAME WAS ENTERED.
 
-                if (!isAllowed)
-                {
-                    throw new ArgumentException("The Salesforce credential's Domain '" + trimmed + "' isn't a My Domain name. Enter only the name, for example 'mycompany', or 'mycompany--sandboxname.sandbox' for a sandbox.");
-                }
+            string[] labels = trimmed.Split('.');
+
+            bool isMyDomainName = labels.Length <= 2
+                && labels.All(label => label != "" && label.All(character => (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '-'))
+                && !(labels.Length == 2 && string.Equals(labels[1], "com", StringComparison.OrdinalIgnoreCase));
+
+            if (!isMyDomainName)
+            {
+                throw new ArgumentException("The Salesforce credential's Domain '" + trimmed + "' isn't a My Domain name. Enter only the name, for example 'mycompany', or 'mycompany--sandboxname.sandbox' for a sandbox. Don't enter a sign-in host such as test.salesforce.com.");
             }
 
             return trimmed;
