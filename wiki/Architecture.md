@@ -73,7 +73,7 @@ A rule carries ten credential values (from its linked credential) and ten option
 | Target type | Credential values | Options |
 | --- | --- | --- |
 | `AzureEventHub` | 01 ConnectionString, 02 EventSource, 03 MaxBatchKBOverride | 01 EventSchemaUri, 02 UpsertFieldName (the ID field), 03 OperationFieldName |
-| `SalesforceRESTAPI` | 01 ClientId, 02 ClientSecret, 03 Username, 04 Password, 05 SecurityToken, 06 Domain, 07 AuthFlow | 01 DestinationName (sObject), 02 ExternalIDFieldName, 03 DeleteBehavior |
+| `SalesforceRESTAPI` | 01 ClientId, 02 ClientSecret, 03 Domain | 01 DestinationName (sObject), 02 ExternalIDFieldName, 03 DeleteBehavior |
 
 ## Triggers
 

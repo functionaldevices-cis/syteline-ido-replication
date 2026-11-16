@@ -78,48 +78,17 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers
 
                     try
                     {
-                        // LOAD THE REQUEST
+                        // SIGN IN WITH THE OAUTH CLIENT CREDENTIALS FLOW, THE ONLY FLOW SUPPORTED
 
-                        HttpResponseMessage httpResponse;
-
-                        switch (credential.AuthFlow)
-                        {
-
-                            case "UsernamePassword":
-
-                                httpResponse = this.HttpClient.PostAsync(
-                                    requestUri: new Uri(credential.TokenRequestEndpoint),
-                                    content: new FormUrlEncodedContent(new Dictionary<string, string>()
-                                    {
-                                        { "grant_type", "password" },
-                                        { "client_id", credential.ClientId },
-                                        { "client_secret", credential.ClientSecret },
-                                        { "username", credential.Username }, // Username IS TESTED FOR NULLABILITY WHEN LOADED
-                                        { "password", credential.Password + credential.SecurityToken }  // Password AND SecurityToken ARE TESTED FOR NULLABILITY WHEN LOADED
-                                    })
-                                ).Result;
-
-                                break;
-
-                            case "ClientCredentials":
-
-                                httpResponse = this.HttpClient.PostAsync(
-                                    requestUri: new Uri(credential.TokenRequestEndpoint),
-                                    content: new FormUrlEncodedContent(new Dictionary<string, string>()
-                                    {
-                                        { "grant_type", "client_credentials" },
-                                        { "client_id", credential.ClientId },
-                                        { "client_secret", credential.ClientSecret }
-                                    })
-                                ).Result;
-
-                                break;
-
-                            default:
-
-                                throw new Exception("Unknown Salesforce auth flow '" + credential.AuthFlow + "'. Expected 'UsernamePassword' or 'ClientCredentials'.");
-
-                        }
+                        HttpResponseMessage httpResponse = this.HttpClient.PostAsync(
+                            requestUri: new Uri(credential.TokenRequestEndpoint),
+                            content: new FormUrlEncodedContent(new Dictionary<string, string>()
+                            {
+                                { "grant_type", "client_credentials" },
+                                { "client_id", credential.ClientId },
+                                { "client_secret", credential.ClientSecret }
+                            })
+                        ).Result;
 
                         Dictionary<string, object> parsedResponseContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(httpResponse.Content.ReadAsStringAsync().Result);
 

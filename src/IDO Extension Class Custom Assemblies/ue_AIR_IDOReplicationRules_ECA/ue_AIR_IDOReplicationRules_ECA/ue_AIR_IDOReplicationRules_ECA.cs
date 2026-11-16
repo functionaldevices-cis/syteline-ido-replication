@@ -354,8 +354,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 case "SalesforceRESTAPI":
 
-                    // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Username, 04 = Password, 05 = SecurityToken,
-                    //                    06 = Domain (OPTIONAL), 07 = AuthFlow (OPTIONAL: UsernamePassword OR ClientCredentials)
+                    // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Domain
                     // RULE OPTIONS:      01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
                     // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
 
@@ -372,21 +371,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         return ruleResult;
                     }
 
-                    // Domain AND AuthFlow WORK AS THEY DO IN SyteBridge AND THE Bridjer SALESFORCE LIBRARY. Domain IS THE ORG'S MY DOMAIN
-                    // NAME: "mycompany" FOR PRODUCTION, "mycompany--sandboxname.sandbox" FOR A SANDBOX. SIGN-IN THEN GOES TO
-                    // https://<Domain>.my.salesforce.com. A BLANK Domain SIGNS IN AT login.salesforce.com, WHICH ONLY WORKS FOR
-                    // UsernamePassword AND ONLY FOR PRODUCTION. ClientCredentials NEEDS A Domain, AND NO USERNAME, PASSWORD OR
-                    // SECURITY TOKEN. SalesforceAPICredential THROWS WHEN THE VALUES DON'T FIT THE FLOW, AND THE CALLER LOGS THAT.
+                    // SIGN-IN USES THE OAUTH CLIENT CREDENTIALS FLOW ONLY, SO THE CREDENTIAL IS THE CONSUMER KEY AND SECRET OF A SALESFORCE
+                    // EXTERNAL CLIENT APP PLUS THE ORG'S MY DOMAIN NAME. Domain WORKS AS IT DOES IN SyteBridge AND THE Bridjer SALESFORCE
+                    // LIBRARY: "mycompany" FOR PRODUCTION, "mycompany--sandboxname.sandbox" FOR A SANDBOX, AND SIGN-IN GOES TO
+                    // https://<Domain>.my.salesforce.com. SalesforceAPICredential THROWS WHEN A VALUE IS MISSING, AND THE CALLER LOGS THAT.
 
                     SalesforceRestAPI salesforceRestAPI = new SalesforceRestAPI(
                         credential: new SalesforceAPICredential(
                             ClientId: replicationRule.CredentialValue01,
                             ClientSecret: replicationRule.CredentialValue02,
-                            AuthFlow: NormalizeSalesforceAuthFlow(replicationRule.CredentialValue07),
-                            Username: replicationRule.CredentialValue03,
-                            Password: replicationRule.CredentialValue04,
-                            SecurityToken: replicationRule.CredentialValue05,
-                            Domain: NormalizeSalesforceDomain(replicationRule.CredentialValue06)
+                            Domain: NormalizeSalesforceDomain(replicationRule.CredentialValue03)
                         )
                     );
 
@@ -558,33 +552,6 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             outcome.Warning = warning;
             return outcome;
-
-        }
-
-
-
-        // THE SALESFORCE CREDENTIAL'S AuthFlow. BLANK MEANS UsernamePassword, THE DEFAULT. A KNOWN FLOW IS MATCHED WITHOUT REGARD
-        // TO CASE. ANYTHING ELSE IS PASSED ON AS IT IS, SO SalesforceAPICredential REJECTS IT WITH ITS OWN MESSAGE.
-
-        private static string NormalizeSalesforceAuthFlow(string authFlow)
-        {
-
-            string trimmed = (authFlow ?? "").Trim();
-
-            if (trimmed == "")
-            {
-                return "UsernamePassword";
-            }
-
-            foreach (string knownAuthFlow in new string[] { "UsernamePassword", "ClientCredentials" })
-            {
-                if (string.Equals(trimmed, knownAuthFlow, StringComparison.OrdinalIgnoreCase))
-                {
-                    return knownAuthFlow;
-                }
-            }
-
-            return trimmed;
 
         }
 

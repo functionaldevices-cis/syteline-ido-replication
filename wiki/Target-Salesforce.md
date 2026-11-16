@@ -8,15 +8,26 @@ Upserts records into a Salesforce object by external ID. Deletes are optional, p
 
 | Value | Name | What to enter |
 | --- | --- | --- |
-| 1 | Client ID | The consumer key of your Salesforce connected app |
-| 2 | Client Secret | The consumer secret of the connected app |
-| 3 | Username | The integration user's username |
-| 4 | Password | The integration user's password |
-| 5 | Security Token | The integration user's security token |
-| 6 | Domain | Optional. Your org's My Domain name. See below. |
-| 7 | Auth Flow | Optional. `UsernamePassword` (default, also when blank) or `ClientCredentials`. |
+| 1 | Client ID | The consumer key of your Salesforce external client app |
+| 2 | Client Secret | The consumer secret of the app |
+| 3 | Domain | Your org's My Domain name. See below. |
 
-Values 3 to 5 are only used by the `UsernamePassword` flow.
+All three are required.
+
+### Signing in
+
+Sign-in uses the OAuth client credentials flow, and only that flow. It is headless: Syteline sends the client ID and secret to Salesforce and gets a token back. No username, password or security token is stored in Syteline.
+
+In Salesforce:
+
+1. Create an external client app with OAuth turned on, and give it API access.
+2. Turn on the client credentials flow for the app.
+3. Choose the user the app runs as. Use a dedicated integration user with access only to the objects you replicate. Every record this project writes is written as that user.
+4. Copy the app's consumer key and consumer secret into the credential.
+
+An older connected app works the same way, as long as it has the client credentials flow turned on. Salesforce no longer lets you create new connected apps by default.
+
+The username-password flow isn't supported. External client apps don't offer it.
 
 ### Domain
 
@@ -26,23 +37,13 @@ The Domain decides where sign-in goes: `https://<Domain>.my.salesforce.com`. Ent
 | --- | --- | --- |
 | Production | `mycompany` | `https://mycompany.my.salesforce.com` |
 | Sandbox named `partial` | `mycompany--partial.sandbox` | `https://mycompany--partial.sandbox.my.salesforce.com` |
-| Blank | | `https://login.salesforce.com` (production only, `UsernamePassword` only) |
 
-- To replicate to a sandbox, set the Domain to the sandbox's My Domain name. This is the way to test a rule before pointing it at production: make one credential for the sandbox and one for production, and switch the rule's credential.
+- To replicate to a sandbox, set the Domain to the sandbox's My Domain name. This is the way to test a rule before pointing it at production: make one credential for the sandbox and one for production, and switch the rule's credential. Each org needs its own external client app, so the client ID and secret differ too.
 - If you paste a URL or host name that contains the name, such as `https://mycompany.my.salesforce.com/` or `mycompany.lightning.force.com`, it is cut down to the name.
 - A name is one word (`mycompany`), or a word and a suffix (`mycompany--partial.sandbox`, or `mycompany-dev-ed.develop` for a Developer Edition org). Only letters, digits and hyphens are allowed in each part.
 - Don't enter a sign-in host such as `test.salesforce.com` or `login.salesforce.com`. Those are rejected with a message that says what to enter.
 
 Domain works the same way as the `Domain` property of the Salesforce credential in SyteBridge and the Bridjer Salesforce library, so a value that works there works here.
-
-### Auth Flow
-
-| Auth Flow | Needs | Notes |
-| --- | --- | --- |
-| `UsernamePassword` | Client ID, Client Secret, Username, Password, Security Token | The connected app and the org must allow the username-password flow. Domain is optional for production and required for a sandbox. |
-| `ClientCredentials` | Client ID, Client Secret, Domain | No user password is stored in Syteline. In Salesforce, turn on the client credentials flow for the connected app and choose the user it runs as. |
-
-Whichever flow you use, the Salesforce user should be a dedicated integration user with access only to the objects you replicate.
 
 ## Rule options
 
@@ -78,9 +79,8 @@ To delete in Salesforce, set the rule's Delete Behavior to `Delete`. Then:
 
 | Message | Fix |
 | --- | --- |
-| `Unable to load access token. Server Error: ...` | Check the credential values, and that the connected app allows the Auth Flow you chose. For a sandbox, check that the Domain is the sandbox's My Domain name. |
-| `The salesforce authentication flow is set to ClientCredentials, but the credentials are missing a domain.` | Set the Domain. `ClientCredentials` can't sign in without it. |
-| `The AuthFlow config must be set to either UsernamePassword or ClientCredentials.` | Fix the Auth Flow value, or leave it blank for `UsernamePassword` |
+| `Unable to load access token. Server Error: ...` | Check the client ID and secret, that the app has the client credentials flow turned on, and that it has a user to run as. For a sandbox, check that the Domain is the sandbox's My Domain name and that the client ID and secret come from the sandbox's app. |
+| `The Salesforce credential is missing a Client ID.` (or `Client Secret`, or `Domain`) | Fill in the value on the credential. All three are required. |
 | `The Salesforce credential's Domain '...' isn't a My Domain name.` | Enter only the My Domain name, for example `mycompany` or `mycompany--partial.sandbox`, not a host such as `test.salesforce.com` |
 | `Batch failed: ...` | The whole batch was rejected. Check the sObject name and the external ID field name. |
 | `The external ID matches N records, so none were deleted` | Make the external ID unique in Salesforce |
