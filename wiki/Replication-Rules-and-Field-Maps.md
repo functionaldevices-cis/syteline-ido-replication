@@ -7,7 +7,7 @@ Form: **IDO Replication Rules (AIR)** (`ue_AIR_IDOReplicationRules`)
 ## Adding a rule
 
 1. Add a record. Set the **IDO Name** to the IDO collection you want to replicate, for example `SLCustomers`.
-2. Enter the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`, spelled exactly.
+2. Choose or type the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`, spelled exactly, including capitals.
 3. On the **Target Credentials** tab, pick a [credential](Credentials) of the same target type.
 4. On the **Target Options** tab, fill in the options for the target (below).
 5. On the **Field Mapping** tab, add the fields to send (below).

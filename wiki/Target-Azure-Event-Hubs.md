@@ -67,6 +67,8 @@ A delete is sent like any other event, with `operation` set to `Delete`. The bod
 
 ## Common errors
 
+A sensitive value can't be edited on a saved credential. Where a fix below means changing one, follow [Changing a credential](Credentials#changing-a-credential).
+
 | Message | Fix |
 | --- | --- |
 | `The Azure Event Hub connection string is missing ... EntityPath` | Use the connection string from a policy on the event hub, not the namespace |

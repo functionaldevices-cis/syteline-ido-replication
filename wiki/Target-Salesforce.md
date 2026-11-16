@@ -77,6 +77,8 @@ To delete in Salesforce, set the rule's Delete Behavior to `Delete`. Then:
 
 ## Common errors
 
+A sensitive value can't be edited on a saved credential. Where a fix below means changing one, follow [Changing a credential](Credentials#changing-a-credential).
+
 | Message | Fix |
 | --- | --- |
 | `Unable to load access token. Server Error: ...` | Check the client ID and secret, that the app has the client credentials flow turned on, and that it has a user to run as. For a sandbox, check that the Domain is the sandbox's My Domain name and that the client ID and secret come from the sandbox's app. |

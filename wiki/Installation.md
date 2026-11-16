@@ -40,6 +40,7 @@ Folder: `dist/3 - Mongoose Objects (FormSync)/`
 
 1. Import the forms and `Strings.XML` with FormSync.
 2. Unload global form objects (Form > Definition > Unload All Global Form Objects).
+3. Optional: create a user-defined type named `IDOReplicationTargetType` with the values `AzureEventHub` and `SalesforceRESTAPI`. The Target Type drop-down on the Rules and Credentials forms takes its list from it, and the package doesn't create it. Without it the list is empty and you type the value, spelled exactly.
 
 | Form | Use |
 | --- | --- |
