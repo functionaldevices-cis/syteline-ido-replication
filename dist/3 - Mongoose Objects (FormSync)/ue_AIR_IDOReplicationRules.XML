@@ -48,7 +48,7 @@
                <Width>10</Width>
                <Caption>C(CredentialIDStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>0</ContainerSequence>
                <DataSource>object.CredentialID</DataSource>
                <Binding>1</Binding>
@@ -97,7 +97,7 @@
                <Width>20</Width>
                <Caption>sCredentials</Caption>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>3</ContainerSequence>
                <Binding>0</Binding>
                <Flags>1</Flags>
@@ -117,7 +117,7 @@
                <ListHeight>0</ListHeight>
                <Width>30</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>1</ContainerSequence>
                <DataSource>object.CredentialName</DataSource>
                <Binding>1</Binding>
@@ -129,27 +129,6 @@
                <MenuName>StdDefault</MenuName>
                <PropertyClassName>LongDesc</PropertyClassName>
                <Post301Format />
-            </Component>
-            <Component Name="CredentialsTab">
-               <DeviceID>-1</DeviceID>
-               <Type>13</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>13</TopPos>
-               <LeftPos>3</LeftPos>
-               <Height>35</Height>
-               <ListHeight>0</ListHeight>
-               <Width>124</Width>
-               <Caption>sue_AIR_TargetCredentials</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>notebook1_SITE</ContainerName>
-               <ContainerSequence>1</ContainerSequence>
-               <Binding>0</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format />
-               <EffectiveCaption>sue_AIR_TargetCredentials</EffectiveCaption>
             </Component>
             <Component Name="edit1_SITE">
                <DeviceID>-1</DeviceID>
@@ -606,7 +585,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>4</ContainerSequence>
                <DataSource>object.Option01</DataSource>
                <Binding>1</Binding>
@@ -628,7 +607,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>5</ContainerSequence>
                <DataSource>variables.Option01Label</DataSource>
                <Binding>6</Binding>
@@ -648,7 +627,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>6</ContainerSequence>
                <DataSource>object.Option02</DataSource>
                <Binding>1</Binding>
@@ -670,7 +649,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>7</ContainerSequence>
                <DataSource>variables.Option02Label</DataSource>
                <Binding>6</Binding>
@@ -690,7 +669,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>8</ContainerSequence>
                <DataSource>object.Option03</DataSource>
                <Binding>1</Binding>
@@ -712,7 +691,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>9</ContainerSequence>
                <DataSource>variables.Option03Label</DataSource>
                <Binding>6</Binding>
@@ -732,7 +711,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>10</ContainerSequence>
                <DataSource>object.Option04</DataSource>
                <Binding>1</Binding>
@@ -754,7 +733,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>11</ContainerSequence>
                <DataSource>variables.Option04Label</DataSource>
                <Binding>6</Binding>
@@ -774,7 +753,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>12</ContainerSequence>
                <DataSource>object.Option05</DataSource>
                <Binding>1</Binding>
@@ -796,7 +775,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>13</ContainerSequence>
                <DataSource>variables.Option05Label</DataSource>
                <Binding>6</Binding>
@@ -816,7 +795,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>14</ContainerSequence>
                <DataSource>object.Option06</DataSource>
                <Binding>1</Binding>
@@ -838,7 +817,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>15</ContainerSequence>
                <DataSource>variables.Option06Label</DataSource>
                <Binding>6</Binding>
@@ -858,7 +837,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>16</ContainerSequence>
                <DataSource>object.Option07</DataSource>
                <Binding>1</Binding>
@@ -880,7 +859,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>17</ContainerSequence>
                <DataSource>variables.Option07Label</DataSource>
                <Binding>6</Binding>
@@ -900,7 +879,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>18</ContainerSequence>
                <DataSource>object.Option08</DataSource>
                <Binding>1</Binding>
@@ -922,7 +901,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>19</ContainerSequence>
                <DataSource>variables.Option08Label</DataSource>
                <Binding>6</Binding>
@@ -942,7 +921,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>20</ContainerSequence>
                <DataSource>object.Option09</DataSource>
                <Binding>1</Binding>
@@ -964,7 +943,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>21</ContainerSequence>
                <DataSource>variables.Option09Label</DataSource>
                <Binding>6</Binding>
@@ -984,7 +963,7 @@
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>22</ContainerSequence>
                <DataSource>object.Option10</DataSource>
                <Binding>1</Binding>
@@ -1006,7 +985,7 @@
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>23</ContainerSequence>
                <DataSource>variables.Option10Label</DataSource>
                <Binding>6</Binding>
@@ -1198,6 +1177,27 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>Limit</EffectiveCaption>
             </Component>
+            <Component Name="TargetTab">
+               <DeviceID>-1</DeviceID>
+               <Type>13</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>13</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>35</Height>
+               <ListHeight>0</ListHeight>
+               <Width>124</Width>
+               <Caption>sue_AIR_Target</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>notebook1_SITE</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_Target</EffectiveCaption>
+            </Component>
             <Component Name="TargetTypeEdit">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
@@ -1234,7 +1234,7 @@
                <Width>19</Width>
                <Caption>C(TargetTypeStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerName>TargetTab</ContainerName>
                <ContainerSequence>2</ContainerSequence>
                <DataSource>object.CredentialTargetType</DataSource>
                <Binding>1</Binding>
@@ -1456,7 +1456,7 @@
                <ScriptLine>      public void UpdateVariableUI()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         // EACH TARGET TYPE'S RULE OPTIONS, IN ORDER. THE NAMES ARE THE LABELS SHOWN ON THE TARGET CREDENTIALS TAB, UNDER THE LINE THAT</ScriptLine>
+               <ScriptLine>         // EACH TARGET TYPE'S RULE OPTIONS, IN ORDER. THE NAMES ARE THE LABELS SHOWN ON THE TARGET TAB, UNDER THE LINE THAT</ScriptLine>
                <ScriptLine>         // SHOWS WHICH CREDENTIAL THE RULE USES. THEIR POSITIONS MUST MATCH WHAT SendRule IN THE RULES EXTENSION CLASS READS.</ScriptLine>
                <ScriptLine>         //</ScriptLine>
                <ScriptLine>         // THE CREDENTIAL'S VALUES AREN'T SHOWN ON THIS FORM. THEY ARE ENTERED, LABELLED AND MASKED ON THE CREDENTIALS FORM.</ScriptLine>
