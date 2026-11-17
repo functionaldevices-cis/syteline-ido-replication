@@ -294,7 +294,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
                     // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES),
                     //                    03 = OperationFieldName (OPTIONAL: BODY FIELD THAT RECEIVES THE OPERATION)
-                    // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
+                    // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
+                    // RULES FORM SCRIPT (UpdateVariableUI).
 
                     string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
                     string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
@@ -356,7 +357,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Domain
                     // RULE OPTIONS:      01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
-                    // THESE POSITIONS MUST MATCH THE CredentialKeys AND OptionKeys LISTS IN THE CREDENTIALS AND RULES FORM SCRIPTS.
+                    // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
+                    // RULES FORM SCRIPT (UpdateVariableUI).
 
                     bool isDelete = operation == "Delete";
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);

@@ -50,14 +50,14 @@ Replication runs inside the user's save, so it must never throw out of the trigg
 
 A rule's `CredentialValue01`–`10` come from its linked credential record. What each credential value and option means for a target type is defined in two form scripts, which also label and show or hide the form fields:
 - the Credentials form's `UpdateValueLabels` (credential keys, each with a flag that says whether the value is sensitive). Each value has two inputs bound to the same property: `ValueNNEdit`, a plain multi-line edit, and `ValueNNMaskedEdit`, a single-line edit with the `ComponentFlags.EDIT_PASSWORD` flag (4), which shows dots. The form designer has no setting for that flag, so it can only be set in the export, and it hasn't been tried on a multi-line edit. On a new record the script shows the plain input for every value. On a saved record it shows the masked one for a sensitive value and the plain one otherwise, and it also shows the `ValueNNPreviewEdit` field beside a sensitive value, bound to a derived `ValueNNPreview` property on `ue_AIR_IDOReplicationCredentials` that returns the first and last 6 characters. When you add a credential value, set its flag.
-- the Rules form's `UpdateVariableUI` `config` dictionary (`CredentialKeys` and `OptionKeys`)
+- the Rules form's `UpdateVariableUI` `config` dictionary (option keys only). The Rules form doesn't show credential values. Its Target tab (`TargetTab`) has one line that shows which credential the rule uses (its ID, name and target type), and the rule's options under it.
 
-Keep both in sync, and make the extension class read the same positions. `README.md` documents the same credential values, rule options, transformations and log behavior for administrators, so update its tables, and the matching pages in `wiki/`, when these change.
+Make the extension class read the same positions the two scripts label. `README.md` documents the same credential values, rule options, transformations and log behavior for administrators, so update its tables, and the matching pages in `wiki/`, when these change.
 
 To add a new target type:
 - add a `case` in that `switch`
 - add a helper, plus models under the target's own folder, in both projects
-- add entries to both form-script lists
+- add its credential keys to the Credentials form script and its option keys to the Rules form script
 
 ## Building
 

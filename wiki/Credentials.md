@@ -41,7 +41,7 @@ What each value means is on the target's page:
 ## Keeping credentials safe
 
 > [!WARNING]
-> Credential values are stored as plain text in `ue_AIR_idorepl_cred_mst`. The Credentials form masks the sensitive ones with dots, which hides them from someone looking at the screen and nothing more. They are all still shown in full on the Rules form and can be read through the `ue_AIR_IDOReplicationCredentials` and `ue_AIR_IDOReplicationRules` IDOs.
+> Credential values are stored as plain text in `ue_AIR_idorepl_cred_mst`. The Credentials form masks the sensitive ones with dots, which hides them from someone looking at the screen and nothing more. The Rules form doesn't show them. They can still be read through the `ue_AIR_IDOReplicationCredentials` and `ue_AIR_IDOReplicationRules` IDOs.
 
 - Give access to the Credentials and Rules forms, and to those two IDOs, only to the administrators who need it.
 - Use a credential with the least access that works. For Event Hubs, use a shared access policy on the one event hub with only the **Send** claim. For Salesforce, set the external client app to run as a dedicated integration user limited to the objects you replicate.

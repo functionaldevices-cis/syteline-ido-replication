@@ -217,13 +217,9 @@
          <TableName>Strings</TableName>
          <String>RuleNum</String>
       </String>
-      <String Name="sue_AIR_TargetCredentials" Scope="1" ScopeName="[NULL]">
+      <String Name="sue_AIR_Target" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
-         <String>Target Credentials</String>
-      </String>
-      <String Name="sue_AIR_TargetOptions" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Target Options</String>
+         <String>Target</String>
       </String>
       <String Name="sue_AIR_TargetType" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
