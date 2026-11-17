@@ -589,6 +589,7 @@
                <ContainerSequence>24</ContainerSequence>
                <DataSource>object.Option01</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option01Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -653,6 +654,7 @@
                <ContainerSequence>25</ContainerSequence>
                <DataSource>object.Option02</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option02Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -717,6 +719,7 @@
                <ContainerSequence>26</ContainerSequence>
                <DataSource>object.Option03</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option03Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -781,6 +784,7 @@
                <ContainerSequence>27</ContainerSequence>
                <DataSource>object.Option04</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option04Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -845,6 +849,7 @@
                <ContainerSequence>28</ContainerSequence>
                <DataSource>object.Option05</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option05Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -909,6 +914,7 @@
                <ContainerSequence>29</ContainerSequence>
                <DataSource>object.Option06</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option06Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -973,6 +979,7 @@
                <ContainerSequence>30</ContainerSequence>
                <DataSource>object.Option07</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option07Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1037,6 +1044,7 @@
                <ContainerSequence>31</ContainerSequence>
                <DataSource>object.Option08</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option08Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1101,6 +1109,7 @@
                <ContainerSequence>32</ContainerSequence>
                <DataSource>object.Option09</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option09Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1165,6 +1174,7 @@
                <ContainerSequence>33</ContainerSequence>
                <DataSource>object.Option10</DataSource>
                <Binding>1</Binding>
+               <ComboListSource>INLINE ENTRIES(V(Option10Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1679,13 +1689,16 @@
                <ScriptLine>         // EACH TARGET TYPE'S RULE OPTIONS, IN ORDER. THE NAMES ARE THE LABELS SHOWN ON THE TARGET TAB, UNDER THE LINE THAT SHOWS WHICH</ScriptLine>
                <ScriptLine>         // CREDENTIAL THE RULE USES. THEIR POSITIONS MUST MATCH WHAT SendRule IN THE RULES EXTENSION CLASS READS.</ScriptLine>
                <ScriptLine>         //</ScriptLine>
-               <ScriptLine>         // AN OPTION IS FREE TEXT UNLESS IT IS GIVEN A LIST OF CHOICES HERE. TO GIVE ONE A LIST, PASS THE CHOICES AFTER ITS NAME:</ScriptLine>
+               <ScriptLine>         // AN OPTION IS FREE TEXT UNLESS IT IS GIVEN A LIST OF CHOICES HERE. TO GIVE ONE A LIST, PASS THE CHOICES AFTER ITS NAME. EACH</ScriptLine>
+               <ScriptLine>         // CHOICE IS THE VALUE THAT IS STORED, AND A DESCRIPTION SHOWN BESIDE IT IN THE LIST:</ScriptLine>
                <ScriptLine>         //</ScriptLine>
-               <ScriptLine>         //    Option("DeleteBehavior", "Skip", "Delete")</ScriptLine>
+               <ScriptLine>         //    Option("DeleteBehavior", Choice("Skip", "Skip deletes."), Choice("Delete", "Send deletes through."))</ScriptLine>
                <ScriptLine>         //</ScriptLine>
                <ScriptLine>         // EACH OPTION HAS TWO INPUTS BOUND TO THE SAME PROPERTY: OptionNNEdit, A TEXT BOX, AND OptionNNCombo, A COMBOBOX. A SCRIPT</ScriptLine>
-               <ScriptLine>         // CAN'T CHANGE A COMPONENT'S TYPE, SO THE SCRIPT SHOWS THE COMBOBOX AND FILLS ITS LIST WHEN THE OPTION HAS CHOICES, AND SHOWS</ScriptLine>
-               <ScriptLine>         // THE TEXT BOX WHEN IT DOESN'T.</ScriptLine>
+               <ScriptLine>         // CAN'T CHANGE A COMPONENT'S TYPE, SO THE SCRIPT SHOWS THE COMBOBOX WHEN THE OPTION HAS CHOICES AND THE TEXT BOX WHEN IT DOESN'T.</ScriptLine>
+               <ScriptLine>         //</ScriptLine>
+               <ScriptLine>         // THE COMBOBOX'S LIST SOURCE IS  INLINE ENTRIES(V(OptionNNChoices)) DISPLAY(1,2) VALUE(1)  SO ITS LIST COMES FROM THE FORM</ScriptLine>
+               <ScriptLine>         // VARIABLE OptionNNChoices, WHICH THIS SCRIPT SETS TO THE OPTION'S CHOICES FOR THE RULE'S TARGET TYPE.</ScriptLine>
                <ScriptLine>         //</ScriptLine>
                <ScriptLine>         // THE CREDENTIAL'S VALUES AREN'T SHOWN ON THIS FORM. THEY ARE ENTERED, LABELLED AND MASKED ON THE CREDENTIALS FORM.</ScriptLine>
                <ScriptLine />
@@ -1706,7 +1719,11 @@
                <ScriptLine>               {</ScriptLine>
                <ScriptLine>                  Option("DestinationName"),</ScriptLine>
                <ScriptLine>                  Option("ExternalIDFieldName"),</ScriptLine>
-               <ScriptLine>                  Option("DeleteBehavior", "Skip", "Delete")</ScriptLine>
+               <ScriptLine>                  Option(</ScriptLine>
+               <ScriptLine>                     "DeleteBehavior",</ScriptLine>
+               <ScriptLine>                     Choice("Skip", "Skip deletes and don't send them to Salesforce."),</ScriptLine>
+               <ScriptLine>                     Choice("Delete", "Send all deletes through to Salesforce.")</ScriptLine>
+               <ScriptLine>                  )</ScriptLine>
                <ScriptLine>               }</ScriptLine>
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>         };</ScriptLine>
@@ -1719,15 +1736,34 @@
                <ScriptLine>            bool isUsed = options.Count &gt; counter;</ScriptLine>
                <ScriptLine>            string optionKey = isUsed ? options[counter].Key : "";</ScriptLine>
                <ScriptLine>            string[] choices = isUsed ? options[counter].Value : new string[0];</ScriptLine>
+               <ScriptLine>            bool hasChoices = choices.Length &gt; 0;</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            // THE COMBOBOX IS ONLY USED WHEN ITS LIST COULD BE FILLED. OTHERWISE THE OPTION FALLS BACK TO THE TEXT BOX.</ScriptLine>
+               <ScriptLine>            // HAND THE CHOICES TO THE COMBOBOX THROUGH ITS FORM VARIABLE. WHEN THEY CHANGE, FOR EXAMPLE ON MOVING TO A RULE WITH ANOTHER</ScriptLine>
+               <ScriptLine>            // TARGET TYPE, THE COMBOBOX IS TOLD TO LOAD ITS LIST AGAIN.</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            bool showCombo = choices.Length &gt; 0 &amp;&amp; FillChoices($"Option{(counter+1):00}Combo", choices);</ScriptLine>
+               <ScriptLine>            var choicesVariable = this.ThisForm.Variables($"Option{(counter+1):00}Choices");</ScriptLine>
+               <ScriptLine>            string entries = string.Join(",", choices);</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            if (choicesVariable.Value != entries)</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               choicesVariable.Value = entries;</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               try</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  this.ThisForm.Components[$"Option{(counter+1):00}Combo"].InvalidateList();</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
+               <ScriptLine>               catch (Exception)</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE COMBOBOX READS ITS LIST SOURCE</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            }</ScriptLine>
                <ScriptLine />
                <ScriptLine>            this.ThisForm.Variables($"Option{(counter+1):00}Label").Value = optionKey;</ScriptLine>
                <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Static"].Visible = isUsed;</ScriptLine>
-               <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Edit"].Visible = isUsed &amp;&amp; !showCombo;</ScriptLine>
-               <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Combo"].Visible = showCombo;</ScriptLine>
+               <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Edit"].Visible = isUsed &amp;&amp; !hasChoices;</ScriptLine>
+               <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Combo"].Visible = hasChoices;</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
@@ -1740,57 +1776,12 @@
                <ScriptLine>         return new KeyValuePair&lt;string, string[]&gt;(name, choices);</ScriptLine>
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
-               <ScriptLine>      // MAKES THE COMBOBOX'S LIST HOLD EXACTLY THESE CHOICES, AND SAYS WHETHER IT DOES. THE LIST IS LEFT ALONE WHEN IT ALREADY MATCHES,</ScriptLine>
-               <ScriptLine>      // SO SELECTING ANOTHER RULE DOESN'T REBUILD IT. ANY ERROR COUNTS AS NOT FILLED, SO A PROBLEM HERE CAN'T BREAK THE FORM.</ScriptLine>
+               <ScriptLine>      // ONE CHOICE, AS AN INLINE LIST ENTRY: THE VALUE AND THE DESCRIPTION, SEPARATED BY A BACKSLASH. ENTRIES ARE SEPARATED BY COMMAS</ScriptLine>
+               <ScriptLine>      // INSIDE ENTRIES( ), SO NEITHER PART MAY CONTAIN A COMMA, A BACKSLASH OR A PARENTHESIS.</ScriptLine>
                <ScriptLine />
-               <ScriptLine>      private bool FillChoices(string comboName, string[] choices)</ScriptLine>
+               <ScriptLine>      private static string Choice(string value, string description)</ScriptLine>
                <ScriptLine>      {</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         try</ScriptLine>
-               <ScriptLine>         {</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            var combo = this.ThisForm.Components[comboName];</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            if (!ListMatches(combo, choices))</ScriptLine>
-               <ScriptLine>            {</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>               combo.ResetListBoxContent();</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>               for (int index = 0; index &lt; choices.Length; index++)</ScriptLine>
-               <ScriptLine>               {</ScriptLine>
-               <ScriptLine>                  combo.InsertListBoxString(index, choices[index]);</ScriptLine>
-               <ScriptLine>               }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            return ListMatches(combo, choices);</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         }</ScriptLine>
-               <ScriptLine>         catch (Exception)</ScriptLine>
-               <ScriptLine>         {</ScriptLine>
-               <ScriptLine>            return false;</ScriptLine>
-               <ScriptLine>         }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>      }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>      private static bool ListMatches(IWSFormComponent combo, string[] choices)</ScriptLine>
-               <ScriptLine>      {</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         if (combo.GetListBoxCount() != choices.Length)</ScriptLine>
-               <ScriptLine>         {</ScriptLine>
-               <ScriptLine>            return false;</ScriptLine>
-               <ScriptLine>         }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         for (int index = 0; index &lt; choices.Length; index++)</ScriptLine>
-               <ScriptLine>         {</ScriptLine>
-               <ScriptLine>            if (combo.GetListBoxText(index) != choices[index])</ScriptLine>
-               <ScriptLine>            {</ScriptLine>
-               <ScriptLine>               return false;</ScriptLine>
-               <ScriptLine>            }</ScriptLine>
-               <ScriptLine>         }</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         return true;</ScriptLine>
-               <ScriptLine />
+               <ScriptLine>         return value + "\\" + description;</ScriptLine>
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
                <ScriptLine>      public void SetValuesOnNewFieldRecord() {</ScriptLine>
