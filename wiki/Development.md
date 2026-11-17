@@ -49,7 +49,7 @@ The language version is the .NET Framework default (C# 7.3). Avoid newer syntax 
 1. Add a `case` for the new target type in `SendRule` in the Rules assembly. Return a `ReplicationRuleResult` with one `ReplicationRecordOutcome` per record.
 2. Add a helper under `Helpers/`, and models under a folder for the target in `Models/`. Add them to both projects.
 3. Add the target's credential keys to the Credentials form's `UpdateValueLabels` script.
-4. Add its credential keys and option keys to the Rules form's `UpdateVariableUI` script.
+4. Add its option keys to the Rules form's `UpdateVariableUI` script.
 5. Make `SendRule` read the same positions the forms label.
 6. Document it: a row in the README tables and a `Target-<Name>` page here.
 

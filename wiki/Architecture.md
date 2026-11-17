@@ -62,12 +62,12 @@ Replication runs inside the user's save. An unhandled exception would fail the e
 
 ## Credential values and options
 
-A rule carries ten credential values (from its linked credential) and ten options. What each position means depends on the target type, and it is defined in three places that must agree:
+A rule carries ten credential values (from its linked credential) and ten options. What each position means depends on the target type, and it is defined in three places that must agree. The Rules form doesn't show credential values, only which credential a rule uses:
 
 | Place | What it defines |
 | --- | --- |
 | The Credentials form's `UpdateValueLabels` script | Credential value labels |
-| The Rules form's `UpdateVariableUI` script (`CredentialKeys`, `OptionKeys`) | Credential and option labels |
+| The Rules form's `UpdateVariableUI` script | Option labels |
 | `SendRule` in the Rules assembly | Which position is read for what |
 
 | Target type | Credential values | Options |
