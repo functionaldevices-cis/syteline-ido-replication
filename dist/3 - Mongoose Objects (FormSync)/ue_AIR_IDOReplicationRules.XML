@@ -52,7 +52,7 @@
                <ContainerSequence>0</ContainerSequence>
                <DataSource>object.CredentialID</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>STDOLE ue_AIR_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) RECORDCAP(0))</ComboListSource>
+               <ComboListSource>STDOLE ue_AIR_IDOReplicationCredentials(  PROPERTIES(CredentialID,Name) FILTER(TargetType = FP(TargetType))RECORDCAP(0))</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
