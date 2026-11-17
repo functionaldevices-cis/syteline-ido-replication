@@ -51,7 +51,7 @@ Domain works the same way as the `Domain` property of the Salesforce credential 
 | --- | --- | --- |
 | 1 | sObject name | The API name of the object, for example `Account` or `Order__c` |
 | 2 | External ID field name | The API name of the object's external ID field, for example `Syteline_Id__c` |
-| 3 | Delete Behavior | `Skip` (default, also when blank) or `Delete` |
+| 3 | Delete Behavior | Choose `Skip` (default, also when blank) or `Delete` from the list |
 
 ## Field map
 
