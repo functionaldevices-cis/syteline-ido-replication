@@ -600,14 +600,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>15.5</TopPos>
+               <TopPos>17</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>0</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
                <DataSource>object.Option01</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -622,14 +622,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>15.8</TopPos>
+               <TopPos>17.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>1</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>5</ContainerSequence>
                <DataSource>variables.Option01Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -642,14 +642,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>18.5</TopPos>
+               <TopPos>20</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>2</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>6</ContainerSequence>
                <DataSource>object.Option02</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -664,14 +664,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>18.8</TopPos>
+               <TopPos>20.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>3</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>7</ContainerSequence>
                <DataSource>variables.Option02Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -684,14 +684,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>21.5</TopPos>
+               <TopPos>23</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>4</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>8</ContainerSequence>
                <DataSource>object.Option03</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -706,14 +706,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>21.8</TopPos>
+               <TopPos>23.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>5</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>9</ContainerSequence>
                <DataSource>variables.Option03Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -726,15 +726,15 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>24.5</TopPos>
+               <TopPos>26</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>6</ContainerSequence>
-               <DataSource>object.Option01</DataSource>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>10</ContainerSequence>
+               <DataSource>object.Option04</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
@@ -748,14 +748,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>24.8</TopPos>
+               <TopPos>26.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>7</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>11</ContainerSequence>
                <DataSource>variables.Option04Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -768,14 +768,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>27.5</TopPos>
+               <TopPos>29</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>8</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>12</ContainerSequence>
                <DataSource>object.Option05</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -790,14 +790,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>27.8</TopPos>
+               <TopPos>29.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>9</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>13</ContainerSequence>
                <DataSource>variables.Option05Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -810,14 +810,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>30.5</TopPos>
+               <TopPos>32</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>10</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>14</ContainerSequence>
                <DataSource>object.Option06</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -832,14 +832,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>30.8</TopPos>
+               <TopPos>32.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>11</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>15</ContainerSequence>
                <DataSource>variables.Option06Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -852,14 +852,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>33.5</TopPos>
+               <TopPos>35</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>12</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>16</ContainerSequence>
                <DataSource>object.Option07</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -874,14 +874,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>33.8</TopPos>
+               <TopPos>35.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>13</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>17</ContainerSequence>
                <DataSource>variables.Option07Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -894,14 +894,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>36.5</TopPos>
+               <TopPos>38</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>14</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>18</ContainerSequence>
                <DataSource>object.Option08</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -916,14 +916,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>36.7777777777778</TopPos>
+               <TopPos>38.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>15</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>19</ContainerSequence>
                <DataSource>variables.Option08Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -936,14 +936,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>39.5</TopPos>
+               <TopPos>41</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>16</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>20</ContainerSequence>
                <DataSource>object.Option09</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -958,14 +958,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>39.8</TopPos>
+               <TopPos>41.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>17</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>21</ContainerSequence>
                <DataSource>variables.Option09Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -978,14 +978,14 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>10</TabOrder>
-               <TopPos>42.5</TopPos>
+               <TopPos>44</TopPos>
                <LeftPos>25</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
                <Width>60</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>18</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>22</ContainerSequence>
                <DataSource>object.Option10</DataSource>
                <Binding>1</Binding>
                <Flags>1</Flags>
@@ -1000,14 +1000,14 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>9</TabOrder>
-               <TopPos>42.8</TopPos>
+               <TopPos>44.3</TopPos>
                <LeftPos>4</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
                <MaxCharacters>0</MaxCharacters>
-               <ContainerName>TargetOptionsTab</ContainerName>
-               <ContainerSequence>19</ContainerSequence>
+               <ContainerName>CredentialsTab</ContainerName>
+               <ContainerSequence>23</ContainerSequence>
                <DataSource>variables.Option10Label</DataSource>
                <Binding>6</Binding>
                <Flags>1</Flags>
@@ -1198,27 +1198,6 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>Limit</EffectiveCaption>
             </Component>
-            <Component Name="TargetOptionsTab">
-               <DeviceID>-1</DeviceID>
-               <Type>13</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>13</TopPos>
-               <LeftPos>3</LeftPos>
-               <Height>35</Height>
-               <ListHeight>0</ListHeight>
-               <Width>124</Width>
-               <Caption>sue_AIR_TargetOptions</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>notebook1_SITE</ContainerName>
-               <ContainerSequence>2</ContainerSequence>
-               <Binding>0</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format />
-               <EffectiveCaption>sue_AIR_TargetOptions</EffectiveCaption>
-            </Component>
             <Component Name="TargetTypeEdit">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
@@ -1349,7 +1328,7 @@
                <Caption>sue_AIR_Test</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>notebook1_SITE</ContainerName>
-               <ContainerSequence>3</ContainerSequence>
+               <ContainerSequence>2</ContainerSequence>
                <Binding>0</Binding>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
@@ -1477,11 +1456,10 @@
                <ScriptLine>      public void UpdateVariableUI()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         // EACH TARGET TYPE'S RULE OPTIONS, IN ORDER. THE NAMES ARE THE LABELS SHOWN ON THE TARGET OPTIONS TAB, AND THEIR POSITIONS MUST</ScriptLine>
-               <ScriptLine>         // MATCH WHAT SendRule IN THE RULES EXTENSION CLASS READS.</ScriptLine>
+               <ScriptLine>         // EACH TARGET TYPE'S RULE OPTIONS, IN ORDER. THE NAMES ARE THE LABELS SHOWN ON THE TARGET CREDENTIALS TAB, UNDER THE LINE THAT</ScriptLine>
+               <ScriptLine>         // SHOWS WHICH CREDENTIAL THE RULE USES. THEIR POSITIONS MUST MATCH WHAT SendRule IN THE RULES EXTENSION CLASS READS.</ScriptLine>
                <ScriptLine>         //</ScriptLine>
-               <ScriptLine>         // THE CREDENTIAL'S VALUES AREN'T SHOWN ON THIS FORM. THE TARGET CREDENTIALS TAB ONLY SHOWS WHICH CREDENTIAL THE RULE USES. THE</ScriptLine>
-               <ScriptLine>         // VALUES ARE ENTERED, LABELLED AND MASKED ON THE CREDENTIALS FORM.</ScriptLine>
+               <ScriptLine>         // THE CREDENTIAL'S VALUES AREN'T SHOWN ON THIS FORM. THEY ARE ENTERED, LABELLED AND MASKED ON THE CREDENTIALS FORM.</ScriptLine>
                <ScriptLine />
                <ScriptLine>         Dictionary&lt;string, List&lt;string&gt;&gt; config = new Dictionary&lt;string, List&lt;string&gt;&gt;()</ScriptLine>
                <ScriptLine>         {</ScriptLine>
