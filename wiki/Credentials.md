@@ -12,7 +12,7 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 
 The Target Type can only be set on a new credential. Once the credential is saved, it is locked.
 
-**Sensitive values are masked.** Their inputs show dots, like a password field, both while you enter a new credential and afterward. Once the credential is saved, a preview appears to the right of each one: the first 6 and last 6 characters, such as `Endpoi ... ubname`. Use it to check that you saved the value you meant to.
+**Sensitive values are masked once the credential is saved.** While you enter a new credential, every value shows as you type it, so you can check it. After you save, a sensitive value's input shows dots, like a password field, and a preview appears to its right: the first 6 and last 6 characters, such as `Endpoi ... ubname`. Use it to check that you saved the value you meant to.
 
 | Target type | Sensitive | Not sensitive |
 | --- | --- | --- |
