@@ -77,7 +77,7 @@ To delete in Salesforce, set the rule's Delete Behavior to `Delete`. Then:
 
 ## Common errors
 
-A sensitive value can't be edited on a saved credential. Where a fix below means changing one, follow [Changing a credential](Credentials#changing-a-credential).
+A sensitive value shows as dots on the Credentials form. To change one, type the new value over the dots and save.
 
 | Message | Fix |
 | --- | --- |
