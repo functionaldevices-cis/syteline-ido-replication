@@ -19,6 +19,7 @@ Check these in order:
 | `Unknown target type '...'` | The rule's Target Type isn't `AzureEventHub` or `SalesforceRESTAPI` |
 | `The payload is over 4,000 characters, so it wasn't stored and can't be retried.` | The record was still sent. Only the log copy was dropped. If it failed, resend it with a [bulk load](Bulk-Loads). |
 | `Warning: Field '...': couldn't apply ... so it was sent unchanged` | A [transformation](Replication-Rules-and-Field-Maps#transformations) couldn't convert the value. Check the source property's type and the transformation. |
+| `It can't be retried, because it has no record ID.` | The rule has no ID field, so a retry couldn't tell whether newer data was sent since. Set the rule's Option 2 to an output field in its field map, then resend the record with a [bulk load](Bulk-Loads). |
 | `Superseded by a newer replication of this record, so it wasn't resent.` | Expected. The retry task skipped an old failed row because newer data was sent. |
 | `The stored payload couldn't be read, so it can't be retried.` | The log row's payload isn't valid JSON. Resend the record with a bulk load. |
 | `Delete skipped, because the rule's DeleteBehavior isn't Delete.` | Expected for Salesforce rules with the default Delete Behavior |
@@ -37,6 +38,7 @@ Replication runs during the save, so the save waits for the target to answer. If
 
 - The row has `RetriesRemaining` of 0. See [When retries run out](Replication-Log-and-Retries#when-retries-run-out).
 - The row has no stored payload.
+- The row has no record ID, because its rule has no ID field (Option 2) or the field map doesn't include that field.
 - The row's rule is inactive or deleted.
 - The background task isn't scheduled, or its definition doesn't call `ue_RetryFailedReplications` on the `ue_AIR_IDOReplicationRules` IDO. See [Installation](Installation#4-background-tasks).
 

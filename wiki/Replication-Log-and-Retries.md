@@ -16,11 +16,11 @@ One row per record per rule.
 | CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
 | Source | What started the run. See [Source and operation](#source-and-operation). A retry doesn't change it. |
 | Operation | What the run did with the record at the target: `Insert`, `Update`, `Upsert` or `Delete` |
-| RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
+| RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field, and a failed row with a blank record ID isn't retried. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
 | ErrorMessage | The error, and any transformation warnings |
-| RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. |
+| RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row that has a stored payload and a record ID. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
 
 ## Source and operation
@@ -45,12 +45,13 @@ Two less common cases:
 | --- | --- |
 | Trigger (a user's save) | Every record |
 | Background task that loaded 100 records or fewer | Every record |
-| Background task that loaded more than 100 records | Failed records, and records with a transformation warning |
+| Background task that loaded more than 100 records | Failed records, records with a transformation warning, and records that have an older failed row waiting for a retry |
 
 Special cases:
 - If a rule fails before its records are built, it gets one `Failed` row with no payload.
 - If a rule's source records can't be loaded, most often because its field map names a property the IDO doesn't have, that rule gets one such row. The IDO's other rules still replicate. The record's change isn't replicated for the failed rule and can't be retried from the log, so after fixing the field map, run a [bulk load](Bulk-Loads) for the records that changed in the meantime.
 - A payload over 4,000 characters isn't stored. The row says so, and it can't be retried.
+- A failed row with no record ID can't be retried. The row says so. The retry task couldn't tell whether the record was replicated again since, so resending it could put old data over newer data. Set the rule's ID field (Option 2).
 
 ## Statuses
 
@@ -83,6 +84,6 @@ To send them again, either:
 
 ## Limits to know about
 
-- The supersede check needs a record ID. Set Option 2 (the ID field) on every rule, or old failed rows may be resent after newer data.
-- A background run over 100 records doesn't log its successes, so a failed row from before that run isn't recognized as out of date.
+- Retries need a record ID. Set Option 2 (the ID field) on every rule to an output field that identifies the record, or its failed records aren't retried.
+- The record ID has to be unique per record. If two records share an ID field value, a newer replication of one makes a failed row for the other look out of date.
 - The retry task sends the payload that was stored when the record first failed, not the record's current values.

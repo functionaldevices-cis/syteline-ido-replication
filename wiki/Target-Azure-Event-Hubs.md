@@ -19,7 +19,7 @@ For a Fabric Eventstream, add a custom endpoint source and use its Event Hub con
 | Option | Name | What to enter |
 | --- | --- | --- |
 | 1 | Event Schema URI | Optional. Only for Fabric Event Schema Eventstreams. The schema's full URL, in the form `https://<host>/schemagroups/<schema set id>/schemas/<schema name>/versions/<version>`. |
-| 2 | ID field name | The output field that identifies the record. Used as the record ID in the replication log and in failure messages. |
+| 2 | ID field name | The output field that identifies the record. Used as the record ID in the replication log and in failure messages. Without it, a failed record isn't retried. |
 | 3 | Operation Field Name | Optional. Adds the operation to each event body under this field name. |
 
 ## What is sent
