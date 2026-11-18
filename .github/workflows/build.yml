@@ -1,0 +1,68 @@
+# Builds both extension class assemblies, so a change that doesn't compile is caught before it is merged.
+#
+# The build only proves the code compiles. Nothing here runs against Syteline, so behavior, forms and IDOs still
+# have to be tested there.
+#
+# Each run publishes the built DLLs as downloads (Artifacts, on the run's summary page). They can be uploaded to
+# Syteline (IDO Extension Class Assemblies) in place of a local build.
+
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request replaces its earlier run. Runs on main are never cancelled, so every commit on main
+# finishes its build and publishes its DLLs, even when two merges land close together.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  shared-code:
+    name: Helpers and Models match
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare Helpers/ and Models/ between the two projects
+        run: bash .github/scripts/compare-shared-code.sh
+
+  build:
+    name: Build ${{ matrix.assembly }}
+    runs-on: windows-latest
+    strategy:
+      # Build both assemblies even when one fails, so one run shows every error.
+      fail-fast: false
+      matrix:
+        assembly:
+          - ue_AIR_IDOReplicationRules_ECA
+          - ue_AIR_IDOReplicationConfig_ECA
+    env:
+      SOLUTION: src/IDO Extension Class Custom Assemblies/${{ matrix.assembly }}/${{ matrix.assembly }}.sln
+      OUTPUT: src/IDO Extension Class Custom Assemblies/${{ matrix.assembly }}/${{ matrix.assembly }}/bin/Release
+    steps:
+      - uses: actions/checkout@v4
+
+      # Puts the runner's Visual Studio MSBuild on the PATH. The runner already has the .NET Framework 4.8 targeting pack.
+      - uses: microsoft/setup-msbuild@v2
+
+      # The projects use packages.config, which MSBuild only restores when RestorePackagesConfig is set.
+      - name: Restore NuGet packages
+        run: msbuild "$env:SOLUTION" /t:Restore /p:RestorePackagesConfig=true /p:Configuration=Release /nologo /verbosity:minimal
+
+      - name: Build
+        run: msbuild "$env:SOLUTION" /p:Configuration=Release /nologo /verbosity:minimal
+
+      - name: Publish the built DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.assembly }}
+          path: ${{ env.OUTPUT }}/${{ matrix.assembly }}.dll
+          if-no-files-found: error
+          retention-days: 14
