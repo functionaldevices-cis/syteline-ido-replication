@@ -6,10 +6,10 @@
          <Type>0</Type>
          <StandardOperations>953</StandardOperations>
          <Flags>1048778</Flags>
-         <Height>30</Height>
+         <Height>37</Height>
          <LeftPos>0</LeftPos>
          <TopPos>0</TopPos>
-         <Width>100</Width>
+         <Width>120</Width>
          <HelpContextID>-1</HelpContextID>
          <PaneZeroSize>36</PaneZeroSize>
          <PrimaryDataSource>ue_AIR_IDOReplicationLogs( LOCKMODE(Row) )</PrimaryDataSource>
@@ -19,8 +19,8 @@
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>27</TabOrder>
-               <TopPos>14.5</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>28</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>10</Width>
@@ -67,11 +67,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>26</TabOrder>
-               <TopPos>14.7</TopPos>
+               <TopPos>28.2</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sAttemptCount</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -84,15 +84,60 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sAttemptCount</EffectiveCaption>
             </Component>
+            <Component Name="CredentialNameEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>17</TabOrder>
+               <TopPos>10</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>C(CredentialNameStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.CredentialName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(CredentialNameStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="CredentialNameStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>16</TabOrder>
+               <TopPos>10.2</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>18</Width>
+               <Caption>ue_AIR_sCredentialName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sCredentialName</EffectiveCaption>
+            </Component>
             <Component Name="ErrorMessageEdit">
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>29</TabOrder>
-               <TopPos>17.5</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>31</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>2.8</Height>
                <ListHeight>0</ListHeight>
-               <Width>37.05</Width>
+               <Width>40</Width>
                <Caption>C(ErrorMessageStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -136,11 +181,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>28</TabOrder>
-               <TopPos>17.7</TopPos>
+               <TopPos>31.2</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sErrorMessage</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -177,8 +222,8 @@
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>13</TabOrder>
-               <TopPos>1</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>14.5</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>30</Width>
@@ -228,11 +273,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>12</TabOrder>
-               <TopPos>1.2</TopPos>
+               <TopPos>14.7</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>sIDOName</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -245,12 +290,33 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>sIDOName</EffectiveCaption>
             </Component>
+            <Component Name="IsReadOnlyCheckBox">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>1.05555555555556</TopPos>
+               <LeftPos>76</LeftPos>
+               <Height>1.05555555555556</Height>
+               <ListHeight>0</ListHeight>
+               <Width>5</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.IsReadOnly</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>True</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+            </Component>
             <Component Name="LastAttemptDateDateCombo">
                <DeviceID>-1</DeviceID>
                <Type>26</Type>
                <TabOrder>31</TabOrder>
-               <TopPos>20.6</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>34</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -297,11 +363,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>30</TabOrder>
-               <TopPos>20.7</TopPos>
+               <TopPos>34.2</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sLastAttemptTimestamp</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -318,8 +384,8 @@
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>21</TabOrder>
-               <TopPos>7</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>17.5</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>15</Width>
@@ -366,11 +432,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>20</TabOrder>
-               <TopPos>7.2</TopPos>
+               <TopPos>17.7</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sOperation</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -387,8 +453,8 @@
                <DeviceID>-1</DeviceID>
                <Type>18</Type>
                <TabOrder>23</TabOrder>
-               <TopPos>8.5</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>19</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>4.3</Height>
                <ListHeight>0</ListHeight>
                <Width>40</Width>
@@ -435,11 +501,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>22</TabOrder>
-               <TopPos>8.7</TopPos>
+               <TopPos>19.2</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sPayload</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -452,12 +518,33 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sPayload</EffectiveCaption>
             </Component>
+            <Component Name="RecordGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>13</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>11</Height>
+               <ListHeight>0</ListHeight>
+               <Width>66</Width>
+               <Caption>ue_AIR_sRecord</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sRecord</EffectiveCaption>
+            </Component>
             <Component Name="RecordIDEdit">
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>19</TabOrder>
-               <TopPos>5.5</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>16</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>15</Width>
@@ -504,11 +591,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>18</TabOrder>
-               <TopPos>5.7</TopPos>
+               <TopPos>16.2</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sRecordID</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -525,8 +612,8 @@
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
                <TabOrder>33</TabOrder>
-               <TopPos>16</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>29.5</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>10</Width>
@@ -573,11 +660,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>32</TabOrder>
-               <TopPos>16.2</TopPos>
+               <TopPos>29.7</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sRetriesRemaining</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -590,12 +677,33 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sRetriesRemaining</EffectiveCaption>
             </Component>
+            <Component Name="RuleGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>5.5</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>6.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>66</Width>
+               <Caption>ue_AIR_sRule</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sRule</EffectiveCaption>
+            </Component>
             <Component Name="RuleNumComboBox">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>15</TabOrder>
-               <TopPos>2.5</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>7</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>10</Width>
@@ -645,11 +753,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>14</TabOrder>
-               <TopPos>2.7</TopPos>
+               <TopPos>7.16666666666667</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sRuleNum</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -662,12 +770,58 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sRuleNum</EffectiveCaption>
             </Component>
+            <Component Name="SourceComboBox">
+               <DeviceID>-1</DeviceID>
+               <Type>27</Type>
+               <TabOrder>15</TabOrder>
+               <TopPos>2.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>C(SourceStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.Source</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDetails</MenuName>
+               <MaintainFromSpec>ue_AIR_IDOReplicationRules( PROPERTY(RuleNum) )</MaintainFromSpec>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(SourceStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="SourceStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>2.7</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>18</Width>
+               <Caption>ue_AIR_sSource</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sSource</EffectiveCaption>
+            </Component>
             <Component Name="StatusCombobox">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>25</TabOrder>
-               <TopPos>13</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>26.5</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>15</Width>
@@ -710,15 +864,36 @@
                <Post301Format />
                <EffectiveCaption>sStatus</EffectiveCaption>
             </Component>
+            <Component Name="StatusGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>25</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>11.6111111111111</Height>
+               <ListHeight>0</ListHeight>
+               <Width>66</Width>
+               <Caption>ue_AIR_sStatus</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sStatus</EffectiveCaption>
+            </Component>
             <Component Name="StatusStatic">
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>24</TabOrder>
-               <TopPos>13.2</TopPos>
+               <TopPos>26.7</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>sStatus</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -735,8 +910,8 @@
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>17</TabOrder>
-               <TopPos>4</TopPos>
-               <LeftPos>23.75</LeftPos>
+               <TopPos>8.5</TopPos>
+               <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>20</Width>
@@ -783,11 +958,11 @@
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
                <TabOrder>16</TabOrder>
-               <TopPos>4.2</TopPos>
+               <TopPos>8.7</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>20</Width>
+               <Width>18</Width>
                <Caption>ue_AIR_sTargetType</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -799,6 +974,27 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sTargetType</EffectiveCaption>
+            </Component>
+            <Component Name="TriggerGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>1</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>3.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>66</Width>
+               <Caption>ue_AIR_sTrigger</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sTrigger</EffectiveCaption>
             </Component>
          </Components>
          <Variables>
