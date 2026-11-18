@@ -228,8 +228,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationCredentials</LabelStringID>
-         <RevisionNo>6</RevisionNo>
-         <RevisionDate>2026-11-16T16:18:27</RevisionDate>
+         <RevisionNo>7</RevisionNo>
+         <RevisionDate>2026-11-17T18:24:33</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -329,6 +329,7 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes>
                   <IsRequired>1</IsRequired>
+                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert) DISPLAY(1,2) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
@@ -1086,8 +1087,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>25</RevisionNo>
-         <RevisionDate>2026-11-16T17:41:22</RevisionDate>
+         <RevisionNo>26</RevisionNo>
+         <RevisionDate>2026-11-17T18:24:13</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -1624,6 +1625,7 @@ END</Expression>
                <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
                <PropertyAttributes>
                   <IsRequired>1</IsRequired>
+                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert) DISPLAY(1,2) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">

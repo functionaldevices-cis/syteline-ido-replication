@@ -1448,7 +1448,6 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <MenuName>StdDefault</MenuName>
-               <DefaultFrom>UserDefinedType(IDOReplicationTargetType)</DefaultFrom>
                <PropertyClassName>ShortDesc</PropertyClassName>
                <Post301Format />
                <EffectiveCaption>C(TargetTypeStatic)</EffectiveCaption>
@@ -1474,7 +1473,6 @@
                <Hidden>True</Hidden>
                <HelpContextID>0</HelpContextID>
                <MenuName>StdDefault</MenuName>
-               <DefaultFrom>UserDefinedType(IDOReplicationTargetType)</DefaultFrom>
                <PropertyClassName>ShortDesc</PropertyClassName>
                <Post301Format />
                <EffectiveCaption>C(TargetTypeStatic)</EffectiveCaption>
@@ -1499,7 +1497,6 @@
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <MenuName>StdDefault</MenuName>
-               <DefaultFrom>UserDefinedType(IDOReplicationTargetType)</DefaultFrom>
                <PropertyClassName>ShortDesc</PropertyClassName>
                <Post301Format />
                <EffectiveCaption>ue_AIR_sTargetType</EffectiveCaption>
