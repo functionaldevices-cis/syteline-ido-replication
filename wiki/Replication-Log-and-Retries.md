@@ -13,7 +13,7 @@ One row per record per rule.
 | Property | Meaning |
 | --- | --- |
 | RuleNum, IDOName, TargetType | The rule that sent the record |
-| Operation | `Insert`, `Update`, `Delete`, or blank when unknown (bulk loads) |
+| Operation | `Insert`, `Update` or `Delete` for a trigger, `Test` for a run from the Rules form's Test tab, or blank when unknown (bulk loads) |
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |

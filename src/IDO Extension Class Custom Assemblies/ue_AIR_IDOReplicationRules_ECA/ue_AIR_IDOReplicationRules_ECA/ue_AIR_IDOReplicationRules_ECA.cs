@@ -90,6 +90,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
+        // THE OPERATION THE RULES FORM'S TEST TAB PASSES, AND THE VALUE WRITTEN TO THE REPLICATION LOG FOR A TEST RUN
+
+        private const string TestOperation = "Test";
+
         // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
 
         private const int BackgroundTaskFailedReturnCode = 16;
@@ -107,8 +111,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // THE OPERATION THAT CHANGED THE RECORD: Insert, Update OR Delete. BLANK (BACKGROUND TASKS, OR TRIGGERS SET
             // UP BEFORE THIS PARAMETER EXISTED) MEANS UNKNOWN, AND TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
+            //
+            // THE RULES FORM'S TEST TAB PASSES Test. A TEST IS SENT EXACTLY LIKE A RUN WITH AN UNKNOWN OPERATION, SO THE TARGET
+            // NEVER SEES THE WORD Test. IT IS ONLY RECORDED: THE REPLICATION LOG ROWS AND THE TASK MESSAGES SAY Test.
+
+            bool isTest = string.Equals((operation ?? "").Trim(), TestOperation, StringComparison.OrdinalIgnoreCase);
 
             operation = NormalizeOperation(operation);
+
+            string loggedOperation = isTest ? TestOperation : operation;
 
             // SETUP UTILITIES
 
@@ -232,12 +243,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             foreach (ReplicationRuleResult ruleResult in ruleResults)
             {
+                ruleResult.Operation = loggedOperation;
                 utils.WriteLogMessage(ruleResult.ToString());
             }
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, ruleResults, isBackgroundTask, recordCountLoaded);
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, loggedOperation, ruleResults, isBackgroundTask, recordCountLoaded);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
 
