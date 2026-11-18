@@ -5,6 +5,10 @@
          <TableName>Strings</TableName>
          <String>IDO Replication Credentials (AIR)</String>
       </String>
+      <String Name="fue_AIR_IDOReplicationLogs" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>IDO Replication Logs (AIR)</String>
+      </String>
       <String Name="fue_AIR_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>IDO Replication Rules (AIR)</String>
@@ -221,6 +225,14 @@
          <TableName>Strings</TableName>
          <String>Target</String>
       </String>
+      <String Name="sue_AIR_TargetCredentials" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Credentials</String>
+      </String>
+      <String Name="sue_AIR_TargetOptions" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Options</String>
+      </String>
       <String Name="sue_AIR_TargetType" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Target Type</String>
@@ -228,6 +240,46 @@
       <String Name="sue_AIR_Test" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Test</String>
+      </String>
+      <String Name="ue_AIR_sAttemptCount" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Attempt Count</String>
+      </String>
+      <String Name="ue_AIR_sErrorMessage" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Error Message</String>
+      </String>
+      <String Name="ue_AIR_sLastAttemptDate" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Last Attempt Date</String>
+      </String>
+      <String Name="ue_AIR_sLastAttemptTimestamp" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Last Attempt Timestamp</String>
+      </String>
+      <String Name="ue_AIR_sOperation" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Operation</String>
+      </String>
+      <String Name="ue_AIR_sPayload" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Payload</String>
+      </String>
+      <String Name="ue_AIR_sRecordID" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>RecordID</String>
+      </String>
+      <String Name="ue_AIR_sRetriesRemaining" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Retries Remaining</String>
+      </String>
+      <String Name="ue_AIR_sRuleNum" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>RuleNum</String>
+      </String>
+      <String Name="ue_AIR_sTargetType" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Target Type</String>
       </String>
    </Strings>
 </FormsAndObjectsExport>
