@@ -40,7 +40,7 @@ Each map field is one field in the output record.
 
 Notes:
 - Property names must exist on the IDO. Picking from the drop-down avoids a misspelled name, but a name can still be typed, and a property can be renamed or removed later. A rule with a property the IDO doesn't have fails with a `Failed` row in the [replication log](Replication-Log-and-Retries) that names the property. The IDO's other rules still replicate.
-- Choose the rule's IDO Name before filling in the field map, because the drop-down lists that IDO's properties.
+- Choose the rule's IDO Name before filling in the field map, because the drop-down lists that IDO's properties. If you change a rule's IDO Name later, the list changes with it, but the Source Values already entered stay as they are, so check them.
 - A map field with a blank Source Value is left out, unless its Source Type is `Literal`.
 - Without a transformation, a value is sent with the type the IDO returns (number, date, text).
 - Output field names should be unique within a rule.
