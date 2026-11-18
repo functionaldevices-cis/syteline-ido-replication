@@ -48,7 +48,7 @@ sequenceDiagram
 
 1. **Entry.** `ue_ReplicateRecordToExternalSystems` normalizes the operation (`Insert`, `Update` or `Delete`, and `Upsert` for anything else) and works out the run's source and wraps everything in a try/catch. It always returns 0.
 2. **Rules.** `LoadReplicationRulesAndMaps` loads the IDO's active rules, with their credential values and options, and each rule's map fields. With no active rules it stops.
-3. **Records.** The union of every rule's source properties is loaded once through `SytelineInternalAPI.LoadRecords`. All data access goes through IDOs, not direct SQL.
+3. **Records.** `LoadSourceRecords` loads the union of every rule's source properties once through `SytelineInternalAPI.LoadRecords`. If that load fails, it loads each rule's records separately, so only the rule that can't be loaded fails. All data access goes through IDOs, not direct SQL.
 4. **Per rule.** `ReplicateRule` calls `RemapRecords` to build the output records and apply transformations, then `SendRule` to send them. Each rule is isolated: an exception becomes a failed `ReplicationRuleResult`, and the other rules still run.
 5. **Sending.** `SendRule` switches on `TargetType`:
    - `AzureEventHub`: `AzureEventHubPusher.Push`
