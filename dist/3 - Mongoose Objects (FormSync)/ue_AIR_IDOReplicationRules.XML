@@ -235,7 +235,7 @@
                <Post301Format />
                <EffectiveCaption>sue_AIR_OutputTarget</EffectiveCaption>
             </Component>
-            <Component Name="IDONameEdit">
+            <Component Name="IDONameComboBox">
                <DeviceID>-1</DeviceID>
                <Type>27</Type>
                <TabOrder>12</TabOrder>
@@ -250,7 +250,7 @@
                <ContainerSequence>0</ContainerSequence>
                <DataSource>object.IDOName</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>STDOLE IdoCollections(  PROPERTIES(CollectionName) DISPLAY(1)RECORDCAP(0))</ComboListSource>
+               <ComboListSource>STDOLE ue_AIR_IDOReplicationConfigs(  PROPERTIES(CollectionName) DISPLAY(1)FILTER(ue_EventHandlersStatus = 'Setup')RECORDCAP(0))</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -275,7 +275,7 @@
                <ContainerSequence>1</ContainerSequence>
                <DataSource>object.IDOName</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>STDOLE IdoCollections(  PROPERTIES(CollectionName) DISPLAY(1)RECORDCAP(0))</ComboListSource>
+               <ComboListSource>STDOLE ue_AIR_IDOReplicationConfigs(  PROPERTIES(CollectionName) DISPLAY(1)FILTER(ue_EventHandlersStatus = 'Setup')RECORDCAP(0))</ComboListSource>
                <Flags>0</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -1297,9 +1297,9 @@
                <Post301Format />
                <EffectiveCaption>C(RemappedShipToStateStatic)</EffectiveCaption>
             </Component>
-            <Component Name="RuleNumEdit">
+            <Component Name="RuleNumComboBox">
                <DeviceID>-1</DeviceID>
-               <Type>1</Type>
+               <Type>27</Type>
                <TabOrder>12</TabOrder>
                <TopPos>8.5</TopPos>
                <LeftPos>15</LeftPos>
@@ -1615,7 +1615,7 @@
                <Description />
             </Variable>
             <Variable Name="BGTaskParms">
-               <Value>BG~TASKID~, V(sQueryFilter), P(IDOName), V(sRecordCap), P(RuleNum), Test</Value>
+               <Value>BG~TASKID~, V(sQueryFilter), P(IDOName), V(sRecordCap), P(RuleNum)</Value>
                <Value2 />
                <Value3 />
                <Description />
