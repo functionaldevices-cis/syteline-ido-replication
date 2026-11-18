@@ -1401,10 +1401,6 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int ResendRowPointerBatchSize = 100;
 
-        // NO RECORD CAP: A RESEND SENDS EVERY RECORD ITS FILTER SELECTS. IN A LOAD REQUEST 0 MEANS NO CAP, AND -1 MEANS THE DEFAULT CAP OF 200.
-
-        private const int NoRecordCap = 0;
-
         // THE MOST FAILED ROWS WITH NO STORED PAYLOAD AND NO RECORD TO RELOAD THAT ONE RESEND COUNTS, TO REPORT THEM
 
         private const int ResendUnsendableRowLimit = 1000;
@@ -1575,10 +1571,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
             bool anyRuleFailed = false;
             bool anyRunNeverSent = false;
 
+            // A RESEND SENDS EVERY RECORD ITS FILTER SELECTS, SO IT LOADS WITH NO RECORD CAP (0, NOT -1, WHICH IS THE DEFAULT CAP OF 200)
+
             void RunFilter(string filter)
             {
 
-                ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, NoRecordCap, ruleNum, OperationUpsert, SourceTaskResend);
+                ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, SytelineInternalAPI.NoRecordCap, ruleNum, OperationUpsert, SourceTaskResend);
 
                 bool neverSent = runResult.RuleResults.Any(ruleResult => !ruleResult.Success && ruleResult.RecordOutcomes.Count == 0);
 
