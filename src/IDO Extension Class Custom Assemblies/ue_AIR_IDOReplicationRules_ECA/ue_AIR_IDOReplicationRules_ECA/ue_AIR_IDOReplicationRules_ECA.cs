@@ -159,12 +159,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             bool includeInactiveRules = isBackgroundTask && ruleNum != null;
 
+            // DECLARED OUTSIDE THE TRY SO THE CATCH CAN SEE WHICH RULES WERE LOADED BEFORE A FAILURE
+
+            Dictionary<string, ReplicationRule> replicationRules = new Dictionary<string, ReplicationRule>();
+
             try
             {
 
                 // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
+                replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
 
                 if (replicationRules.Keys.Count == 0)
                 {
@@ -236,14 +240,47 @@ namespace ue_AIR_IDOReplicationRules_ECA
             catch (Exception ex)
             {
 
-                ruleResults.Add(new ReplicationRuleResult(
-                    ruleNum: ruleNum ?? "",
-                    targetType: "",
-                    recordCount: 0,
-                    success: false,
-                    errorMessage: "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex),
-                    operation: operation
-                ));
+                string setupErrorMessage = "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex);
+
+                // A FAILURE AFTER THE RULES WERE LOADED (FOR EXAMPLE, THE SOURCE RECORDS COULDN'T BE LOADED) STOPS EVERY RULE THAT HASN'T RUN YET.
+                // EACH OF THOSE GETS ITS OWN RESULT, SO ITS LOG ROW CARRIES THE RULE'S NUMBER, TARGET TYPE AND CREDENTIAL NAME.
+
+                List<ReplicationRule> rulesWithoutResult = replicationRules.Values
+                    .Where(rule => !ruleResults.Any(ruleResult => ruleResult.RuleNum == rule.RuleNum))
+                    .ToList();
+
+                foreach (ReplicationRule replicationRule in rulesWithoutResult)
+                {
+
+                    ruleResults.Add(new ReplicationRuleResult(
+                        ruleNum: replicationRule.RuleNum ?? "",
+                        targetType: replicationRule.TargetType ?? "",
+                        recordCount: 0,
+                        success: false,
+                        errorMessage: setupErrorMessage,
+                        operation: operation
+                    )
+                    {
+                        CredentialName = replicationRule.CredentialName ?? ""
+                    });
+
+                }
+
+                // A FAILURE BEFORE THE RULES WERE LOADED HAS NO RULE TO NAME, SO IT GETS ONE RESULT WITH NO TARGET TYPE OR CREDENTIAL
+
+                if (rulesWithoutResult.Count == 0)
+                {
+
+                    ruleResults.Add(new ReplicationRuleResult(
+                        ruleNum: ruleNum ?? "",
+                        targetType: "",
+                        recordCount: 0,
+                        success: false,
+                        errorMessage: setupErrorMessage,
+                        operation: operation
+                    ));
+
+                }
 
             }
 

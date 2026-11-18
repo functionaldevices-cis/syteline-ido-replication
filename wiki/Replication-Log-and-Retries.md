@@ -31,7 +31,8 @@ One row per record per rule.
 | Background task that loaded more than 100 records | Failed records, and records with a transformation warning |
 
 Special cases:
-- If a rule fails before its records are built (for example, a property in its field map doesn't exist), it gets one `Failed` row with no payload.
+- If a rule fails before its records are built, it gets one `Failed` row with no payload.
+- If the source records can't be loaded (for example, a field map names a property the IDO doesn't have), every rule for the IDO gets one such row, each with its own rule number, target type and credential name.
 - A payload over 4,000 characters isn't stored. The row says so, and it can't be retried.
 
 ## Statuses
