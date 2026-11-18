@@ -45,7 +45,7 @@ Two less common cases:
 | --- | --- |
 | Trigger (a user's save) | Every record |
 | Background task that loaded 100 records or fewer | Every record |
-| Background task that loaded more than 100 records | Failed records, records with a transformation warning, and records that have an older failed row waiting for a retry |
+| Background task that loaded more than 100 records | Failed records, records with a transformation warning, and records that have an older `Failed` row |
 
 Special cases:
 - If a rule fails before its records are built, it gets one `Failed` row with no payload.

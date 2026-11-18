@@ -221,7 +221,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     bool logEveryRecord = BGTaskNum <= 0 || recordCountLoaded <= LogAllRecordsLimit;
 
-                    // A RUN THAT ONLY LOGS FAILURES STILL LOGS A RECORD THAT HAS A FAILED ROW WAITING FOR A RETRY, SO THE RETRY TASK CAN SEE THAT
+                    // A RUN THAT ONLY LOGS FAILURES STILL LOGS A RECORD THAT HAS A FAILED ROW THE RETRY TASK COULD RESEND, SO THE RETRY TASK CAN SEE THAT
                     // THE RECORD WAS REPLICATED AGAIN AND DOESN'T RESEND THE OLDER DATA. BuildOutcome READS THIS.
 
                     this.recordIDsAwaitingRetry = logEveryRecord
@@ -826,7 +826,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // IN A RUN THAT ONLY LOGS FAILURES, THESE ARE STILL LOGGED:
             //   - A RECORD WITH A WARNING, SO THE PROBLEM IS VISIBLE
-            //   - A RECORD THAT HAS A FAILED ROW WAITING FOR A RETRY, SO THE RETRY TASK SEES THIS NEWER REPLICATION OF IT
+            //   - A RECORD THAT HAS A FAILED ROW THE RETRY TASK COULD RESEND, SO THE RETRY TASK SEES THIS NEWER REPLICATION OF IT
 
             if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed && warning == "" && !this.IsAwaitingRetry(replicationRule.RuleNum, recordID))
             {
@@ -952,11 +952,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int DefaultRetries = 3;
 
-        // THE MOST FAILED ROWS LOOKED AT WHEN A RUN CHECKS WHICH RECORDS ARE WAITING FOR A RETRY
+        // THE MOST FAILED ROWS LOOKED AT WHEN A RUN CHECKS WHICH RECORDS HAVE A FAILED ROW THAT COULD BE RESENT
 
         private const int AwaitingRetryRowLimit = 10000;
 
-        // RECORD IDS THAT HAVE A FAILED ROW WAITING FOR A RETRY, BY RULE NUMBER. ONLY FILLED IN FOR A RUN THAT DOESN'T LOG EVERY RECORD.
+        // RECORD IDS THAT HAVE A FAILED ROW THE RETRY TASK COULD RESEND, BY RULE NUMBER. ONLY FILLED IN FOR A RUN THAT DOESN'T LOG EVERY RECORD.
         // AN EXTENSION CLASS OBJECT SERVES ONE REQUEST, SO THIS BELONGS TO THE RUN THAT SET IT.
 
         private Dictionary<string, HashSet<string>> recordIDsAwaitingRetry = new Dictionary<string, HashSet<string>>();
@@ -985,8 +985,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        // LOADS THE RECORD IDS OF THE FAILED ROWS THAT ARE WAITING FOR A RETRY, FOR THE GIVEN RULES OF ONE IDO. NEVER THROWS: IF THE LOG CAN'T
+        // LOADS THE RECORD IDS OF THE FAILED ROWS THE RETRY TASK COULD RESEND, FOR THE GIVEN RULES OF ONE IDO. NEVER THROWS: IF THE LOG CAN'T
         // BE READ, THE RUN CARRIES ON AND LOGS ONLY ITS FAILURES.
+        //
+        // EVERY FAILED ROW COUNTS, NOT ONLY THOSE WITH RETRIES LEFT, BECAUSE AN ADMINISTRATOR CAN GIVE A ROW ITS RETRIES BACK. ROWS WITH
+        // RETRIES LEFT ARE LOADED FIRST, OLDEST FIRST, WHICH IS THE ORDER THE RETRY TASK RESENDS THEM IN. SO WHEN THERE ARE MORE ROWS THAN
+        // AwaitingRetryRowLimit, THE ONES LEFT OUT ARE THE ONES LEAST LIKELY TO BE RESENT SOON.
 
         private Dictionary<string, HashSet<string>> LoadRecordIDsAwaitingRetry(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, IEnumerable<string> ruleNums)
         {
@@ -1006,8 +1010,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 LoadRecordsResponseData awaitingResponse = sytelineAPI.LoadRecords(
                     IDOName: "ue_AIR_IDOReplicationLogs",
                     properties: new List<string>() { "RuleNum", "RecordID" },
-                    filter: "Status = 'Failed' AND RetriesRemaining > 0 AND RecordID IS NOT NULL AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " AND " + sytelineAPI.BuildInFilter("RuleNum", ruleNumList),
-                    orderBy: "CreateDate DESC",
+                    filter: "Status = 'Failed' AND RecordID IS NOT NULL AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " AND " + sytelineAPI.BuildInFilter("RuleNum", ruleNumList),
+                    orderBy: "RetriesRemaining DESC, CreateDate ASC",
                     recordCap: AwaitingRetryRowLimit
                 );
 

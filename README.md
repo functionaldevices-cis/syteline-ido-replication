@@ -114,7 +114,7 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 - the status (`Succeeded`, `Failed` or `Skipped`) and the error
 - the number of retries left (3 to start)
 
-**What's logged:** trigger runs log every record. Background-task runs log every record when they load 100 or fewer. Above that they log failures, warnings, and records that have an older failed row waiting for a retry.
+**What's logged:** trigger runs log every record. Background-task runs log every record when they load 100 or fewer. Above that they log failures, warnings, and records that have an older failed row.
 
 **What the retry task does:**
 - It resends failed rows that still have retries left and a stored payload, using each rule's current settings.
