@@ -30,7 +30,7 @@ For a Fabric Eventstream, add a custom endpoint source and use its Event Hub con
 { "CustomerNumber": "C000123", "Name": "Example Customer" }
 ```
 
-**The operation.** When the operation is known (`Insert`, `Update` or `Delete`), every event carries it as a user property named `operation`. [Bulk loads](Bulk-Loads) don't know the operation, so they send no `operation` property.
+**The operation.** When the operation is known, every event carries it as a user property named `operation`, with the value `Insert`, `Update` or `Delete`. Events carry these words, not the operation codes the [replication log](Replication-Log-and-Retries) stores. [Bulk loads](Bulk-Loads) don't know the operation, so they send no `operation` property.
 
 If you set Operation Field Name, the operation is also written into the body under that name (blank when unknown). It is off by default because Event Schema Eventstreams reject fields their schema doesn't define. If you turn it on with an event schema, add the field to the schema.
 

@@ -16,7 +16,7 @@ Background task: `ue_AIR_ReplicateRecordToExternalSystems` (see [Installation](I
 | 3. IDO name | The IDO collection, for example `SLCustomers` |
 | 4. Record cap | The most records to load |
 | 5. Rule number | Optional. Blank runs every active rule for the IDO. A rule named here runs even when it isn't active, so you can test a rule before switching it on. The Test tab passes the rule you are on. |
-| 6. Operation | Optional. Leave it blank for a bulk load, which is logged as `Bulk`. The Test tab passes `Test`, which is logged as `Test`. Both words are only recorded, in the replication log rows and task messages. The records are sent the same way either way. |
+| 6. Operation | Optional. Leave it blank for a bulk load, which is logged as Bulk Replicate (`BR`). The Test tab passes `T`, which is logged as Test. Both are only recorded, in the replication log rows and task messages. The records are sent the same way either way. |
 
 Example parameters:
 
@@ -29,7 +29,7 @@ BG~TASKID~, CustNum LIKE 'C%', SLCustomers, 5000
 | | Trigger | Bulk run |
 | --- | --- | --- |
 | Records | The one changed record | Every record that matches the filter, up to the record cap |
-| Operation | `Insert`, `Update` or `Delete` | Unknown. Records are treated as inserts or updates, and logged as `Bulk`. |
+| Operation | Insert, update or delete, from the event | Unknown. Records are treated as inserts or updates, and logged as Bulk Replicate. |
 | Event Hubs | Sends the `operation` user property | Sends no `operation` property |
 | Salesforce | Upserts, or deletes if the rule allows | Upserts |
 | Replication log | Every record | Every record for 100 or fewer; otherwise failures and warnings only |
@@ -43,8 +43,10 @@ A bulk run shows as **failed** when a rule fails, or when nothing could be sent 
 | --- | --- |
 | `Nothing was sent: IDO '...' has no active replication rules.` | No active rule has that IDO Name. Check the spelling and **Is Active**. |
 | `Nothing was sent: no '...' record matches the filter "...".` | The filter selected no records |
-| `Rule '2' (SalesforceRESTAPI): FAILED for 1 record(s). ...` | The send was tried and failed. The error follows. |
-| `Rule '2' (SalesforceRESTAPI): succeeded for 1 record(s).` | The target accepted the records |
+| `Rule '2' (SalesforceRESTAPI, BR): FAILED for 1 record(s). ...` | The send was tried and failed. The error follows. |
+| `Rule '2' (SalesforceRESTAPI, BR): succeeded for 1 record(s).` | The target accepted the records |
+
+Task messages show the operation as its code: `BR` for a bulk load, `T` for a run from the Test tab.
 
 Each record's outcome is also in the [replication log](Replication-Log-and-Retries).
 

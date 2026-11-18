@@ -1615,7 +1615,7 @@
                <Description />
             </Variable>
             <Variable Name="BGTaskParms">
-               <Value>BG~TASKID~, V(sQueryFilter), P(IDOName), V(sRecordCap), P(RuleNum)</Value>
+               <Value>BG~TASKID~, V(sQueryFilter), P(IDOName), V(sRecordCap), P(RuleNum), T</Value>
                <Value2 />
                <Value3 />
                <Description />

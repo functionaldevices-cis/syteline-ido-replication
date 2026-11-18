@@ -90,13 +90,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        // THE OPERATION THE RULES FORM'S TEST TAB PASSES, AND THE VALUE WRITTEN TO THE REPLICATION LOG FOR A TEST RUN
+        // THE OPERATION CODES. THEY SAY HOW A RUN WAS STARTED, AND THEY ARE THE VALUES THE TRIGGERS PASS AND THE REPLICATION LOG STORES.
+        // THE LOG FORM SHOWS A DESCRIPTION FOR EACH, FROM THE Operation INLINE LIST ON ue_AIR_IDOReplicationLogs AND ITS STRINGS.
+        // A TARGET NEVER RECEIVES A CODE: TargetOperation TURNS THE THREE EVENT CODES INTO Insert, Update AND Delete FOR IT.
+        //
+        // THE THREE EVENT CODES MUST MATCH OperationForEvent IN THE CONFIG ASSEMBLY, WHICH WRITES THEM INTO THE TRIGGERS.
 
-        private const string TestOperation = "Test";
+        private const string OperationAfterInsert = "EAI";  // EVENT: AFTER-INSERT (IdoPostItemInsert)
 
-        // THE VALUE WRITTEN TO THE REPLICATION LOG FOR A BULK LOAD: A BACKGROUND TASK RUN THAT PASSES NO OPERATION
+        private const string OperationAfterUpdate = "EAU";  // EVENT: AFTER-UPDATE (IdoPostItemUpdate)
 
-        private const string BulkOperation = "Bulk";
+        private const string OperationBeforeDelete = "EBD"; // EVENT: BEFORE-DELETE (IdoOnItemDelete)
+
+        // BULK REPLICATE: A BACKGROUND TASK RUN THAT PASSES NO OPERATION. ONLY RECORDED.
+
+        private const string OperationBulk = "BR";
+
+        // TEST: THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION. ONLY RECORDED.
+
+        private const string OperationTest = "T";
 
         // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
 
@@ -113,21 +125,22 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 ruleNum = null;
             }
 
-            // THE OPERATION THAT CHANGED THE RECORD: Insert, Update OR Delete. BLANK (BACKGROUND TASKS, OR TRIGGERS SET
-            // UP BEFORE THIS PARAMETER EXISTED) MEANS UNKNOWN, AND TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
+            // THE OPERATION CODE OF THE EVENT THAT CHANGED THE RECORD: EAI, EAU OR EBD. BLANK, OR ANYTHING ELSE, MEANS UNKNOWN, AND
+            // TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
             //
             // TWO KINDS OF RUN ARE ONLY RECORDED, IN THE REPLICATION LOG ROWS AND THE TASK MESSAGES. BOTH ARE SENT EXACTLY LIKE A
-            // RUN WITH AN UNKNOWN OPERATION, SO THE TARGET NEVER SEES EITHER WORD:
-            //   Test: THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION.
-            //   Bulk: A BACKGROUND TASK RUN (BGTaskNum ABOVE 0) THAT PASSES NO OPERATION, WHICH IS A BULK LOAD.
+            // RUN WITH AN UNKNOWN OPERATION:
+            //   T (TEST): THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION.
+            //   BR (BULK REPLICATE): A BACKGROUND TASK RUN (BGTaskNum ABOVE 0) THAT PASSES NO OPERATION, WHICH IS A BULK LOAD.
             //
-            // A TRIGGER RUN WITH NO OPERATION STAYS BLANK. ONLY TRIGGERS SET UP BEFORE THE OPERATION PARAMETER EXISTED DO THAT.
+            // A TRIGGER RUN WITH NO OPERATION CODE STAYS BLANK. ONLY TRIGGERS SET UP BEFORE THE CODES EXISTED DO THAT, AND THE
+            // CONFIGS FORM SHOWS THEM AS BROKEN UNTIL Fix Triggers IS RUN.
 
-            bool isTest = string.Equals((operation ?? "").Trim(), TestOperation, StringComparison.OrdinalIgnoreCase);
+            bool isTest = string.Equals((operation ?? "").Trim(), OperationTest, StringComparison.OrdinalIgnoreCase);
 
             operation = NormalizeOperation(operation);
 
-            string loggedOperation = isTest ? TestOperation : (operation == "" && BGTaskNum > 0 ? BulkOperation : operation);
+            string loggedOperation = isTest ? OperationTest : (operation == "" && BGTaskNum > 0 ? OperationBulk : operation);
 
             // SETUP UTILITIES
 
@@ -433,7 +446,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         eventSchemaUri: eventSchemaUri,
                         eventSource: eventSource,
                         maxBatchBytes: maxBatchBytes,
-                        operation: operation,
+                        operation: TargetOperation(operation),
                         operationFieldName: replicationRule.Option03
                     );
 
@@ -460,7 +473,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
                     // RULES FORM SCRIPT (UpdateVariableUI).
 
-                    bool isDelete = operation == "Delete";
+                    bool isDelete = operation == OperationBeforeDelete;
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
 
                     // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
@@ -1300,16 +1313,41 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // RETURNS THE EVENT CODE (EAI, EAU OR EBD) FOR AN OPERATION PASSED IN OR READ FROM A LOG ROW, AND BLANK FOR ANYTHING ELSE.
+        // BR AND T ARE ONLY RECORDED, SO THEY COME BACK BLANK AND ARE SENT AS AN UNKNOWN OPERATION.
+
         private static string NormalizeOperation(string operation)
         {
 
-            switch ((operation ?? "").Trim().ToLowerInvariant())
+            switch ((operation ?? "").Trim().ToUpperInvariant())
             {
-                case "insert":
+                case OperationAfterInsert:
+                    return OperationAfterInsert;
+                case OperationAfterUpdate:
+                    return OperationAfterUpdate;
+                case OperationBeforeDelete:
+                    return OperationBeforeDelete;
+                default:
+                    return "";
+            }
+
+        }
+
+
+
+        // THE WORD A TARGET RECEIVES FOR AN EVENT CODE: Insert, Update OR Delete. BLANK WHEN THE OPERATION IS UNKNOWN.
+        // TARGETS GET THESE WORDS AND NOT THE CODES, SO WHAT CONSUMERS READ DOESN'T DEPEND ON HOW SYTELINE NAMES ITS EVENTS.
+
+        private static string TargetOperation(string operation)
+        {
+
+            switch (operation)
+            {
+                case OperationAfterInsert:
                     return "Insert";
-                case "update":
+                case OperationAfterUpdate:
                     return "Update";
-                case "delete":
+                case OperationBeforeDelete:
                     return "Delete";
                 default:
                     return "";

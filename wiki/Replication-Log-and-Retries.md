@@ -14,13 +14,29 @@ One row per record per rule.
 | --- | --- |
 | RuleNum, IDOName, TargetType | The rule that sent the record |
 | CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
-| Operation | `Insert`, `Update` or `Delete` for a trigger, `Test` for a run from the Rules form's Test tab, or `Bulk` for a bulk load (a background task run that passes no operation) |
+| Operation | How the run was started. See [Operations](#operations). |
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
+
+## Operations
+
+The log stores a short code and the form shows its description.
+
+| Shown as | Stored code | Run |
+| --- | --- | --- |
+| Event: After-Insert | `EAI` | The insert trigger |
+| Event: After-Update | `EAU` | The update trigger |
+| Event: Before-Delete | `EBD` | The delete trigger, which runs before the row is removed |
+| Bulk Replicate | `BR` | A [bulk load](Bulk-Loads): a background task run that passes no operation |
+| Test | `T` | A run from the Rules form's Test tab |
+
+The descriptions come from the strings `ue_AIR_sOperationEAI`, `ue_AIR_sOperationEAU`, `ue_AIR_sOperationEBD`, `ue_AIR_sOperationBR` and `ue_AIR_sOperationT`, so you can reword or translate them.
+
+Targets never receive these codes. Event Hubs events carry `Insert`, `Update` or `Delete`.
 
 ## What gets logged
 

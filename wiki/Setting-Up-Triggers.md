@@ -39,20 +39,20 @@ A status of **Broken** is expected after an upgrade that changes the trigger act
 
 Three event handlers on the IDO, each with the description `ue_AIR_ReplicationTrigger`:
 
-| Event | Operation passed |
-| --- | --- |
-| `IdoPostItemInsert` | `Insert` |
-| `IdoPostItemUpdate` | `Update` |
-| `IdoOnItemDelete` | `Delete` |
+| Event | Operation code passed | Shown in the log as |
+| --- | --- | --- |
+| `IdoPostItemInsert` | `EAI` | Event: After-Insert |
+| `IdoPostItemUpdate` | `EAU` | Event: After-Update |
+| `IdoOnItemDelete` | `EBD` | Event: Before-Delete |
 
 Each handler has one event action that calls:
 
 ```
 IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems")
-PARMS(-1, SUBSTITUTE("RowPointer = '{0}'", P("RowPointer")), "<IDO name>", 1, "", "<operation>")
+PARMS(-1, SUBSTITUTE("RowPointer = '{0}'", P("RowPointer")), "<IDO name>", 1, "", "<operation code>")
 ```
 
-The parameters are: no background task (`-1`), a filter for the changed row, the IDO name, a record cap of 1, a blank rule number (every active rule), and the operation.
+The parameters are: no background task (`-1`), a filter for the changed row, the IDO name, a record cap of 1, a blank rule number (every active rule), and the operation code.
 
 The delete trigger runs before the row is removed, so the record can still be read and sent.
 
