@@ -90,6 +90,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
+        // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
+
+        private const int BackgroundTaskFailedReturnCode = 16;
+
         [IDOMethod(MethodFlags.None, "Infobar")]
         public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "")
         {
@@ -122,14 +126,39 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // THIS METHOD RUNS INSIDE AES TRIGGERS ON THE SOURCE IDO, SO IT MUST NEVER THROW. AN UNHANDLED EXCEPTION
             // WOULD FAIL THE EVENT ACTION AND ROLL BACK THE USER'S SAVE. EVERY ERROR IS CAUGHT, RECORDED AND LOGGED,
-            // AND THE METHOD ALWAYS RETURNS 0.
+            // AND A TRIGGER RUN ALWAYS RETURNS 0.
+            //
+            // A BACKGROUND TASK RUN (BGTaskNum ABOVE 0) HAS NO SAVE TO PROTECT, SO IT REPORTS WHAT HAPPENED: IT RETURNS
+            // BackgroundTaskFailedReturnCode WHEN ANY RULE FAILED OR WHEN NOTHING COULD BE SENT, SO THE TASK DOESN'T SHOW
+            // AS SUCCEEDED, AND ITS MESSAGES SAY WHY.
+
+            bool isBackgroundTask = BGTaskNum > 0;
+            bool nothingToSend = false;
+
+            // A BACKGROUND TASK RUN THAT NAMES A RULE RUNS THAT RULE EVEN WHEN IT ISN'T ACTIVE, SO A RULE CAN BE TESTED
+            // BEFORE IT IS SWITCHED ON. TRIGGERS NEVER NAME A RULE, SO THEY ONLY EVER RUN ACTIVE RULES.
+
+            bool includeInactiveRules = isBackgroundTask && ruleNum != null;
 
             try
             {
 
                 // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum);
+                Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
+
+                if (replicationRules.Keys.Count == 0)
+                {
+
+                    // WITHOUT THIS MESSAGE A BACKGROUND RUN WITH NO MATCHING RULE WOULD FINISH WITHOUT SAYING ANYTHING
+
+                    nothingToSend = true;
+
+                    utils.WriteLogMessage(ruleNum != null
+                        ? "Nothing was sent: there is no replication rule " + ruleNum + " for IDO '" + IDOName + "'."
+                        : "Nothing was sent: IDO '" + IDOName + "' has no active replication rules. Check the rule's IDO Name and Is Active.");
+
+                }
 
                 if (replicationRules.Keys.Count > 0)
                 {
@@ -151,6 +180,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     bool logEveryRecord = BGTaskNum <= 0 || recordCountLoaded <= LogAllRecordsLimit;
 
                     utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
+
+                    if (recordCountLoaded == 0)
+                    {
+                        nothingToSend = true;
+                        utils.WriteLogMessage("Nothing was sent: no '" + IDOName + "' record matches the filter \"" + queryFilter + "\".");
+                    }
 
                     // STEP THROUGH EACH RULE
                     // REMAP THE RECORD(S) BASED ON THE MAP
@@ -202,7 +237,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, ruleResults, BGTaskNum > 0, recordCountLoaded);
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, ruleResults, isBackgroundTask, recordCountLoaded);
+
+            // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
+
+            if (isBackgroundTask && (nothingToSend || ruleResults.Any(ruleResult => !ruleResult.Success)))
+            {
+                return BackgroundTaskFailedReturnCode;
+            }
 
             return 0;
 
