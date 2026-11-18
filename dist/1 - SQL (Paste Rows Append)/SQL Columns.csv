@@ -12,11 +12,11 @@ value07,dbo,ue_AIR_idorepl_cred_mst,LongerDescType,,YES
 value08,dbo,ue_AIR_idorepl_cred_mst,LongerDescType,,YES
 value09,dbo,ue_AIR_idorepl_cred_mst,LongerDescType,,YES
 value10,dbo,ue_AIR_idorepl_cred_mst,LongerDescType,,YES
-rule_num,dbo,ue_AIR_idorepl_log_mst,GenericIntType,,NO
+rule_num,dbo,ue_AIR_idorepl_log_mst,GenericIntType,,YES
 ido_name,dbo,ue_AIR_idorepl_log_mst,CollectionNameType,,NO
-target_type,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,NO
+target_type,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,YES
 operation,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,NO
-record_id,dbo,ue_AIR_idorepl_log_mst,LongDescType,,NO
+record_id,dbo,ue_AIR_idorepl_log_mst,LongDescType,,YES
 payload,dbo,ue_AIR_idorepl_log_mst,LongListType,,YES
 status,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,NO
 error_message,dbo,ue_AIR_idorepl_log_mst,LongerDescType,,YES
