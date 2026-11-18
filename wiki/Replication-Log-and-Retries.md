@@ -14,7 +14,7 @@ One row per record per rule.
 | --- | --- |
 | RuleNum, IDOName, TargetType | The rule that sent the record |
 | CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
-| Operation | `Insert`, `Update` or `Delete` for a trigger, `Test` for a run from the Rules form's Test tab, or blank when unknown (bulk loads) |
+| Operation | `Insert`, `Update` or `Delete` for a trigger, `Test` for a run from the Rules form's Test tab, or `Bulk` for a bulk load (a background task run that passes no operation) |
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |

@@ -94,6 +94,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const string TestOperation = "Test";
 
+        // THE VALUE WRITTEN TO THE REPLICATION LOG FOR A BULK LOAD: A BACKGROUND TASK RUN THAT PASSES NO OPERATION
+
+        private const string BulkOperation = "Bulk";
+
         // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
 
         private const int BackgroundTaskFailedReturnCode = 16;
@@ -112,14 +116,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
             // THE OPERATION THAT CHANGED THE RECORD: Insert, Update OR Delete. BLANK (BACKGROUND TASKS, OR TRIGGERS SET
             // UP BEFORE THIS PARAMETER EXISTED) MEANS UNKNOWN, AND TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
             //
-            // THE RULES FORM'S TEST TAB PASSES Test. A TEST IS SENT EXACTLY LIKE A RUN WITH AN UNKNOWN OPERATION, SO THE TARGET
-            // NEVER SEES THE WORD Test. IT IS ONLY RECORDED: THE REPLICATION LOG ROWS AND THE TASK MESSAGES SAY Test.
+            // TWO KINDS OF RUN ARE ONLY RECORDED, IN THE REPLICATION LOG ROWS AND THE TASK MESSAGES. BOTH ARE SENT EXACTLY LIKE A
+            // RUN WITH AN UNKNOWN OPERATION, SO THE TARGET NEVER SEES EITHER WORD:
+            //   Test: THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION.
+            //   Bulk: A BACKGROUND TASK RUN (BGTaskNum ABOVE 0) THAT PASSES NO OPERATION, WHICH IS A BULK LOAD.
+            //
+            // A TRIGGER RUN WITH NO OPERATION STAYS BLANK. ONLY TRIGGERS SET UP BEFORE THE OPERATION PARAMETER EXISTED DO THAT.
 
             bool isTest = string.Equals((operation ?? "").Trim(), TestOperation, StringComparison.OrdinalIgnoreCase);
 
             operation = NormalizeOperation(operation);
 
-            string loggedOperation = isTest ? TestOperation : operation;
+            string loggedOperation = isTest ? TestOperation : (operation == "" && BGTaskNum > 0 ? BulkOperation : operation);
 
             // SETUP UTILITIES
 
