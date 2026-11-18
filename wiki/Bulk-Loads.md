@@ -16,6 +16,7 @@ Background task: `ue_AIR_ReplicateRecordToExternalSystems` (see [Installation](I
 | 3. IDO name | The IDO collection, for example `SLCustomers` |
 | 4. Record cap | The most records to load |
 | 5. Rule number | Optional. Blank runs every active rule for the IDO. A rule named here runs even when it isn't active, so you can test a rule before switching it on. The Test tab passes the rule you are on. |
+| 6. Operation | Optional. The Test tab passes `Test`, which is only recorded: the replication log rows and task messages say `Test`. The records are sent the same way as with a blank operation. |
 
 Example parameters:
 
