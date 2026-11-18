@@ -952,8 +952,6 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int DefaultRetries = 3;
 
-        private const string NoRecordIDMessage = "It can't be retried, because it has no record ID. Set the rule's ID field (Option 2) to an output field in its field map.";
-
         // THE MOST FAILED ROWS LOOKED AT WHEN A RUN CHECKS WHICH RECORDS ARE WAITING FOR A RETRY
 
         private const int AwaitingRetryRowLimit = 10000;
@@ -1144,22 +1142,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 recordID = recordID.Substring(0, MaxRecordIDLength);
             }
 
-            // WITHOUT A RECORD ID, THE RETRY TASK CAN'T TELL WHETHER THE RECORD WAS REPLICATED AGAIN SINCE, AND RESENDING THE STORED PAYLOAD
-            // COULD PUT OLD DATA OVER NEWER DATA. SO SUCH A ROW GETS NO RETRIES.
-
-            if (outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null && recordID == "")
-            {
-                errorMessage = (errorMessage + " " + NoRecordIDMessage).Trim();
-            }
-
             if (errorMessage.Length > MaxErrorMessageLength)
             {
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
-            // ONLY A FAILED RECORD WITH A STORED PAYLOAD AND A RECORD ID CAN BE RETRIED
+            // ONLY A FAILED RECORD WITH A STORED PAYLOAD CAN BE RETRIED
 
-            bool canRetry = outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null && recordID != "";
+            bool canRetry = outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null;
             int ruleNumber;
 
             return sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
@@ -1267,7 +1257,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             LoadRecordsResponseData logResponse = sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_IDOReplicationLogs",
-                properties: new List<string>() { "RowPointer", "RuleNum", "IDOName", "Operation", "RecordID", "Payload", "RetriesRemaining", "AttemptCount", "ErrorMessage" },
+                properties: new List<string>() { "RowPointer", "RuleNum", "IDOName", "Operation", "RecordID", "Payload", "RetriesRemaining", "AttemptCount" },
                 filter: "Status = 'Failed' AND RetriesRemaining > 0 AND Payload IS NOT NULL AND " + sytelineAPI.BuildInFilter("RuleNum", activeRuleNums),
                 orderBy: "CreateDate ASC",
                 recordCap: RetryRowLimit
@@ -1297,59 +1287,20 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 RowPointer = ReadValue(item, "RowPointer"),
                 Payload = ReadValue(item, "Payload"),
                 RetriesRemaining = ReadInt(item, "RetriesRemaining"),
-                AttemptCount = ReadInt(item, "AttemptCount"),
-                ErrorMessage = ReadValue(item, "ErrorMessage")
+                AttemptCount = ReadInt(item, "AttemptCount")
             }).ToList();
 
-            // A ROW WITH NO RECORD ID CAN'T BE CHECKED AGAINST NEWER REPLICATIONS OF ITS RECORD, SO IT ISN'T RESENT. NEW ROWS LIKE THAT ARE
-            // WRITTEN WITH NO RETRIES. THIS TAKES ROWS WRITTEN BEFORE THAT RULE OUT OF THE RETRY QUEUE.
-
-            var rowsWithoutRecordID = logRows.Where(logRow => logRow.RecordID == "").ToList();
-
-            if (rowsWithoutRecordID.Count > 0)
-            {
-
-                // THE ROW KEEPS ITS OWN ERROR, WITH THE REASON IT ISN'T RETRIED ADDED TO IT
-
-                List<IDOUpdateItem> noRecordIDUpdates = rowsWithoutRecordID
-                    .Select(logRow =>
-                    {
-                        string noRecordIDError = (logRow.ErrorMessage + " " + NoRecordIDMessage).Trim();
-
-                        return sytelineAPI.BuildUpdateItem(logRow.Item.ItemID, new List<IDOUpdateProperty>()
-                        {
-                            new IDOUpdateProperty("ErrorMessage", noRecordIDError.Length > MaxErrorMessageLength ? noRecordIDError.Substring(0, MaxErrorMessageLength) : noRecordIDError, true),
-                            new IDOUpdateProperty("RetriesRemaining", 0, true)
-                        });
-                    })
-                    .ToList();
-
-                for (int i = 0; i < noRecordIDUpdates.Count; i += 200)
-                {
-                    try
-                    {
-                        sytelineAPI.UpdateRecords("ue_AIR_IDOReplicationLogs", noRecordIDUpdates.Skip(i).Take(200).ToList());
-                    }
-                    catch (Exception ex)
-                    {
-                        utils.WriteLogMessage("Couldn't update replication log rows that have no record ID: " + this.DescribeException(ex));
-                    }
-                }
-
-                utils.WriteLogMessage(rowsWithoutRecordID.Count + " failed row(s) have no record ID, so they weren't retried. Set the ID field (Option 2) on their rules.");
-
-                logRows = logRows.Where(logRow => logRow.RecordID != "").ToList();
-
-            }
-
+            // A ROW WITH NO RECORD ID CAN'T BE CHECKED THIS WAY, BECAUSE NOTHING SAYS WHICH RECORD IT IS. IT IS STILL RETRIED, UP TO ITS
+            // RETRIES, SO A RULE WITH NO ID FIELD (Option02) CAN HAVE OLDER DATA RESENT AFTER NEWER DATA.
+            //
             // A FAILED ROW IS SUPERSEDED WHEN THE SAME RECORD WAS REPLICATED AGAIN BY THE SAME RULE LATER (WHATEVER THAT ROW'S
             // STATUS). RESENDING IT WOULD OVERWRITE NEWER DATA, OR RE-CREATE A RECORD THAT WAS DELETED SINCE. SUPERSEDED ROWS ARE
             // MARKED SKIPPED, WHICH ALSO COLLAPSES SEVERAL FAILED ROWS FOR ONE RECORD DOWN TO THE NEWEST.
 
             HashSet<string> supersededRowPointers = this.FindSupersededLogRows(
                 sytelineAPI,
-                logRows.Select(logRow => new KeyValuePair<string, string>(logRow.IDOName + "|" + logRow.RuleNum, logRow.RecordID)).ToList(),
-                logRows.Select(logRow => logRow.RowPointer).ToList()
+                logRows.Where(logRow => logRow.RecordID != "").Select(logRow => new KeyValuePair<string, string>(logRow.IDOName + "|" + logRow.RuleNum, logRow.RecordID)).ToList(),
+                logRows.Where(logRow => logRow.RecordID != "").Select(logRow => logRow.RowPointer).ToList()
             );
 
             if (supersededRowPointers.Count > 0)
