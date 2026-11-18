@@ -221,6 +221,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     bool logEveryRecord = BGTaskNum <= 0 || recordCountLoaded <= LogAllRecordsLimit;
 
+                    // A RUN THAT ONLY LOGS FAILURES STILL LOGS A RECORD THAT HAS A FAILED ROW THE RETRY TASK COULD RESEND, SO THE RETRY TASK CAN SEE THAT
+                    // THE RECORD WAS REPLICATED AGAIN AND DOESN'T RESEND THE OLDER DATA. BuildOutcome READS THIS.
+
+                    this.recordIDsAwaitingRetry = logEveryRecord
+                        ? new Dictionary<string, HashSet<string>>()
+                        : this.LoadRecordIDsAwaitingRetry(sytelineAPI, utils, IDOName, recordsByRule.Keys);
+
                     if (recordsByRule.Count > 0)
                     {
 
@@ -307,7 +314,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults, isBackgroundTask, recordCountLoaded);
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
 
@@ -815,15 +822,19 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 warning = "";
             }
 
-            // A RECORD WITH A WARNING IS ALWAYS LOGGED, EVEN IN A RUN THAT ONLY LOGS FAILURES, SO THE PROBLEM IS VISIBLE
+            string recordID = GetRecordID(record, replicationRule.Option02);
 
-            if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed && warning == "")
+            // IN A RUN THAT ONLY LOGS FAILURES, THESE ARE STILL LOGGED:
+            //   - A RECORD WITH A WARNING, SO THE PROBLEM IS VISIBLE
+            //   - A RECORD THAT HAS A FAILED ROW THE RETRY TASK COULD RESEND, SO THE RETRY TASK SEES THIS NEWER REPLICATION OF IT
+
+            if (!logEveryRecord && status != ReplicationRecordOutcome.StatusFailed && warning == "" && !this.IsAwaitingRetry(replicationRule.RuleNum, recordID))
             {
                 return null;
             }
 
             ReplicationRecordOutcome outcome = new ReplicationRecordOutcome(
-                recordID: GetRecordID(record, replicationRule.Option02),
+                recordID: recordID,
                 payload: JsonConvert.SerializeObject(record),
                 status: status,
                 errorMessage: errorMessage
@@ -941,13 +952,110 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int DefaultRetries = 3;
 
-        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
+        // THE MOST FAILED ROWS LOOKED AT WHEN A RUN CHECKS WHICH RECORDS HAVE A FAILED ROW THAT COULD BE RESENT
+
+        private const int AwaitingRetryRowLimit = 10000;
+
+        // RECORD IDS THAT HAVE A FAILED ROW THE RETRY TASK COULD RESEND, BY RULE NUMBER. ONLY FILLED IN FOR A RUN THAT DOESN'T LOG EVERY RECORD.
+        // AN EXTENSION CLASS OBJECT SERVES ONE REQUEST, SO THIS BELONGS TO THE RUN THAT SET IT.
+
+        private Dictionary<string, HashSet<string>> recordIDsAwaitingRetry = new Dictionary<string, HashSet<string>>();
+
+
+
+        private bool IsAwaitingRetry(string ruleNum, string recordID)
+        {
+
+            if (string.IsNullOrEmpty(recordID) || this.recordIDsAwaitingRetry.Count == 0)
+            {
+                return false;
+            }
+
+            // THE LOG STORES AT MOST MaxRecordIDLength CHARACTERS OF A RECORD ID, SO COMPARE THE SAME LENGTH
+
+            if (recordID.Length > MaxRecordIDLength)
+            {
+                recordID = recordID.Substring(0, MaxRecordIDLength);
+            }
+
+            HashSet<string> recordIDs;
+            return this.recordIDsAwaitingRetry.TryGetValue(ruleNum ?? "", out recordIDs) && recordIDs.Contains(recordID);
+
+        }
+
+
+
+        // LOADS THE RECORD IDS OF THE FAILED ROWS THE RETRY TASK COULD RESEND, FOR THE GIVEN RULES OF ONE IDO. NEVER THROWS: IF THE LOG CAN'T
+        // BE READ, THE RUN CARRIES ON AND LOGS ONLY ITS FAILURES.
+        //
+        // EVERY FAILED ROW COUNTS, NOT ONLY THOSE WITH RETRIES LEFT, BECAUSE AN ADMINISTRATOR CAN GIVE A ROW ITS RETRIES BACK. ROWS WITH
+        // RETRIES LEFT ARE LOADED FIRST, OLDEST FIRST, WHICH IS THE ORDER THE RETRY TASK RESENDS THEM IN. SO WHEN THERE ARE MORE ROWS THAN
+        // AwaitingRetryRowLimit, THE ONES LEFT OUT ARE THE ONES LEAST LIKELY TO BE RESENT SOON.
+
+        private Dictionary<string, HashSet<string>> LoadRecordIDsAwaitingRetry(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, IEnumerable<string> ruleNums)
+        {
+
+            Dictionary<string, HashSet<string>> awaitingRetry = new Dictionary<string, HashSet<string>>();
+
+            try
+            {
+
+                List<string> ruleNumList = (ruleNums ?? Enumerable.Empty<string>()).Where(ruleNum => !string.IsNullOrEmpty(ruleNum)).ToList();
+
+                if (ruleNumList.Count == 0)
+                {
+                    return awaitingRetry;
+                }
+
+                LoadRecordsResponseData awaitingResponse = sytelineAPI.LoadRecords(
+                    IDOName: "ue_AIR_IDOReplicationLogs",
+                    properties: new List<string>() { "RuleNum", "RecordID" },
+                    filter: "Status = 'Failed' AND RecordID IS NOT NULL AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " AND " + sytelineAPI.BuildInFilter("RuleNum", ruleNumList),
+                    orderBy: "RetriesRemaining DESC, CreateDate ASC",
+                    recordCap: AwaitingRetryRowLimit
+                );
+
+                foreach (IDOItem awaitingItem in awaitingResponse.Items)
+                {
+
+                    string awaitingRuleNum = awaitingItem.PropertyValues[awaitingResponse.PropertyKeys["RuleNum"]].Value ?? "";
+                    string awaitingRecordID = awaitingItem.PropertyValues[awaitingResponse.PropertyKeys["RecordID"]].Value ?? "";
+
+                    if (awaitingRecordID == "")
+                    {
+                        continue;
+                    }
+
+                    HashSet<string> recordIDs;
+
+                    if (!awaitingRetry.TryGetValue(awaitingRuleNum, out recordIDs))
+                    {
+                        recordIDs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        awaitingRetry[awaitingRuleNum] = recordIDs;
+                    }
+
+                    recordIDs.Add(awaitingRecordID);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                utils.WriteLogMessage("Couldn't check the replication log for records waiting for a retry: " + this.DescribeException(ex));
+            }
+
+            return awaitingRetry;
+
+        }
+
+
+
+        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults)
         {
 
             try
             {
 
-                bool logEveryRecord = !isBackgroundTask || recordCountLoaded <= LogAllRecordsLimit;
                 List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
                 DateTime attemptDate = DateTime.Now;
 
@@ -966,12 +1074,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     }
 
+                    // BuildOutcome ALREADY LEFT OUT THE RECORDS A RUN DOESN'T LOG, SO EVERY OUTCOME HERE GETS A ROW
+
                     foreach (ReplicationRecordOutcome outcome in ruleResult.RecordOutcomes)
                     {
-                        if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed || outcome.Warning != "")
-                        {
-                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, outcome, attemptDate));
-                        }
+                        logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, outcome, attemptDate));
                     }
 
                 }
@@ -1187,6 +1294,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 AttemptCount = ReadInt(item, "AttemptCount")
             }).ToList();
 
+            // A ROW WITH NO RECORD ID CAN'T BE CHECKED THIS WAY, BECAUSE NOTHING SAYS WHICH RECORD IT IS. IT IS STILL RETRIED, UP TO ITS
+            // RETRIES, SO A RULE WITH NO ID FIELD (Option02) CAN HAVE OLDER DATA RESENT AFTER NEWER DATA.
+            //
             // A FAILED ROW IS SUPERSEDED WHEN THE SAME RECORD WAS REPLICATED AGAIN BY THE SAME RULE LATER (WHATEVER THAT ROW'S
             // STATUS). RESENDING IT WOULD OVERWRITE NEWER DATA, OR RE-CREATE A RECORD THAT WAS DELETED SINCE. SUPERSEDED ROWS ARE
             // MARKED SKIPPED, WHICH ALSO COLLAPSES SEVERAL FAILED ROWS FOR ONE RECORD DOWN TO THE NEWEST.

@@ -114,11 +114,11 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 - the status (`Succeeded`, `Failed` or `Skipped`) and the error
 - the number of retries left (3 to start)
 
-**What's logged:** trigger runs log every record. Background-task runs log every record when they load 100 or fewer, and only failures above that.
+**What's logged:** trigger runs log every record. Background-task runs log every record when they load 100 or fewer. Above that they log failures, warnings, and records that have an older failed row.
 
 **What the retry task does:**
 - It resends failed rows that still have retries left and a stored payload, using each rule's current settings.
-- It marks a failed row `Skipped` when the same record was replicated again later, so older data never overwrites newer data.
+- It marks a failed row `Skipped` when the same record was replicated again later, so older data doesn't overwrite newer data. This needs the rule's ID field (Option 2). Without it, the row is still retried, but the check can't be made.
 - It ignores rows for inactive rules.
 - It deletes `Succeeded` and `Skipped` rows older than the number of days you set. `Failed` rows are kept.
 

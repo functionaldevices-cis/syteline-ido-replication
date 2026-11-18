@@ -16,11 +16,11 @@ One row per record per rule.
 | CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
 | Source | What started the run. See [Source and operation](#source-and-operation). A retry doesn't change it. |
 | Operation | What the run did with the record at the target: `Insert`, `Update`, `Upsert` or `Delete` |
-| RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
+| RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
 | ErrorMessage | The error, and any transformation warnings |
-| RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. |
+| RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
 
 ## Source and operation
@@ -45,7 +45,7 @@ Two less common cases:
 | --- | --- |
 | Trigger (a user's save) | Every record |
 | Background task that loaded 100 records or fewer | Every record |
-| Background task that loaded more than 100 records | Failed records, and records with a transformation warning |
+| Background task that loaded more than 100 records | Failed records, records with a transformation warning, and records that have an older `Failed` row |
 
 Special cases:
 - If a rule fails before its records are built, it gets one `Failed` row with no payload.
@@ -83,6 +83,6 @@ To send them again, either:
 
 ## Limits to know about
 
-- The supersede check needs a record ID. Set Option 2 (the ID field) on every rule, or old failed rows may be resent after newer data.
-- A background run over 100 records doesn't log its successes, so a failed row from before that run isn't recognized as out of date.
+- The out-of-date check needs a record ID. A failed row with no record ID is still retried, up to 3 times, but the retry task can't tell whether its record was replicated again since, so older data can be resent after newer data. Set Option 2 (the ID field) on every rule to an output field that identifies the record.
+- The record ID has to be unique per record. If two records share an ID field value, a newer replication of one makes a failed row for the other look out of date.
 - The retry task sends the payload that was stored when the record first failed, not the record's current values.

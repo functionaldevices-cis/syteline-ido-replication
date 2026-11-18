@@ -24,7 +24,7 @@ A rule does nothing until the IDO also has active triggers. See [Setting Up Trig
 
 Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](Target-Salesforce) pages.
 
-**Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later.
+**Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later. Without it, a retry can resend older data after newer data.
 
 ## Field maps
 
