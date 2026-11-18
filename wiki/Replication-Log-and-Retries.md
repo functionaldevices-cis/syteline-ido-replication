@@ -19,6 +19,7 @@ One row per record per rule.
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
+| SourceRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored. |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
@@ -30,6 +31,7 @@ One row per record per rule.
 | The insert trigger | `Event: After-Insert` | `Insert` |
 | The update trigger | `Event: After-Update` | `Update` |
 | The delete trigger, which runs before the row is removed | `Event: Before-Delete` | `Delete` |
+| A [manual resend](Resending-Records) | `BG Task: Resend` | `Upsert` |
 | A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
 | A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |
 
@@ -62,7 +64,7 @@ Special cases:
 
 ## The retry task
 
-Background task: `ue_AIR_RetryFailedReplications`, which calls `ue_RetryFailedReplications(BGTaskNum, purgeAfterDays)`. See [Installation](Installation) for the task definition. Schedule it, for example hourly.
+Background task: `ue_AIR_RetryFailedReplications`, which calls `ue_RetryFailedReplications(BGTaskNum, purgeAfterDays)`. See [Installation](Installation) for the task definition. Schedule it to run every minute, so a record that failed because of timing, such as a Salesforce child record sent before its parent, goes through a minute later.
 
 Each run:
 
@@ -75,11 +77,11 @@ It only retries rows for active rules. Rows for an inactive or deleted rule are 
 
 ## When retries run out
 
-A failed row gets 3 retries. With an hourly schedule, a target that is down for more than about 3 hours leaves rows with no retries left. They stay in the log as `Failed`.
+A failed row gets 3 retries, one per run of the retry task. With the task running every minute, a target that is down for more than about 3 minutes leaves rows with no retries left. They stay in the log as `Failed`. The automatic retries are for timing problems, not for outages.
 
-To send them again, either:
-- set RetriesRemaining back above 0 on those rows, and the next run picks them up, or
-- run a [bulk load](Bulk-Loads) for the affected records, which sends their current data.
+To send them again, use the [IDO Replication Resend](Resending-Records) form. It reloads the failed records and sends their current values.
+
+You can also set RetriesRemaining back above 0 on a row, and the next run of the retry task resends its stored payload.
 
 ## Limits to know about
 

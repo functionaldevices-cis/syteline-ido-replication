@@ -70,7 +70,8 @@ The install package is in `dist/`. Its folders are numbered in install order.
 3. **Forms and strings** (`dist/3 - Mongoose Objects (FormSync)/`): import the forms and `Strings.XML` with FormSync. Then unload global form objects (Form > Definition > Unload All Global Form Objects).
 4. **Background tasks:** create Background Task Definitions for:
    - **replication**, called from the Rules form: `ue_AIR_ReplicateRecordToExternalSystems`, with parameters `BG~TASKID~, <filter>, <IDO name>, <record cap>, <rule number>`. The rule number is optional. A background run shows as failed when a rule fails or nothing could be sent, and its task messages say why
-   - **retries:** `ue_AIR_RetryFailedReplications`, calling the Rules IDO method `ue_RetryFailedReplications` with parameters `BG~TASKID~, 90`. The second parameter is how many days to keep successful log rows, and `0` keeps them forever. Schedule it, for example hourly.
+   - **retries:** `ue_AIR_RetryFailedReplications`, calling the Rules IDO method `ue_RetryFailedReplications` with parameters `BG~TASKID~, 90`. The second parameter is how many days to keep successful log rows, and `0` keeps them forever. Schedule it to run every minute, and don't let two runs overlap.
+   - **resend:** `ue_AIR_ResendReplications`, calling the Rules IDO method `ue_ResendReplications`. The IDO Replication Resend form submits it, so it isn't scheduled.
 5. **Configure:** add credentials and rules (below), then set up triggers on the IDO Replication Configs form.
 
 ## Configuring
@@ -121,6 +122,8 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 - It marks a failed row `Skipped` when the same record was replicated again later, so older data doesn't overwrite newer data. This needs the rule's ID field (Option 2). Without it, the row is still retried, but the check can't be made.
 - It ignores rows for inactive rules.
 - It deletes `Succeeded` and `Skipped` rows older than the number of days you set. `Failed` rows are kept.
+
+**Resending by hand:** each failed record gets 3 automatic retries, one per run of the retry task, which is meant to run every minute. For anything left after that, the IDO Replication Resend form (`ue_AIR_IDOReplicationResend`) resends one rule's records for a period you choose: only the records that failed, or every record changed in the period. It reloads each record and sends its current values.
 
 ## Building
 

@@ -48,11 +48,12 @@ Folder: `dist/3 - Mongoose Objects (FormSync)/`
 | `ue_AIR_IDOReplicationRules` | Rules, field maps and target options |
 | `ue_AIR_IDOReplicationCredentials` | Credentials for external targets |
 | `ue_AIR_IDOReplicationLogs` | The replication log |
+| `ue_AIR_IDOReplicationResend` | Resend a rule's records by hand |
 | `ue_AIR_ImportJob`, `ue_AIR_JobFileInputWindow` | Import Map window opened from the Rules form (not working yet) |
 
 ## 4. Background tasks
 
-Create two Background Task Definitions.
+Create three Background Task Definitions.
 
 **Replication** (for [bulk loads](Bulk-Loads))
 - Task name: `ue_AIR_ReplicateRecordToExternalSystems`
@@ -63,7 +64,14 @@ Create two Background Task Definitions.
 - Task name: `ue_AIR_RetryFailedReplications`
 - Calls the `ue_AIR_IDOReplicationRules` IDO method `ue_RetryFailedReplications`
 - Parameters: `BG~TASKID~, 90`. The second parameter is how many days to keep successful log rows. `0` keeps them forever.
-- Schedule it, for example hourly.
+- Schedule it to run every minute. Each failed record gets 3 retries, one per run.
+- Make sure two runs can't overlap, or a record could be resent twice. Set the task definition to allow one run at a time.
+
+**Resend** (see [Resending Records](Resending-Records))
+- Task name: `ue_AIR_ResendReplications`
+- Calls the `ue_AIR_IDOReplicationRules` IDO method `ue_ResendReplications`
+- Parameters: `BG~TASKID~, <rule number>, <from>, <to>, <Failures or Everything>`. The Resend form fills these in.
+- Not scheduled. The form submits it.
 
 ## 5. Configure
 

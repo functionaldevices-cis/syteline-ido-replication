@@ -119,6 +119,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const string SourceTaskTest = "BG Task: Test";                  // A BACKGROUND TASK RUN FROM THE RULES FORM'S TEST TAB
 
+        private const string SourceTaskResend = "BG Task: Resend";              // A MANUAL RESEND (ue_ResendReplications)
+
         // WHAT THE RULES FORM'S TEST TAB PASSES AS THE OPERATION TO MARK ITS RUN AS A TEST. THE RUN'S OPERATION IS THEN Upsert.
 
         private const string TestOperationParameter = "Test";
@@ -162,7 +164,44 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 BGTaskNum: BGTaskNum
             );
 
-            List<ReplicationRuleResult> ruleResults = new List<ReplicationRuleResult>();
+            ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, queryFilter, IDOName, recordCap, ruleNum, operation, source);
+
+            // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
+
+            if (BGTaskNum > 0 && (runResult.NothingToSend || runResult.RuleResults.Any(ruleResult => !ruleResult.Success)))
+            {
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            return 0;
+
+        }
+
+
+
+        // WHAT ONE RUN DID: EACH RULE'S RESULT, WHETHER THERE WAS NOTHING TO SEND, AND THE RowPointer OF EVERY SOURCE RECORD IT LOADED
+
+        private class ReplicationRunResult
+        {
+
+            public List<ReplicationRuleResult> RuleResults = new List<ReplicationRuleResult>();
+
+            public bool NothingToSend = false;
+
+            public HashSet<string> SourceRowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        }
+
+
+
+        // ONE REPLICATION RUN: LOADS THE RULES AND THE RECORDS THAT MATCH THE FILTER, SENDS THEM, AND WRITES THE REPLICATION LOG.
+        // ue_ReplicateRecordToExternalSystems AND ue_ResendReplications BOTH RUN THROUGH HERE. operation IS ALREADY NORMALIZED.
+
+        private ReplicationRunResult RunReplication(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string queryFilter, string IDOName, int recordCap, string ruleNum, string operation, string source)
+        {
+
+            ReplicationRunResult runResult = new ReplicationRunResult();
+            List<ReplicationRuleResult> ruleResults = runResult.RuleResults;
             int recordCountLoaded = 0;
 
             // THIS METHOD RUNS INSIDE AES TRIGGERS ON THE SOURCE IDO, SO IT MUST NEVER THROW. AN UNHANDLED EXCEPTION
@@ -216,6 +255,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // EVERY RULE IS LOADED WITH THE SAME FILTER AND RECORD CAP, SO THE COUNTS ONLY DIFFER IF A RECORD CHANGED BETWEEN TWO LOADS
 
                     recordCountLoaded = recordsByRule.Values.Select(recordsResponse => recordsResponse.Items.Count).DefaultIfEmpty(0).Max();
+
+                    foreach (LoadRecordsResponseData recordsResponse in recordsByRule.Values.Distinct())
+                    {
+
+                        int rowPointerIndex = RowPointerIndex(recordsResponse);
+
+                        if (rowPointerIndex >= 0)
+                        {
+                            foreach (IDOItem loadedItem in recordsResponse.Items)
+                            {
+                                runResult.SourceRowPointersLoaded.Add(loadedItem.PropertyValues[rowPointerIndex].Value ?? "");
+                            }
+                        }
+
+                    }
 
                     // TRIGGER RUNS LOG EVERY RECORD. BACKGROUND TASK RUNS LOG EVERY RECORD UP TO LogAllRecordsLimit, AND ONLY FAILURES ABOVE IT.
 
@@ -316,14 +370,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
 
-            // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
-
-            if (isBackgroundTask && (nothingToSend || ruleResults.Any(ruleResult => !ruleResult.Success)))
-            {
-                return BackgroundTaskFailedReturnCode;
-            }
-
-            return 0;
+            runResult.NothingToSend = nothingToSend;
+            return runResult;
 
         }
 
@@ -350,6 +398,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             Dictionary<Dictionary<string, object>, string> transformWarnings = new Dictionary<Dictionary<string, object>, string>();
 
+            // EACH REMAPPED RECORD'S SOURCE RowPointer, KEYED THE SAME WAY. IT ISN'T PART OF THE RECORD, SO IT IS NEVER SENT. BuildOutcome READS IT.
+
+            this.sourceRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
+
             try
             {
 
@@ -358,7 +410,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 remappedReplicationRecords = this.RemapRecords(
                     fields: replicationRule.MapFieldsList,
                     recordsResponseData: replicationRecordsResponse,
-                    transformWarnings: transformWarnings
+                    transformWarnings: transformWarnings,
+                    sourceRowPointers: this.sourceRowPointersByRecord
                 );
 
                 if (transformWarnings.Count > 0)
@@ -434,12 +487,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
             Dictionary<string, LoadRecordsResponseData> recordsByRule = new Dictionary<string, LoadRecordsResponseData>();
             Exception combinedLoadException;
 
+            // EACH RECORD'S RowPointer IS LOADED WITH THE RULES' PROPERTIES, SO THE REPLICATION LOG CAN SAY WHICH SOURCE RECORD A ROW IS FOR
+
+            List<string> combinedProperties = replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList();
+
             try
             {
 
                 LoadRecordsResponseData combinedResponse = sytelineAPI.LoadRecords(
                     IDOName: IDOName,
-                    properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
+                    properties: WithRowPointer(combinedProperties),
                     filter: queryFilter,
                     orderBy: "",
                     recordCap: recordCap
@@ -458,10 +515,42 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 combinedLoadException = ex;
             }
 
-            // THE COMBINED LOAD FAILED. THE IDO'S PROPERTY NAMES ARE ONLY USED TO SAY WHICH PROPERTY IS WRONG IN THE MESSAGE.
-            // WHETHER A RULE FAILS IS DECIDED BY ITS OWN LOAD, NOT BY THIS LIST.
+            // THE COMBINED LOAD FAILED. THE IDO'S PROPERTY NAMES ARE ONLY USED TO SAY WHICH PROPERTY IS WRONG IN THE MESSAGE, AND TO SEE
+            // WHETHER THE IDO HAS A RowPointer AT ALL. WHETHER A RULE FAILS IS DECIDED BY ITS OWN LOAD, NOT BY THIS LIST.
 
             HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
+            bool idoHasRowPointer = idoPropertyNames == null || idoPropertyNames.Contains(RowPointerPropertyName);
+
+            // AN IDO WITH NO RowPointer PROPERTY IS LOADED WITHOUT IT. ITS LOG ROWS THEN HAVE NO SOURCE ROW POINTER.
+
+            if (!idoHasRowPointer)
+            {
+
+                try
+                {
+
+                    LoadRecordsResponseData combinedResponse = sytelineAPI.LoadRecords(
+                        IDOName: IDOName,
+                        properties: combinedProperties,
+                        filter: queryFilter,
+                        orderBy: "",
+                        recordCap: recordCap
+                    );
+
+                    foreach (string loadedRuleNum in replicationRules.Keys)
+                    {
+                        recordsByRule[loadedRuleNum] = combinedResponse;
+                    }
+
+                    return recordsByRule;
+
+                }
+                catch (Exception ex)
+                {
+                    combinedLoadException = ex;
+                }
+
+            }
 
             // THE FIRST SET OF RECORDS THAT LOADED. A RULE WHOSE FIELD MAP HAS ONLY LITERAL VALUES HAS NO PROPERTIES TO LOAD, SO IT
             // USES THESE RECORDS. THAT IS WHY RULES WITH SOURCE PROPERTIES GO FIRST.
@@ -490,7 +579,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         LoadRecordsResponseData ruleResponse = sytelineAPI.LoadRecords(
                             IDOName: IDOName,
-                            properties: replicationRule.SourceIDOProperties,
+                            properties: idoHasRowPointer ? WithRowPointer(replicationRule.SourceIDOProperties) : replicationRule.SourceIDOProperties,
                             filter: queryFilter,
                             orderBy: "",
                             recordCap: recordCap
@@ -532,6 +621,41 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             return recordsByRule;
+
+        }
+
+
+
+        // THE PROPERTY THAT IDENTIFIES A SOURCE RECORD. THE TRIGGERS ALREADY FILTER ON IT.
+
+        private const string RowPointerPropertyName = "RowPointer";
+
+
+
+        // THE GIVEN PROPERTIES PLUS RowPointer, UNLESS IT IS ALREADY AMONG THEM
+
+        private static List<string> WithRowPointer(List<string> properties)
+        {
+
+            List<string> withRowPointer = new List<string>(properties ?? new List<string>());
+
+            if (!withRowPointer.Any(propertyName => string.Equals((propertyName ?? "").Trim(), RowPointerPropertyName, StringComparison.OrdinalIgnoreCase)))
+            {
+                withRowPointer.Add(RowPointerPropertyName);
+            }
+
+            return withRowPointer;
+
+        }
+
+
+
+        // WHERE RowPointer IS AMONG THE PROPERTIES A LOAD ASKED FOR. -1 WHEN IT WASN'T LOADED.
+
+        private static int RowPointerIndex(LoadRecordsResponseData recordsResponse)
+        {
+
+            return recordsResponse.PropertyNames.FindIndex(propertyName => string.Equals((propertyName ?? "").Trim(), RowPointerPropertyName, StringComparison.OrdinalIgnoreCase));
 
         }
 
@@ -840,7 +964,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage: errorMessage
             );
 
+            string sourceRowPointer;
+
             outcome.Warning = warning;
+            outcome.SourceRowPointer = this.sourceRowPointersByRecord.TryGetValue(record, out sourceRowPointer) ? sourceRowPointer : "";
             return outcome;
 
         }
@@ -960,6 +1087,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // AN EXTENSION CLASS OBJECT SERVES ONE REQUEST, SO THIS BELONGS TO THE RUN THAT SET IT.
 
         private Dictionary<string, HashSet<string>> recordIDsAwaitingRetry = new Dictionary<string, HashSet<string>>();
+
+        // THE SOURCE RowPointer OF EACH REMAPPED RECORD OF THE RULE BEING SENT, KEYED BY THE RECORD (REFERENCE EQUALITY). ReplicateRule SETS IT.
+        // A RECORD THAT ISN'T IN IT, SUCH AS ONE THE RETRY TASK READ BACK FROM A STORED PAYLOAD, HAS NO KNOWN SOURCE RowPointer.
+
+        private Dictionary<Dictionary<string, object>, string> sourceRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
 
 
 
@@ -1151,6 +1283,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
+            // THE SOURCE ROW POINTER IS ONLY WRITTEN WHEN IT IS A GUID, WHICH IS WHAT THE COLUMN HOLDS
+
+            Guid sourceRowPointerGuid;
+            bool hasSourceRowPointer = Guid.TryParse(outcome.SourceRowPointer ?? "", out sourceRowPointerGuid);
+
             // ONLY A FAILED RECORD WITH A STORED PAYLOAD CAN BE RETRIED
 
             bool canRetry = outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null;
@@ -1165,6 +1302,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "Source", source },
                 { "Operation", operation },
                 { "RecordID", recordID != "" ? recordID : null },
+                { "SourceRowPointer", hasSourceRowPointer ? sourceRowPointerGuid.ToString() : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
                 { "ErrorMessage", errorMessage != "" ? errorMessage : null },
@@ -1227,6 +1365,334 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             return 0;
+
+        }
+
+
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
+        /* Name:     ue_ResendReplications
+        /* Purpose:  Background task method. Resends one rule's records by hand, for a period of time. It reloads
+        /*           the records from SyteLine and sends their current values, so it never sends old data.
+        /*
+        /*           scope "Everything" resends every record changed in the period (by RecordDate), plus every record
+        /*           that has a Failed log row in the period. scope "Failures" resends only the records that have a
+        /*           Failed log row in the period. Both go through the same RunReplication as every other run, with
+        /*           the source "BG Task: Resend".
+        /*
+        /*           A failed row whose record was resent is marked Skipped. A failed row that can't be reloaded gets
+        /*           its retries back, so the retry task resends it from its stored payload: a failed delete, or a
+        /*           row with no source row pointer. Never throws.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        private const string ResendScopeFailures = "Failures";
+
+        private const string ResendScopeEverything = "Everything";
+
+        // THE MOST FAILED LOG ROWS ONE RESEND LOOKS AT
+
+        private const int ResendFailedRowLimit = 10000;
+
+        // HOW MANY RECORDS ONE LOAD ASKS FOR BY RowPointer, WHICH KEEPS THE FILTER A REASONABLE LENGTH
+
+        private const int ResendRowPointerBatchSize = 100;
+
+        // NO RECORD CAP: A RESEND SENDS EVERY RECORD ITS FILTER SELECTS
+
+        private const int NoRecordCap = -1;
+
+        [IDOMethod(MethodFlags.None, "Infobar")]
+        public int ue_ResendReplications(int BGTaskNum = -1, string ruleNum = "", string fromDate = "", string toDate = "", string scope = "")
+        {
+
+            SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
+                IDOCommands: this.Context.Commands
+            );
+
+            Utilities utils = new Utilities(
+                commands: this.Context.Commands,
+                BGTaskNum: BGTaskNum
+            );
+
+            try
+            {
+                return this.ResendReplications(sytelineAPI, utils, BGTaskNum, ruleNum, fromDate, toDate, scope);
+            }
+            catch (Exception ex)
+            {
+                utils.WriteLogMessage("The resend stopped: " + this.DescribeException(ex));
+                return BackgroundTaskFailedReturnCode;
+            }
+
+        }
+
+
+
+        private int ResendReplications(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string fromDate, string toDate, string scope)
+        {
+
+            // CHECK WHAT WAS ASKED FOR
+
+            ruleNum = (ruleNum ?? "").Trim();
+
+            if (ruleNum == "")
+            {
+                utils.WriteLogMessage("Nothing was resent: no rule was given.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            bool resendEverything = string.Equals((scope ?? "").Trim(), ResendScopeEverything, StringComparison.OrdinalIgnoreCase);
+
+            if (!resendEverything && !string.Equals((scope ?? "").Trim(), ResendScopeFailures, StringComparison.OrdinalIgnoreCase))
+            {
+                utils.WriteLogMessage("Nothing was resent: the scope '" + scope + "' isn't '" + ResendScopeFailures + "' or '" + ResendScopeEverything + "'.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            DateTime rangeStart;
+            DateTime rangeEnd;
+
+            if (!TryParseResendDate(fromDate, out rangeStart))
+            {
+                utils.WriteLogMessage("Nothing was resent: the From date '" + fromDate + "' couldn't be read as a date and time.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            // A BLANK To DATE MEANS UP TO NOW
+
+            if (string.IsNullOrWhiteSpace(toDate))
+            {
+                rangeEnd = DateTime.Now;
+            }
+            else if (!TryParseResendDate(toDate, out rangeEnd))
+            {
+                utils.WriteLogMessage("Nothing was resent: the To date '" + toDate + "' couldn't be read as a date and time.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            if (rangeEnd < rangeStart)
+            {
+                utils.WriteLogMessage("Nothing was resent: the To date is before the From date.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            // THE RULE SAYS WHICH IDO TO RELOAD FROM. AN INACTIVE RULE CAN BE RESENT TOO, AS IT CAN BE TESTED.
+
+            LoadRecordsResponseData ruleResponse = sytelineAPI.LoadRecords(
+                IDOName: "ue_AIR_IDOReplicationRules",
+                properties: new List<string>() { "RuleNum", "IDOName" },
+                filter: "RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum),
+                orderBy: "",
+                recordCap: 1
+            );
+
+            string IDOName = ruleResponse.Items.Count > 0 ? (ruleResponse.Items[0].PropertyValues[ruleResponse.PropertyKeys["IDOName"]].Value ?? "").Trim() : "";
+
+            if (IDOName == "")
+            {
+                utils.WriteLogMessage("Nothing was resent: there is no replication rule " + ruleNum + ", or it has no IDO Name.");
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            utils.WriteLogMessage("Resending " + (resendEverything ? "everything" : "failures") + " for rule '" + ruleNum + "' (" + IDOName + ") from " + rangeStart.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " to " + rangeEnd.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + ".");
+
+            // THE RULE'S FAILED LOG ROWS IN THE PERIOD
+
+            LoadRecordsResponseData failedResponse = sytelineAPI.LoadRecords(
+                IDOName: "ue_AIR_IDOReplicationLogs",
+                properties: new List<string>() { "RowPointer", "SourceRowPointer", "Operation" },
+                filter: "Status = 'Failed' AND RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " AND " + ResendDateFilter("CreateDate", rangeStart, rangeEnd),
+                orderBy: "CreateDate ASC",
+                recordCap: ResendFailedRowLimit
+            );
+
+            string ReadFailedValue(IDOItem item, string propertyName)
+            {
+                IDOPropertyValue propertyValue = item.PropertyValues[failedResponse.PropertyKeys[propertyName]];
+                return propertyValue.IsNull ? "" : (propertyValue.Value ?? "").Trim();
+            }
+
+            var failedRows = failedResponse.Items.Select(item => new
+            {
+                Item = item,
+                SourceRowPointer = ReadFailedValue(item, "SourceRowPointer"),
+                IsDelete = NormalizeOperation(ReadFailedValue(item, "Operation")) == OperationDelete
+            }).ToList();
+
+            utils.WriteLogMessage("Failed replication log rows in the period: " + failedRows.Count + "." + (failedRows.Count >= ResendFailedRowLimit ? " That is the most one resend looks at, so run it again for the rest." : ""));
+
+            // A FAILED ROW CAN BE RELOADED WHEN IT SAYS WHICH SOURCE RECORD IT IS FOR AND ISN'T A DELETE (A DELETED RECORD CAN'T BE LOADED)
+
+            List<string> failedRowPointers = failedRows
+                .Where(failedRow => failedRow.SourceRowPointer != "" && !failedRow.IsDelete)
+                .Select(failedRow => failedRow.SourceRowPointer)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            // RUN ONE REPLICATION PER FILTER, AND KEEP WHAT EACH ONE LOADED AND WHETHER IT WORKED
+
+            HashSet<string> rowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            bool anyRuleFailed = false;
+            bool anyLoadFailed = false;
+
+            void RunFilter(string filter)
+            {
+
+                ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, NoRecordCap, ruleNum, OperationUpsert, SourceTaskResend);
+
+                rowPointersLoaded.UnionWith(runResult.SourceRowPointersLoaded);
+
+                foreach (ReplicationRuleResult ruleResult in runResult.RuleResults)
+                {
+
+                    if (!ruleResult.Success)
+                    {
+                        anyRuleFailed = true;
+                    }
+
+                    // A RULE THAT FAILED WITH NO RECORD OUTCOMES NEVER GOT AS FAR AS ITS RECORDS, SO WHAT IT DIDN'T LOAD CAN'T BE CALLED MISSING
+
+                    if (!ruleResult.Success && ruleResult.RecordOutcomes.Count == 0)
+                    {
+                        anyLoadFailed = true;
+                    }
+
+                }
+
+            }
+
+            if (resendEverything)
+            {
+                RunFilter(ResendDateFilter("RecordDate", rangeStart, rangeEnd));
+            }
+
+            // THE RECORDS WITH A FAILED ROW, LESS ANY THE DATE RANGE ALREADY SENT
+
+            List<string> rowPointersToLoad = failedRowPointers.Where(rowPointer => !rowPointersLoaded.Contains(rowPointer)).ToList();
+
+            for (int i = 0; i < rowPointersToLoad.Count; i += ResendRowPointerBatchSize)
+            {
+                RunFilter(sytelineAPI.BuildInFilter(RowPointerPropertyName, rowPointersToLoad.Skip(i).Take(ResendRowPointerBatchSize)));
+            }
+
+            // BRING THE FAILED ROWS UP TO DATE:
+            //   - ITS RECORD WAS RELOADED AND SENT AGAIN: THE RESEND WROTE A NEWER ROW FOR IT (FAILED OR NOT), SO THIS ONE IS SKIPPED.
+            //   - ITS RECORD IS GONE FROM SYTELINE: THERE IS NOTHING TO SEND, SO IT IS SKIPPED.
+            //   - IT IS A DELETE, OR IT DOESN'T SAY WHICH RECORD IT IS FOR: IT GETS ITS RETRIES BACK, AND THE RETRY TASK RESENDS ITS STORED PAYLOAD.
+
+            List<IDOUpdateItem> failedRowUpdates = new List<IDOUpdateItem>();
+            int countSuperseded = 0;
+            int countGone = 0;
+            int countRequeued = 0;
+
+            foreach (var failedRow in failedRows)
+            {
+
+                if (failedRow.SourceRowPointer == "" || failedRow.IsDelete)
+                {
+
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    {
+                        new IDOUpdateProperty("RetriesRemaining", DefaultRetries, true)
+                    }));
+
+                    countRequeued++;
+
+                }
+                else if (rowPointersLoaded.Contains(failedRow.SourceRowPointer))
+                {
+
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    {
+                        new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
+                        new IDOUpdateProperty("ErrorMessage", "Superseded by a manual resend of this record's current data.", true),
+                        new IDOUpdateProperty("RetriesRemaining", 0, true)
+                    }));
+
+                    countSuperseded++;
+
+                }
+                else if (!anyLoadFailed)
+                {
+
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    {
+                        new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
+                        new IDOUpdateProperty("ErrorMessage", "The record no longer exists in SyteLine, so it wasn't resent.", true),
+                        new IDOUpdateProperty("RetriesRemaining", 0, true)
+                    }));
+
+                    countGone++;
+
+                }
+
+            }
+
+            for (int i = 0; i < failedRowUpdates.Count; i += 200)
+            {
+                try
+                {
+                    sytelineAPI.UpdateRecords("ue_AIR_IDOReplicationLogs", failedRowUpdates.Skip(i).Take(200).ToList());
+                }
+                catch (Exception ex)
+                {
+                    utils.WriteLogMessage("Couldn't update the failed replication log rows after the resend: " + this.DescribeException(ex));
+                }
+            }
+
+            utils.WriteLogMessage("Resend finished. Records reloaded and sent: " + rowPointersLoaded.Count + ". Failed rows replaced by the resend: " + countSuperseded + ". Failed rows whose record no longer exists: " + countGone + ". Failed rows handed back to the retry task: " + countRequeued + ".");
+
+            return anyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
+
+        }
+
+
+
+        // A FILTER FOR A DATE PROPERTY WITHIN A PERIOD, WITH THE DATES WRITTEN SO SQL SERVER READS THEM THE SAME WAY IN ANY LANGUAGE
+
+        private static string ResendDateFilter(string propertyName, DateTime rangeStart, DateTime rangeEnd)
+        {
+
+            return propertyName + " >= '" + rangeStart.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "' AND " + propertyName + " <= '" + rangeEnd.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'";
+
+        }
+
+
+
+        // READS A DATE AND TIME PASSED AS TEXT. IT TRIES THE FORMATS A FORM OR A TASK PARAMETER IS LIKELY TO USE, THEN THE SERVER'S OWN
+        // FORMAT, THEN THE INVARIANT ONE.
+
+        private static bool TryParseResendDate(string text, out DateTime parsed)
+        {
+
+            text = (text ?? "").Trim();
+
+            string[] exactFormats = new string[]
+            {
+                "yyyyMMdd HH:mm:ss.fff",
+                "yyyyMMdd HH:mm:ss",
+                "yyyyMMdd",
+                "yyyy-MM-dd HH:mm:ss.fff",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd HH:mm",
+                "yyyy-MM-ddTHH:mm:ss.fff",
+                "yyyy-MM-ddTHH:mm:ss",
+                "yyyy-MM-dd"
+            };
+
+            if (text == "")
+            {
+                parsed = DateTime.MinValue;
+                return false;
+            }
+
+            return DateTime.TryParseExact(text, exactFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                || DateTime.TryParse(text, CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed)
+                || DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed);
 
         }
 
@@ -1797,16 +2263,22 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
+        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData, Dictionary<Dictionary<string, object>, string> transformWarnings = null, Dictionary<Dictionary<string, object>, string> sourceRowPointers = null)
         {
 
             Dictionary<string, object> remappedRecord;
             List<Dictionary<string, object>> remappedRecords = new List<Dictionary<string, object>>();
+            int rowPointerIndex = sourceRowPointers != null ? RowPointerIndex(recordsResponseData) : -1;
 
             foreach (IDOItem record in recordsResponseData.Items)
             {
 
                 remappedRecord = new Dictionary<string, object>();
+
+                if (rowPointerIndex >= 0)
+                {
+                    sourceRowPointers[remappedRecord] = record.PropertyValues[rowPointerIndex].Value ?? "";
+                }
 
                 foreach (ReplicationField field in fields)
                 {

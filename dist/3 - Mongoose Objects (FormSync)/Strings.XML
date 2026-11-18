@@ -9,6 +9,10 @@
          <TableName>Strings</TableName>
          <String>IDO Replication Logs (AIR)</String>
       </String>
+      <String Name="fue_AIR_IDOReplicationResend" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>IDO Replication Resend (AIR)</String>
+      </String>
       <String Name="fue_AIR_IDOReplicationRules" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>IDO Replication Rules (AIR)</String>
@@ -268,6 +272,22 @@
       <String Name="ue_AIR_sRecordID" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>RecordID</String>
+      </String>
+      <String Name="ue_AIR_sResend" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Resend</String>
+      </String>
+      <String Name="ue_AIR_sResendFrom" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Changed From</String>
+      </String>
+      <String Name="ue_AIR_sResendScope" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Resend</String>
+      </String>
+      <String Name="ue_AIR_sResendTo" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Changed To (blank for now)</String>
       </String>
       <String Name="ue_AIR_sRetriesRemaining" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
