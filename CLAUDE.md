@@ -77,12 +77,14 @@ To add a new target type:
 
 ## Building
 
-You need Windows with Visual Studio/MSBuild and the .NET Framework 4.8 targeting pack, and you have to restore NuGet packages first. The .NET SDK and MSBuild aren't available in this Linux container, so you can't compile or validate changes here. Build each solution on its own, for example:
+You need Windows with Visual Studio/MSBuild and the .NET Framework 4.8 targeting pack, and you have to restore NuGet packages first. The .NET SDK and MSBuild aren't available in this Linux container, so you can't compile changes here. The Build workflow (below) compiles them on the pull request. Build each solution on its own, for example:
 
 ```
 nuget restore "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationRules_ECA/ue_AIR_IDOReplicationRules_ECA.sln"
 msbuild "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationRules_ECA/ue_AIR_IDOReplicationRules_ECA.sln" /p:Configuration=Release
 ```
+
+`.github/workflows/build.yml` does this build for both solutions on every pull request and every push to `main`, on a Windows runner, and publishes the two DLLs as artifacts of the run (kept 14 days). The same workflow runs `.github/scripts/compare-shared-code.sh`, which fails when `Helpers/` or `Models/` differ between the two projects by more than the project name. That script runs here too, so run it after changing a helper or model. A green build only proves the code compiles; nothing is run against Syteline. After pushing, read the Build result on the pull request, and fix a failure before calling the change done.
 
 Upload the built DLL to Syteline (IDO Extension Class Assemblies). Then re-export the IDOs to refresh `dist/`, which picks up the new assembly image and any method signature changes. `bin/` and `obj/` are gitignored, so don't commit build output.
 

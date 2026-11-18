@@ -24,11 +24,21 @@ nuget restore "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationCo
 msbuild "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationConfig_ECA/ue_AIR_IDOReplicationConfig_ECA.sln" /p:Configuration=Release
 ```
 
+### The build check
+
+Every pull request, and every push to `main`, runs the **Build** workflow (`.github/workflows/build.yml`). It:
+- builds both assemblies on a Windows runner, the same way as the commands above
+- fails if `Helpers/` or `Models/` differ between the two projects by more than the project name. To run that check yourself: `bash .github/scripts/compare-shared-code.sh`
+
+Each run also publishes the two built DLLs. Open the run from the pull request's **Checks** tab and download them under **Artifacts**. They are kept for 14 days, and you can upload them to Syteline in place of a local build.
+
+The check only proves the code compiles. Behavior, forms and IDOs still have to be tested in Syteline.
+
 The language version is the .NET Framework default (C# 7.3). Avoid newer syntax such as collection expressions, target-typed `new()`, `??=`, nullable annotations and file-scoped namespaces.
 
 ## Deploying a change
 
-1. Build the assembly.
+1. Build the assembly, or download it from the pull request's Build run.
 2. Upload the DLL on Syteline's IDO Extension Class Assemblies form.
 3. If a method's signature changed, use **Resync Parameters** on the IDO method. If you added a method, add it to the IDO first.
 4. Run **Refresh Form Metadata**.

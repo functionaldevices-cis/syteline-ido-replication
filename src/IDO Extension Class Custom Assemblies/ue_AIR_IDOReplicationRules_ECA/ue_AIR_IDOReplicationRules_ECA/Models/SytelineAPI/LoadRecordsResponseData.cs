@@ -9,6 +9,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models.SytelineAPI
 
     public class LoadRecordsResponseData
     {
+
         public Dictionary<string, int> PropertyKeys { get; set; } = new Dictionary<string, int>();
 
         public List<string> PropertyNames { get; set; } = new List<string>();
