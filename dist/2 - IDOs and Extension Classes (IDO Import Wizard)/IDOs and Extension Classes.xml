@@ -550,8 +550,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
-         <RevisionNo>8</RevisionNo>
-         <RevisionDate>2026-11-18T12:54:12</RevisionDate>
+         <RevisionNo>9</RevisionNo>
+         <RevisionDate>2026-11-18T18:06:20</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -637,7 +637,9 @@ END</Expression>
                <PropertyClass>ListYesNo</PropertyClass>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <Expression>1</Expression>
-               <PropertyAttributes />
+               <PropertyAttributes>
+                  <IsRORecordFlag>1</IsRORecordFlag>
+               </PropertyAttributes>
             </Property>
             <Property Name="LastAttemptDate" Key="0" Binding="BOUND" Sequence="17">
                <PropertyClass>DateTime</PropertyClass>
