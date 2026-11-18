@@ -47,6 +47,7 @@ Folder: `dist/3 - Mongoose Objects (FormSync)/`
 | `ue_AIR_IDOReplicationConfigs` | Set up, repair and remove triggers per IDO |
 | `ue_AIR_IDOReplicationRules` | Rules, field maps and target options |
 | `ue_AIR_IDOReplicationCredentials` | Credentials for external targets |
+| `ue_AIR_IDOReplicationLogs` | The replication log |
 | `ue_AIR_ImportJob`, `ue_AIR_JobFileInputWindow` | Import Map window opened from the Rules form (not working yet) |
 
 ## 4. Background tasks

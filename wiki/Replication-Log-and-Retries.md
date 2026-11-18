@@ -4,7 +4,7 @@ Every replication writes its outcome to the replication log. A scheduled backgro
 
 IDO: `ue_AIR_IDOReplicationLogs` (table `ue_AIR_idorepl_log_mst`)
 
-There is no log form yet. Read the log through the IDO, for example with a DataView.
+Form: `ue_AIR_IDOReplicationLogs`
 
 ## What a log row holds
 
@@ -13,13 +13,31 @@ One row per record per rule.
 | Property | Meaning |
 | --- | --- |
 | RuleNum, IDOName, TargetType | The rule that sent the record |
-| Operation | `Insert`, `Update` or `Delete` for a trigger, `Test` for a run from the Rules form's Test tab, or blank when unknown (bulk loads) |
+| CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
+| Source | What started the run. See [Source and operation](#source-and-operation). A retry doesn't change it. |
+| Operation | What the run did with the record at the target: `Insert`, `Update`, `Upsert` or `Delete` |
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
+
+## Source and operation
+
+| Run | Source | Operation |
+| --- | --- | --- |
+| The insert trigger | `Event: After-Insert` | `Insert` |
+| The update trigger | `Event: After-Update` | `Update` |
+| The delete trigger, which runs before the row is removed | `Event: Before-Delete` | `Delete` |
+| A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
+| A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |
+
+`Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
+
+Two less common cases:
+- A bulk load that passes `Insert`, `Update` or `Delete` as its operation keeps the Source `BG Task: Bulk` and logs the operation it passed.
+- `Event: Unknown` with `Upsert` means a trigger called replication without one of the three operations. Open the IDO Replication Configs form and click **Fix Triggers** for that IDO.
 
 ## What gets logged
 
@@ -30,7 +48,8 @@ One row per record per rule.
 | Background task that loaded more than 100 records | Failed records, and records with a transformation warning |
 
 Special cases:
-- If a rule fails before its records are built (for example, a property in its field map doesn't exist), it gets one `Failed` row with no payload.
+- If a rule fails before its records are built, it gets one `Failed` row with no payload.
+- If the source records can't be loaded (for example, a field map names a property the IDO doesn't have), every rule for the IDO gets one such row, each with its own rule number, target type and credential name.
 - A payload over 4,000 characters isn't stored. The row says so, and it can't be retried.
 
 ## Statuses

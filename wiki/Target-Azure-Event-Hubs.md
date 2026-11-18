@@ -30,9 +30,9 @@ For a Fabric Eventstream, add a custom endpoint source and use its Event Hub con
 { "CustomerNumber": "C000123", "Name": "Example Customer" }
 ```
 
-**The operation.** When the operation is known (`Insert`, `Update` or `Delete`), every event carries it as a user property named `operation`. [Bulk loads](Bulk-Loads) don't know the operation, so they send no `operation` property.
+**The operation.** Every event carries the operation as a user property named `operation`. A trigger sends `Insert`, `Update` or `Delete`. A [bulk load](Bulk-Loads) or a test sends `Upsert`, which means insert or update, whichever applies: the run doesn't know if the consumer already has the record.
 
-If you set Operation Field Name, the operation is also written into the body under that name (blank when unknown). It is off by default because Event Schema Eventstreams reject fields their schema doesn't define. If you turn it on with an event schema, add the field to the schema.
+If you set Operation Field Name, the operation is also written into the body under that name. It is off by default because Event Schema Eventstreams reject fields their schema doesn't define. If you turn it on with an event schema, add the field to the schema.
 
 **CloudEvents properties.** When the rule has an Event Schema URI, each event also carries these user properties, which Fabric Event Schema Eventstreams require:
 

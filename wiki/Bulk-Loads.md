@@ -16,7 +16,7 @@ Background task: `ue_AIR_ReplicateRecordToExternalSystems` (see [Installation](I
 | 3. IDO name | The IDO collection, for example `SLCustomers` |
 | 4. Record cap | The most records to load |
 | 5. Rule number | Optional. Blank runs every active rule for the IDO. A rule named here runs even when it isn't active, so you can test a rule before switching it on. The Test tab passes the rule you are on. |
-| 6. Operation | Optional. The Test tab passes `Test`, which is only recorded: the replication log rows and task messages say `Test`. The records are sent the same way as with a blank operation. |
+| 6. Operation | Optional. Leave it blank for a bulk load: the records are sent as `Upsert` (insert or update, whichever applies), and the log's Source is `BG Task: Bulk`. The Test tab passes `Test`, which sends the same way and is logged with the Source `BG Task: Test`. |
 
 Example parameters:
 
@@ -29,8 +29,9 @@ BG~TASKID~, CustNum LIKE 'C%', SLCustomers, 5000
 | | Trigger | Bulk run |
 | --- | --- | --- |
 | Records | The one changed record | Every record that matches the filter, up to the record cap |
-| Operation | `Insert`, `Update` or `Delete` | Unknown. Records are treated as inserts or updates. |
-| Event Hubs | Sends the `operation` user property | Sends no `operation` property |
+| Source in the log | `Event: After-Insert`, `Event: After-Update` or `Event: Before-Delete` | `BG Task: Bulk` |
+| Operation | `Insert`, `Update` or `Delete` | `Upsert` |
+| Event Hubs | Sends `operation` = `Insert`, `Update` or `Delete` | Sends `operation` = `Upsert` |
 | Salesforce | Upserts, or deletes if the rule allows | Upserts |
 | Replication log | Every record | Every record for 100 or fewer; otherwise failures and warnings only |
 | Messages | Replication log only | Also written to the background task's log |
@@ -43,8 +44,8 @@ A bulk run shows as **failed** when a rule fails, or when nothing could be sent 
 | --- | --- |
 | `Nothing was sent: IDO '...' has no active replication rules.` | No active rule has that IDO Name. Check the spelling and **Is Active**. |
 | `Nothing was sent: no '...' record matches the filter "...".` | The filter selected no records |
-| `Rule '2' (SalesforceRESTAPI): FAILED for 1 record(s). ...` | The send was tried and failed. The error follows. |
-| `Rule '2' (SalesforceRESTAPI): succeeded for 1 record(s).` | The target accepted the records |
+| `Rule '2' (SalesforceRESTAPI, Upsert): FAILED for 1 record(s). ...` | The send was tried and failed. The error follows. |
+| `Rule '2' (SalesforceRESTAPI, Upsert): succeeded for 1 record(s).` | The target accepted the records |
 
 Each record's outcome is also in the [replication log](Replication-Log-and-Retries).
 

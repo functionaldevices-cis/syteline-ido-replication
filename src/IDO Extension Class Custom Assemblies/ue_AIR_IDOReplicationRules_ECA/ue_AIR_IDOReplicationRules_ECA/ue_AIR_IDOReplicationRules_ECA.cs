@@ -90,9 +90,38 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        // THE OPERATION THE RULES FORM'S TEST TAB PASSES, AND THE VALUE WRITTEN TO THE REPLICATION LOG FOR A TEST RUN
+        // THE OPERATION: WHAT A RUN DOES WITH ITS RECORDS AT THE TARGET. IT IS SENT TO THE TARGET AND WRITTEN TO THE REPLICATION LOG.
+        // THE VALUES MUST MATCH THE Operation INLINE LIST ON ue_AIR_IDOReplicationLogs, AND THE FIRST THREE MUST MATCH WHAT THE
+        // TRIGGERS PASS (OperationForEvent IN THE CONFIG ASSEMBLY).
+        // Upsert MEANS INSERT OR UPDATE, WHICHEVER APPLIES. IT IS THE OPERATION OF EVERY RUN THAT DOESN'T PASS ONE OF THE OTHER THREE:
+        // A BULK LOAD, A TEST, OR A TRIGGER THAT PASSES NONE.
 
-        private const string TestOperation = "Test";
+        private const string OperationInsert = "Insert";
+
+        private const string OperationUpdate = "Update";
+
+        private const string OperationDelete = "Delete";
+
+        private const string OperationUpsert = "Upsert";
+
+        // THE SOURCE: WHAT STARTED A RUN. IT IS ONLY WRITTEN TO THE REPLICATION LOG, AND A RETRY LEAVES IT AS IT WAS.
+        // THE VALUES MUST MATCH THE Source INLINE LIST ON ue_AIR_IDOReplicationLogs.
+
+        private const string SourceEventAfterInsert = "Event: After-Insert";    // THE IdoPostItemInsert TRIGGER
+
+        private const string SourceEventAfterUpdate = "Event: After-Update";    // THE IdoPostItemUpdate TRIGGER
+
+        private const string SourceEventBeforeDelete = "Event: Before-Delete";  // THE IdoOnItemDelete TRIGGER
+
+        private const string SourceEventUnknown = "Event: Unknown";             // A TRIGGER RUN THAT DIDN'T PASS Insert, Update OR Delete
+
+        private const string SourceTaskBulk = "BG Task: Bulk";                  // A BACKGROUND TASK RUN (A BULK LOAD)
+
+        private const string SourceTaskTest = "BG Task: Test";                  // A BACKGROUND TASK RUN FROM THE RULES FORM'S TEST TAB
+
+        // WHAT THE RULES FORM'S TEST TAB PASSES AS THE OPERATION TO MARK ITS RUN AS A TEST. THE RUN'S OPERATION IS THEN Upsert.
+
+        private const string TestOperationParameter = "Test";
 
         // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
 
@@ -109,17 +138,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 ruleNum = null;
             }
 
-            // THE OPERATION THAT CHANGED THE RECORD: Insert, Update OR Delete. BLANK (BACKGROUND TASKS, OR TRIGGERS SET
-            // UP BEFORE THIS PARAMETER EXISTED) MEANS UNKNOWN, AND TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
+            // THE OPERATION IS Insert, Update OR Delete WHEN THE CALLER PASSES ONE, AS THE TRIGGERS DO. ANYTHING ELSE, BLANK INCLUDED,
+            // BECOMES Upsert: THE RECORD IS INSERTED OR UPDATED AT THE TARGET, WHICHEVER APPLIES. A BULK LOAD PASSES NO OPERATION,
+            // AND THE RULES FORM'S TEST TAB PASSES Test, SO BOTH ARE UPSERTS.
             //
-            // THE RULES FORM'S TEST TAB PASSES Test. A TEST IS SENT EXACTLY LIKE A RUN WITH AN UNKNOWN OPERATION, SO THE TARGET
-            // NEVER SEES THE WORD Test. IT IS ONLY RECORDED: THE REPLICATION LOG ROWS AND THE TASK MESSAGES SAY Test.
+            // THE SOURCE SAYS WHAT STARTED THE RUN: ONE OF THE THREE TRIGGER EVENTS, A BULK LOAD OR A TEST. A BACKGROUND TASK RUN
+            // (BGTaskNum ABOVE 0) IS A BULK LOAD UNLESS IT PASSES Test, WHATEVER OPERATION IT PASSES.
 
-            bool isTest = string.Equals((operation ?? "").Trim(), TestOperation, StringComparison.OrdinalIgnoreCase);
+            bool isTest = string.Equals((operation ?? "").Trim(), TestOperationParameter, StringComparison.OrdinalIgnoreCase);
 
             operation = NormalizeOperation(operation);
 
-            string loggedOperation = isTest ? TestOperation : operation;
+            string source = BGTaskNum > 0 ? (isTest ? SourceTaskTest : SourceTaskBulk) : SourceForEvent(operation);
 
             // SETUP UTILITIES
 
@@ -151,12 +181,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             bool includeInactiveRules = isBackgroundTask && ruleNum != null;
 
+            // DECLARED OUTSIDE THE TRY SO THE CATCH CAN SEE WHICH RULES WERE LOADED BEFORE A FAILURE
+
+            Dictionary<string, ReplicationRule> replicationRules = new Dictionary<string, ReplicationRule>();
+
             try
             {
 
                 // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                Dictionary<string, ReplicationRule> replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
+                replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
 
                 if (replicationRules.Keys.Count == 0)
                 {
@@ -228,14 +262,47 @@ namespace ue_AIR_IDOReplicationRules_ECA
             catch (Exception ex)
             {
 
-                ruleResults.Add(new ReplicationRuleResult(
-                    ruleNum: ruleNum ?? "",
-                    targetType: "",
-                    recordCount: 0,
-                    success: false,
-                    errorMessage: "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex),
-                    operation: operation
-                ));
+                string setupErrorMessage = "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex);
+
+                // A FAILURE AFTER THE RULES WERE LOADED (FOR EXAMPLE, THE SOURCE RECORDS COULDN'T BE LOADED) STOPS EVERY RULE THAT HASN'T RUN YET.
+                // EACH OF THOSE GETS ITS OWN RESULT, SO ITS LOG ROW CARRIES THE RULE'S NUMBER, TARGET TYPE AND CREDENTIAL NAME.
+
+                List<ReplicationRule> rulesWithoutResult = replicationRules.Values
+                    .Where(rule => !ruleResults.Any(ruleResult => ruleResult.RuleNum == rule.RuleNum))
+                    .ToList();
+
+                foreach (ReplicationRule replicationRule in rulesWithoutResult)
+                {
+
+                    ruleResults.Add(new ReplicationRuleResult(
+                        ruleNum: replicationRule.RuleNum ?? "",
+                        targetType: replicationRule.TargetType ?? "",
+                        recordCount: 0,
+                        success: false,
+                        errorMessage: setupErrorMessage,
+                        operation: operation
+                    )
+                    {
+                        CredentialName = replicationRule.CredentialName ?? ""
+                    });
+
+                }
+
+                // A FAILURE BEFORE THE RULES WERE LOADED HAS NO RULE TO NAME, SO IT GETS ONE RESULT WITH NO TARGET TYPE OR CREDENTIAL
+
+                if (rulesWithoutResult.Count == 0)
+                {
+
+                    ruleResults.Add(new ReplicationRuleResult(
+                        ruleNum: ruleNum ?? "",
+                        targetType: "",
+                        recordCount: 0,
+                        success: false,
+                        errorMessage: setupErrorMessage,
+                        operation: operation
+                    ));
+
+                }
 
             }
 
@@ -243,13 +310,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             foreach (ReplicationRuleResult ruleResult in ruleResults)
             {
-                ruleResult.Operation = loggedOperation;
                 utils.WriteLogMessage(ruleResult.ToString());
             }
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, loggedOperation, ruleResults, isBackgroundTask, recordCountLoaded);
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults, isBackgroundTask, recordCountLoaded);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
 
@@ -328,6 +394,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             ruleResult.Operation = operation;
+            ruleResult.CredentialName = replicationRule.CredentialName ?? "";
             return ruleResult;
 
         }
@@ -414,7 +481,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
                     // RULES FORM SCRIPT (UpdateVariableUI).
 
-                    bool isDelete = operation == "Delete";
+                    bool isDelete = operation == OperationDelete;
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
 
                     // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
@@ -718,7 +785,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int DefaultRetries = 3;
 
-        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
+        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
         {
 
             try
@@ -736,7 +803,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         if (!ruleResult.Success)
                         {
-                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusFailed, ruleResult.ErrorMessage), attemptDate));
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusFailed, ruleResult.ErrorMessage), attemptDate));
                         }
 
                         continue;
@@ -747,7 +814,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed || outcome.Warning != "")
                         {
-                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, outcome, attemptDate));
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, outcome, attemptDate));
                         }
                     }
 
@@ -777,7 +844,20 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, ReplicationRecordOutcome outcome, DateTime attemptDate)
+        // THE CREDENTIAL NAME WRITTEN TO A LOG ROW. THE ROW KEEPS ITS OWN COPY, A SNAPSHOT, SO IT STILL SAYS WHICH CREDENTIAL WAS USED
+        // AFTER THE RULE OR THE CREDENTIAL IS CHANGED OR DELETED. THE COLUMN IS REQUIRED, SO A RULE WITH NO CREDENTIAL, OR A FAILURE
+        // BEFORE THE RULE WAS LOADED, IS WRITTEN AS NoCredentialName AND NOT LEFT BLANK, WHICH WOULD FAIL THE INSERT.
+
+        private const string NoCredentialName = "(none)";
+
+        private static string LoggedCredentialName(string credentialName)
+        {
+            return string.IsNullOrWhiteSpace(credentialName) ? NoCredentialName : credentialName.Trim();
+        }
+
+
+
+        private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, string source, ReplicationRecordOutcome outcome, DateTime attemptDate)
         {
 
             string payload = outcome.Payload;
@@ -818,7 +898,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "RuleNum", int.TryParse(ruleResult.RuleNum, NumberStyles.Integer, CultureInfo.InvariantCulture, out ruleNumber) ? (object)ruleNumber : null },
                 { "IDOName", IDOName },
                 { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
-                { "Operation", operation != "" ? operation : null },
+                { "CredentialName", LoggedCredentialName(ruleResult.CredentialName) },
+                { "Source", source },
+                { "Operation", operation },
                 { "RecordID", recordID != "" ? recordID : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
@@ -1071,7 +1153,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             countSucceeded++;
                         }
 
-                        logUpdates.Add(this.BuildLogRetryUpdate(sytelineAPI, retriedRow.Item.ItemID, outcome.Status, outcome.ErrorMessage, stillFailed ? Math.Max(retriedRow.RetriesRemaining - 1, 0) : 0, retriedRow.AttemptCount, attemptDate));
+                        logUpdates.Add(this.BuildLogRetryUpdate(sytelineAPI, retriedRow.Item.ItemID, outcome.Status, outcome.ErrorMessage, stillFailed ? Math.Max(retriedRow.RetriesRemaining - 1, 0) : 0, retriedRow.AttemptCount, attemptDate, LoggedCredentialName(replicationRule.CredentialName)));
 
                     }
 
@@ -1156,7 +1238,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private IDOUpdateItem BuildLogRetryUpdate(SytelineInternalAPI sytelineAPI, string itemID, string status, string errorMessage, int retriesRemaining, int previousAttemptCount, DateTime attemptDate)
+        // credentialName IS THE CREDENTIAL THE RETRY USED. NULL LEAVES THE ROW'S CREDENTIAL NAME AS IT IS, FOR A ROW THAT WASN'T RESENT.
+
+        private IDOUpdateItem BuildLogRetryUpdate(SytelineInternalAPI sytelineAPI, string itemID, string status, string errorMessage, int retriesRemaining, int previousAttemptCount, DateTime attemptDate, string credentialName = null)
         {
 
             errorMessage = errorMessage ?? "";
@@ -1166,14 +1250,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
-            return sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
+            List<IDOUpdateProperty> propertyUpdates = new List<IDOUpdateProperty>()
             {
                 new IDOUpdateProperty("Status", status, true),
                 new IDOUpdateProperty("ErrorMessage", errorMessage, true),
                 new IDOUpdateProperty("RetriesRemaining", retriesRemaining, true),
                 new IDOUpdateProperty("AttemptCount", previousAttemptCount + 1, true),
                 new IDOUpdateProperty("LastAttemptDate", attemptDate, true)
-            });
+            };
+
+            if (credentialName != null)
+            {
+                propertyUpdates.Add(new IDOUpdateProperty("CredentialName", credentialName, true));
+            }
+
+            return sytelineAPI.BuildUpdateItem(itemID, propertyUpdates);
 
         }
 
@@ -1231,19 +1322,42 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // RETURNS Insert, Update OR Delete FOR AN OPERATION PASSED IN OR READ FROM A LOG ROW, AND Upsert FOR ANYTHING ELSE, BLANK INCLUDED
+
         private static string NormalizeOperation(string operation)
         {
 
             switch ((operation ?? "").Trim().ToLowerInvariant())
             {
                 case "insert":
-                    return "Insert";
+                    return OperationInsert;
                 case "update":
-                    return "Update";
+                    return OperationUpdate;
                 case "delete":
-                    return "Delete";
+                    return OperationDelete;
                 default:
-                    return "";
+                    return OperationUpsert;
+            }
+
+        }
+
+
+
+        // THE SOURCE OF A TRIGGER RUN, FROM THE OPERATION ITS TRIGGER PASSED. EACH TRIGGER PASSES THE OPERATION OF ITS OWN EVENT.
+
+        private static string SourceForEvent(string operation)
+        {
+
+            switch (operation)
+            {
+                case OperationInsert:
+                    return SourceEventAfterInsert;
+                case OperationUpdate:
+                    return SourceEventAfterUpdate;
+                case OperationDelete:
+                    return SourceEventBeforeDelete;
+                default:
+                    return SourceEventUnknown;
             }
 
         }
@@ -1484,6 +1598,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 properties: new List<string>(){
                     { "RuleNum" },
                     { "TargetType" },
+                    { "CredentialName" },
                     { "CredentialValue01" },
                     { "CredentialValue02" },
                     { "CredentialValue03" },

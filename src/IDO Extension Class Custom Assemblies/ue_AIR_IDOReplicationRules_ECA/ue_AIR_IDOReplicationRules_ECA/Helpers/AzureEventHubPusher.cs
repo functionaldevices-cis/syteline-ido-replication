@@ -53,10 +53,10 @@ namespace ue_AIR_IDOReplicationRules_ECA.Helpers
 
 
 
-        // operation IS Insert, Update, Delete OR BLANK (UNKNOWN). WHEN SET, EVERY EVENT CARRIES IT AS THE "operation" USER
+        // operation IS Insert, Update, Upsert OR Delete (BLANK IF THE CALLER HAS NONE). WHEN SET, EVERY EVENT CARRIES IT AS THE "operation" USER
         // PROPERTY, WHICH FABRIC EVENTSTREAMS KEEP IN EVENT METADATA WHEN THE SOURCE USES EXTENDED FEATURES.
         // operationFieldName IS OPTIONAL. WHEN SET, THE OPERATION IS ALSO WRITTEN INTO EVERY EVENT BODY UNDER THAT NAME (BLANK
-        // WHEN UNKNOWN), SO DESTINATIONS THAT ONLY READ THE BODY SEE IT. AN EVENT SCHEMA MUST THEN INCLUDE THAT FIELD.
+        // WHEN THERE IS NONE), SO DESTINATIONS THAT ONLY READ THE BODY SEE IT. AN EVENT SCHEMA MUST THEN INCLUDE THAT FIELD.
 
         public static AzureEventHubPushResult Push(AzureEventHubSASCredential credential, List<Dictionary<string, object>> records, string idFieldName = null, FabricEventSchemaUri eventSchemaUri = null, string eventSource = null, int maxBatchBytes = AzureEventHubPusher.DefaultMaxBatchBytes, string operation = null, string operationFieldName = null)
         {

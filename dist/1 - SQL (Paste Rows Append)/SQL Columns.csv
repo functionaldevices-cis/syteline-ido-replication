@@ -20,8 +20,8 @@ record_id,dbo,ue_AIR_idorepl_log_mst,LongDescType,,NO
 payload,dbo,ue_AIR_idorepl_log_mst,LongListType,,YES
 status,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,NO
 error_message,dbo,ue_AIR_idorepl_log_mst,LongerDescType,,YES
-retries_remaining,dbo,ue_AIR_idorepl_log_mst,GenericIntType,-3,NO
-attempt_count,dbo,ue_AIR_idorepl_log_mst,GenericIntType,-1,NO
+retries_remaining,dbo,ue_AIR_idorepl_log_mst,GenericIntType,3,NO
+attempt_count,dbo,ue_AIR_idorepl_log_mst,GenericIntType,1,NO
 last_attempt_date,dbo,ue_AIR_idorepl_log_mst,DateTimeType,,YES
 credential_name,dbo,ue_AIR_idorepl_log_mst,LongDescType,,NO
 rule_num,dbo,ue_AIR_idorepl_mapfield_mst,GenericIntType,,NO

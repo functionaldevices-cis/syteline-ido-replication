@@ -47,5 +47,4 @@ Replication runs during the save, so the save waits for the target to answer. If
 - **Credentials are stored as plain text.** See [Credentials](Credentials#keeping-credentials-safe).
 - **Log payloads are capped at 4,000 characters.** Larger records are sent but can't be retried from the log.
 - **Three retries, no backoff.** A long outage uses them up.
-- **No log form.** Read the log through the IDO.
 - **Not finished:** Import Map on the Rules form, map field sources, and the output preview on the Rules form.

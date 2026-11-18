@@ -20,6 +20,10 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string TargetType { get; set; }
 
+        // THE NAME OF THE RULE'S LINKED CREDENTIAL. NULL WHEN THE RULE HAS NO CREDENTIAL, OR WHEN THE RULE WAS LOADED WITHOUT IT.
+
+        public string CredentialName { get; set; }
+
         public string CredentialValue01 { get; set; }
 
         public string CredentialValue02 { get; set; }
@@ -82,6 +86,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
             this.RuleNum = record.PropertyValues[propertyKeys["RuleNum"]].Value;
             this.TargetType = record.PropertyValues[propertyKeys["TargetType"]].Value;
+            this.CredentialName = propertyKeys.ContainsKey("CredentialName") ? record.PropertyValues[propertyKeys["CredentialName"]].Value : null;
             this.CredentialValue01 = record.PropertyValues[propertyKeys["CredentialValue01"]].Value;
             this.CredentialValue02 = record.PropertyValues[propertyKeys["CredentialValue02"]].Value;
             this.CredentialValue03 = record.PropertyValues[propertyKeys["CredentialValue03"]].Value;

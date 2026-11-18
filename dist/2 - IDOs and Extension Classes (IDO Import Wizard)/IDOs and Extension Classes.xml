@@ -5,8 +5,8 @@
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_EventHandlers</LabelStringID>
-         <RevisionNo>4</RevisionNo>
-         <RevisionDate>2026-11-13T13:22:13</RevisionDate>
+         <RevisionNo>6</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <Extends>EventHandlers</Extends>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>1</QuoteTableAliases>
@@ -63,8 +63,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationConfigs</LabelStringID>
-         <RevisionNo>17</RevisionNo>
-         <RevisionDate>2026-11-13T13:28:05</RevisionDate>
+         <RevisionNo>19</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationConfig_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationConfig_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationConfig_ECA</ExtClassName>
@@ -550,8 +550,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
-         <RevisionNo>4</RevisionNo>
-         <RevisionDate>2026-11-18T15:59:19</RevisionDate>
+         <RevisionNo>7</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -659,7 +659,7 @@ END</Expression>
                <BoundToColumn>operation</BoundToColumn>
                <ColumnTableAlias>log</ColumnTableAlias>
                <PropertyAttributes>
-                  <InlineList>ENTRIES(Insert,Update,Delete,Test) DISPLAY(1) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(Insert,Update,Upsert,Delete) DISPLAY(1) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="Payload" Key="0" Binding="BOUND" Sequence="13">
