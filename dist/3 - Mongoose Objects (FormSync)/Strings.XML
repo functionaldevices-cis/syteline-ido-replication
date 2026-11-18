@@ -261,26 +261,6 @@
          <TableName>Strings</TableName>
          <String>Operation</String>
       </String>
-      <String Name="ue_AIR_sOperationBR" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Bulk Replicate</String>
-      </String>
-      <String Name="ue_AIR_sOperationEAI" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Event: After-Insert</String>
-      </String>
-      <String Name="ue_AIR_sOperationEAU" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Event: After-Update</String>
-      </String>
-      <String Name="ue_AIR_sOperationEBD" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Event: Before-Delete</String>
-      </String>
-      <String Name="ue_AIR_sOperationT" Scope="1" ScopeName="[NULL]">
-         <TableName>Strings</TableName>
-         <String>Test</String>
-      </String>
       <String Name="ue_AIR_sPayload" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Payload</String>

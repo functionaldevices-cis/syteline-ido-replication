@@ -90,25 +90,38 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        // THE OPERATION CODES. THEY SAY HOW A RUN WAS STARTED, AND THEY ARE THE VALUES THE TRIGGERS PASS AND THE REPLICATION LOG STORES.
-        // THE LOG FORM SHOWS A DESCRIPTION FOR EACH, FROM THE Operation INLINE LIST ON ue_AIR_IDOReplicationLogs AND ITS STRINGS.
-        // A TARGET NEVER RECEIVES A CODE: TargetOperation TURNS THE THREE EVENT CODES INTO Insert, Update AND Delete FOR IT.
-        //
-        // THE THREE EVENT CODES MUST MATCH OperationForEvent IN THE CONFIG ASSEMBLY, WHICH WRITES THEM INTO THE TRIGGERS.
+        // THE OPERATION: WHAT A RUN DOES WITH ITS RECORDS AT THE TARGET. IT IS SENT TO THE TARGET AND WRITTEN TO THE REPLICATION LOG.
+        // THE VALUES MUST MATCH THE Operation INLINE LIST ON ue_AIR_IDOReplicationLogs, AND THE FIRST THREE MUST MATCH WHAT THE
+        // TRIGGERS PASS (OperationForEvent IN THE CONFIG ASSEMBLY).
+        // Upsert MEANS INSERT OR UPDATE, WHICHEVER APPLIES. IT IS THE OPERATION OF EVERY RUN THAT DOESN'T PASS ONE OF THE OTHER THREE:
+        // A BULK LOAD, A TEST, OR A TRIGGER THAT PASSES NONE.
 
-        private const string OperationAfterInsert = "EAI";  // EVENT: AFTER-INSERT (IdoPostItemInsert)
+        private const string OperationInsert = "Insert";
 
-        private const string OperationAfterUpdate = "EAU";  // EVENT: AFTER-UPDATE (IdoPostItemUpdate)
+        private const string OperationUpdate = "Update";
 
-        private const string OperationBeforeDelete = "EBD"; // EVENT: BEFORE-DELETE (IdoOnItemDelete)
+        private const string OperationDelete = "Delete";
 
-        // BULK REPLICATE: A BACKGROUND TASK RUN THAT PASSES NO OPERATION. ONLY RECORDED.
+        private const string OperationUpsert = "Upsert";
 
-        private const string OperationBulk = "BR";
+        // THE SOURCE: WHAT STARTED A RUN. IT IS ONLY WRITTEN TO THE REPLICATION LOG, AND A RETRY LEAVES IT AS IT WAS.
+        // THE VALUES MUST MATCH THE Source INLINE LIST ON ue_AIR_IDOReplicationLogs.
 
-        // TEST: THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION. ONLY RECORDED.
+        private const string SourceEventAfterInsert = "Event: After-Insert";    // THE IdoPostItemInsert TRIGGER
 
-        private const string OperationTest = "T";
+        private const string SourceEventAfterUpdate = "Event: After-Update";    // THE IdoPostItemUpdate TRIGGER
+
+        private const string SourceEventBeforeDelete = "Event: Before-Delete";  // THE IdoOnItemDelete TRIGGER
+
+        private const string SourceEventUnknown = "Event: Unknown";             // A TRIGGER RUN THAT DIDN'T PASS Insert, Update OR Delete
+
+        private const string SourceTaskBulk = "BG Task: Bulk";                  // A BACKGROUND TASK RUN (A BULK LOAD)
+
+        private const string SourceTaskTest = "BG Task: Test";                  // A BACKGROUND TASK RUN FROM THE RULES FORM'S TEST TAB
+
+        // WHAT THE RULES FORM'S TEST TAB PASSES AS THE OPERATION TO MARK ITS RUN AS A TEST. THE RUN'S OPERATION IS THEN Upsert.
+
+        private const string TestOperationParameter = "Test";
 
         // SYTELINE'S ERROR SEVERITY. A BACKGROUND TASK WHOSE METHOD RETURNS IT IS SHOWN AS FAILED.
 
@@ -125,22 +138,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 ruleNum = null;
             }
 
-            // THE OPERATION CODE OF THE EVENT THAT CHANGED THE RECORD: EAI, EAU OR EBD. BLANK, OR ANYTHING ELSE, MEANS UNKNOWN, AND
-            // TARGETS TREAT THE RECORD AS AN INSERT OR UPDATE.
+            // THE OPERATION IS Insert, Update OR Delete WHEN THE CALLER PASSES ONE, AS THE TRIGGERS DO. ANYTHING ELSE, BLANK INCLUDED,
+            // BECOMES Upsert: THE RECORD IS INSERTED OR UPDATED AT THE TARGET, WHICHEVER APPLIES. A BULK LOAD PASSES NO OPERATION,
+            // AND THE RULES FORM'S TEST TAB PASSES Test, SO BOTH ARE UPSERTS.
             //
-            // TWO KINDS OF RUN ARE ONLY RECORDED, IN THE REPLICATION LOG ROWS AND THE TASK MESSAGES. BOTH ARE SENT EXACTLY LIKE A
-            // RUN WITH AN UNKNOWN OPERATION:
-            //   T (TEST): THE RULES FORM'S TEST TAB PASSES IT AS THE OPERATION.
-            //   BR (BULK REPLICATE): A BACKGROUND TASK RUN (BGTaskNum ABOVE 0) THAT PASSES NO OPERATION, WHICH IS A BULK LOAD.
-            //
-            // A TRIGGER RUN WITH NO OPERATION CODE STAYS BLANK. ONLY TRIGGERS SET UP BEFORE THE CODES EXISTED DO THAT, AND THE
-            // CONFIGS FORM SHOWS THEM AS BROKEN UNTIL Fix Triggers IS RUN.
+            // THE SOURCE SAYS WHAT STARTED THE RUN: ONE OF THE THREE TRIGGER EVENTS, A BULK LOAD OR A TEST. A BACKGROUND TASK RUN
+            // (BGTaskNum ABOVE 0) IS A BULK LOAD UNLESS IT PASSES Test, WHATEVER OPERATION IT PASSES.
 
-            bool isTest = string.Equals((operation ?? "").Trim(), OperationTest, StringComparison.OrdinalIgnoreCase);
+            bool isTest = string.Equals((operation ?? "").Trim(), TestOperationParameter, StringComparison.OrdinalIgnoreCase);
 
             operation = NormalizeOperation(operation);
 
-            string loggedOperation = isTest ? OperationTest : (operation == "" && BGTaskNum > 0 ? OperationBulk : operation);
+            string source = BGTaskNum > 0 ? (isTest ? SourceTaskTest : SourceTaskBulk) : SourceForEvent(operation);
 
             // SETUP UTILITIES
 
@@ -301,13 +310,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             foreach (ReplicationRuleResult ruleResult in ruleResults)
             {
-                ruleResult.Operation = loggedOperation;
                 utils.WriteLogMessage(ruleResult.ToString());
             }
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, loggedOperation, ruleResults, isBackgroundTask, recordCountLoaded);
+            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults, isBackgroundTask, recordCountLoaded);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
 
@@ -446,7 +454,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         eventSchemaUri: eventSchemaUri,
                         eventSource: eventSource,
                         maxBatchBytes: maxBatchBytes,
-                        operation: TargetOperation(operation),
+                        operation: operation,
                         operationFieldName: replicationRule.Option03
                     );
 
@@ -473,7 +481,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
                     // RULES FORM SCRIPT (UpdateVariableUI).
 
-                    bool isDelete = operation == OperationBeforeDelete;
+                    bool isDelete = operation == OperationDelete;
                     bool deleteInSalesforce = string.Equals((replicationRule.Option03 ?? "").Trim(), "Delete", StringComparison.OrdinalIgnoreCase);
 
                     // DELETES ARE SKIPPED UNLESS THE RULE OPTS IN, SO A SYTELINE DELETE NEVER REMOVES SALESFORCE DATA BY DEFAULT
@@ -777,7 +785,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const int DefaultRetries = 3;
 
-        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
+        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults, bool isBackgroundTask, int recordCountLoaded)
         {
 
             try
@@ -795,7 +803,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         if (!ruleResult.Success)
                         {
-                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusFailed, ruleResult.ErrorMessage), attemptDate));
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusFailed, ruleResult.ErrorMessage), attemptDate));
                         }
 
                         continue;
@@ -806,7 +814,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     {
                         if (logEveryRecord || outcome.Status == ReplicationRecordOutcome.StatusFailed || outcome.Warning != "")
                         {
-                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, outcome, attemptDate));
+                            logRows.Add(this.BuildLogRow(sytelineAPI, ruleResult, IDOName, operation, source, outcome, attemptDate));
                         }
                     }
 
@@ -849,7 +857,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, ReplicationRecordOutcome outcome, DateTime attemptDate)
+        private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, string source, ReplicationRecordOutcome outcome, DateTime attemptDate)
         {
 
             string payload = outcome.Payload;
@@ -891,7 +899,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "IDOName", IDOName },
                 { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
                 { "CredentialName", LoggedCredentialName(ruleResult.CredentialName) },
-                { "Operation", operation != "" ? operation : null },
+                { "Source", source },
+                { "Operation", operation },
                 { "RecordID", recordID != "" ? recordID : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
@@ -1313,44 +1322,42 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        // RETURNS THE EVENT CODE (EAI, EAU OR EBD) FOR AN OPERATION PASSED IN OR READ FROM A LOG ROW, AND BLANK FOR ANYTHING ELSE.
-        // BR AND T ARE ONLY RECORDED, SO THEY COME BACK BLANK AND ARE SENT AS AN UNKNOWN OPERATION.
+        // RETURNS Insert, Update OR Delete FOR AN OPERATION PASSED IN OR READ FROM A LOG ROW, AND Upsert FOR ANYTHING ELSE, BLANK INCLUDED
 
         private static string NormalizeOperation(string operation)
         {
 
-            switch ((operation ?? "").Trim().ToUpperInvariant())
+            switch ((operation ?? "").Trim().ToLowerInvariant())
             {
-                case OperationAfterInsert:
-                    return OperationAfterInsert;
-                case OperationAfterUpdate:
-                    return OperationAfterUpdate;
-                case OperationBeforeDelete:
-                    return OperationBeforeDelete;
+                case "insert":
+                    return OperationInsert;
+                case "update":
+                    return OperationUpdate;
+                case "delete":
+                    return OperationDelete;
                 default:
-                    return "";
+                    return OperationUpsert;
             }
 
         }
 
 
 
-        // THE WORD A TARGET RECEIVES FOR AN EVENT CODE: Insert, Update OR Delete. BLANK WHEN THE OPERATION IS UNKNOWN.
-        // TARGETS GET THESE WORDS AND NOT THE CODES, SO WHAT CONSUMERS READ DOESN'T DEPEND ON HOW SYTELINE NAMES ITS EVENTS.
+        // THE SOURCE OF A TRIGGER RUN, FROM THE OPERATION ITS TRIGGER PASSED. EACH TRIGGER PASSES THE OPERATION OF ITS OWN EVENT.
 
-        private static string TargetOperation(string operation)
+        private static string SourceForEvent(string operation)
         {
 
             switch (operation)
             {
-                case OperationAfterInsert:
-                    return "Insert";
-                case OperationAfterUpdate:
-                    return "Update";
-                case OperationBeforeDelete:
-                    return "Delete";
+                case OperationInsert:
+                    return SourceEventAfterInsert;
+                case OperationUpdate:
+                    return SourceEventAfterUpdate;
+                case OperationDelete:
+                    return SourceEventBeforeDelete;
                 default:
-                    return "";
+                    return SourceEventUnknown;
             }
 
         }

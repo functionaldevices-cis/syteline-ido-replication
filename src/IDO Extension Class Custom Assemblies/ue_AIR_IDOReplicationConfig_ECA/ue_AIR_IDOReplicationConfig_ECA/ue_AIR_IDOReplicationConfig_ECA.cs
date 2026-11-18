@@ -236,9 +236,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
         }
 
-        // THE OPERATION CODE EACH TRIGGER PASSES: EAI (EVENT: AFTER-INSERT), EAU (EVENT: AFTER-UPDATE) OR EBD (EVENT: BEFORE-DELETE).
-        // KEEP IN SYNC WITH THE CASE EventName IN THE ue_AIR_EventHandlers IDO'S ue_IsSetup DERIVED PROPERTY, AND WITH THE OPERATION
-        // CODES IN THE RULES ASSEMBLY (OperationAfterInsert, OperationAfterUpdate, OperationBeforeDelete).
+        // KEEP IN SYNC WITH THE CASE EventName IN THE ue_AIR_EventHandlers IDO'S ue_IsSetup DERIVED PROPERTY
 
         private static string OperationForEvent(string eventName)
         {
@@ -246,11 +244,11 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             switch (eventName)
             {
                 case "IdoPostItemInsert":
-                    return "EAI";
+                    return "Insert";
                 case "IdoPostItemUpdate":
-                    return "EAU";
+                    return "Update";
                 case "IdoOnItemDelete":
-                    return "EBD";
+                    return "Delete";
                 default:
                     return "";
             }

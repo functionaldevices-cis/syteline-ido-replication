@@ -19,10 +19,10 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 
 ## How it works
 
-1. **Triggers.** From the IDO Replication Configs form, you set up triggers on any IDO. This creates AES event handlers for insert, update and delete, each calling the replication method with its operation code (`EAI` after an insert, `EAU` after an update, `EBD` before a delete). The delete trigger runs before the row is removed, so the record can still be read.
+1. **Triggers.** From the IDO Replication Configs form, you set up triggers on any IDO. This creates AES event handlers for insert, update and delete, each calling the replication method with its operation (`Insert`, `Update` or `Delete`). The delete trigger runs before the row is removed, so the record can still be read.
 2. **Rules.** The method loads the IDO's active replication rules, reads the record through the IDO layer, and builds one output record per rule from the rule's field map (IDO properties or literal values, each with an optional transformation).
 3. **Sending.** Each rule sends to its target with its credential:
-   - **Azure Event Hubs:** events carry the operation (`Insert`, `Update` or `Delete`) as an `operation` user property. Optionally, a body field holds it too.
+   - **Azure Event Hubs:** events carry the operation (`Insert`, `Update`, `Delete`, or `Upsert` for bulk loads and tests) as an `operation` user property. Optionally, a body field holds it too.
    - **Salesforce:** records are upserted by external ID. A delete is skipped unless the rule's Delete Behavior is `Delete`.
 4. **Logging and retries.** Every record's outcome goes to the replication log, with the payload exactly as sent. A scheduled background task resends failed records from their stored payloads, so deleted records can be retried too, and skips any that were replicated again since. It purges old successful rows.
 
@@ -109,7 +109,7 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 ## Replication log and retries
 
 `ue_AIR_IDOReplicationLogs` holds one row per record per rule. Each row stores:
-- the operation (Event: After-Insert, Event: After-Update, Event: Before-Delete, Bulk Replicate or Test) and the record's ID
+- the source (which trigger event, a bulk load or a test), the operation (`Insert`, `Update`, `Upsert` or `Delete`) and the record's ID
 - the payload as sent (up to 4,000 characters)
 - the status (`Succeeded`, `Failed` or `Skipped`) and the error
 - the number of retries left (3 to start)

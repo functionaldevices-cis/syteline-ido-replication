@@ -5,8 +5,8 @@
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_EventHandlers</LabelStringID>
-         <RevisionNo>5</RevisionNo>
-         <RevisionDate>2026-11-18T12:38:00</RevisionDate>
+         <RevisionNo>6</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <Extends>EventHandlers</Extends>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>1</QuoteTableAliases>
@@ -41,9 +41,9 @@
             EventAction.Description = 'ue_AIR_ReplicationTrigger' AND
             EventAction.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + IDOCollections + '", 1, "", "' +
                CASE EventName
-                  WHEN 'IdoPostItemInsert' THEN 'EAI'
-                  WHEN 'IdoPostItemUpdate' THEN 'EAU'
-                  WHEN 'IdoOnItemDelete' THEN 'EBD'
+                  WHEN 'IdoPostItemInsert' THEN 'Insert'
+                  WHEN 'IdoPostItemUpdate' THEN 'Update'
+                  WHEN 'IdoOnItemDelete' THEN 'Delete'
                   ELSE ''
                END + '")'
       ) = 1
@@ -63,8 +63,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationConfigs</LabelStringID>
-         <RevisionNo>18</RevisionNo>
-         <RevisionDate>2026-11-18T12:38:00</RevisionDate>
+         <RevisionNo>19</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationConfig_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationConfig_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationConfig_ECA</ExtClassName>
@@ -136,7 +136,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "EAI")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Insert")'
       ) = 1) AND
       ((
          SELECT
@@ -148,7 +148,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "EAU")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Update")'
       ) = 1) AND
       ((
          SELECT
@@ -160,7 +160,7 @@ END</Expression>
             handler.Description = 'ue_AIR_ReplicationTrigger' AND
             handler.AppliesToObjects = CollectionName AND
             action.ActionType = 21 AND
-            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "EBD")'
+            action.Parameters = 'IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems") PARMS(-1, SUBSTITUTE("RowPointer = ''{0}''", P("RowPointer")), "' + CollectionName + '", 1, "", "Delete")'
       ) = 1)
    THEN
       1
@@ -550,8 +550,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
-         <RevisionNo>6</RevisionNo>
-         <RevisionDate>2026-11-18T12:38:00</RevisionDate>
+         <RevisionNo>7</RevisionNo>
+         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -659,7 +659,7 @@ END</Expression>
                <BoundToColumn>operation</BoundToColumn>
                <ColumnTableAlias>log</ColumnTableAlias>
                <PropertyAttributes>
-                  <InlineList>ENTRIES(EAI\ue_AIR_sOperationEAI,EAU\ue_AIR_sOperationEAU,EBD\ue_AIR_sOperationEBD,BR\ue_AIR_sOperationBR,T\ue_AIR_sOperationT) DISPLAY(2) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(Insert,Update,Upsert,Delete) DISPLAY(1) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="Payload" Key="0" Binding="BOUND" Sequence="13">

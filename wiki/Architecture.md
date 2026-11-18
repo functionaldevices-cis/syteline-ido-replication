@@ -46,7 +46,7 @@ sequenceDiagram
     R-->>T: Return 0
 ```
 
-1. **Entry.** `ue_ReplicateRecordToExternalSystems` normalizes the operation code (`EAI`, `EAU`, `EBD`, or blank for unknown) and wraps everything in a try/catch. It always returns 0.
+1. **Entry.** `ue_ReplicateRecordToExternalSystems` normalizes the operation (`Insert`, `Update` or `Delete`, and `Upsert` for anything else) and works out the run's source and wraps everything in a try/catch. It always returns 0.
 2. **Rules.** `LoadReplicationRulesAndMaps` loads the IDO's active rules, with their credential values and options, and each rule's map fields. With no active rules it stops.
 3. **Records.** The union of every rule's source properties is loaded once through `SytelineInternalAPI.LoadRecords`. All data access goes through IDOs, not direct SQL.
 4. **Per rule.** `ReplicateRule` calls `RemapRecords` to build the output records and apply transformations, then `SendRule` to send them. Each rule is isolated: an exception becomes a failed `ReplicationRuleResult`, and the other rules still run.

@@ -14,7 +14,8 @@ One row per record per rule.
 | --- | --- |
 | RuleNum, IDOName, TargetType | The rule that sent the record |
 | CredentialName | The name of the credential the rule used, copied into the row when it is written. It is a snapshot: it stays as it was even if the rule or the credential is later renamed, changed or deleted. A retry updates it to the credential that attempt used. `(none)` means the rule had no credential, or the failure happened before the rule was loaded. |
-| Operation | How the run was started. See [Operations](#operations). |
+| Source | What started the run. See [Source and operation](#source-and-operation). A retry doesn't change it. |
+| Operation | What the run did with the record at the target: `Insert`, `Update`, `Upsert` or `Delete` |
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
@@ -22,21 +23,21 @@ One row per record per rule.
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |
 
-## Operations
+## Source and operation
 
-The log stores a short code and the form shows its description.
-
-| Shown as | Stored code | Run |
+| Run | Source | Operation |
 | --- | --- | --- |
-| Event: After-Insert | `EAI` | The insert trigger |
-| Event: After-Update | `EAU` | The update trigger |
-| Event: Before-Delete | `EBD` | The delete trigger, which runs before the row is removed |
-| Bulk Replicate | `BR` | A [bulk load](Bulk-Loads): a background task run that passes no operation |
-| Test | `T` | A run from the Rules form's Test tab |
+| The insert trigger | `Event: After-Insert` | `Insert` |
+| The update trigger | `Event: After-Update` | `Update` |
+| The delete trigger, which runs before the row is removed | `Event: Before-Delete` | `Delete` |
+| A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
+| A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |
 
-The descriptions come from the strings `ue_AIR_sOperationEAI`, `ue_AIR_sOperationEAU`, `ue_AIR_sOperationEBD`, `ue_AIR_sOperationBR` and `ue_AIR_sOperationT`, so you can reword or translate them.
+`Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
 
-Targets never receive these codes. Event Hubs events carry `Insert`, `Update` or `Delete`.
+Two less common cases:
+- A bulk load that passes `Insert`, `Update` or `Delete` as its operation keeps the Source `BG Task: Bulk` and logs the operation it passed.
+- `Event: Unknown` with `Upsert` means a trigger called replication without one of the three operations. Open the IDO Replication Configs form and click **Fix Triggers** for that IDO.
 
 ## What gets logged
 
