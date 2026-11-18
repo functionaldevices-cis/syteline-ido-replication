@@ -7,7 +7,7 @@ Form: `ue_AIR_IDOReplicationResend`
 ## Using the form
 
 1. Select the rule to resend for. One resend covers one rule.
-2. Set **Changed From** to the start of the period. Leave **Changed To** blank to go up to now.
+2. Set **Changed From** to the start of the period. Leave **Changed To** blank for no end, which takes everything from the start onward.
 3. Choose what to resend:
 
    | Choice | Resends |
@@ -30,16 +30,19 @@ A resend reloads each record from Syteline and sends its **current** values. It 
 | The failed row's record | Result |
 | --- | --- |
 | Was reloaded and sent again | The row becomes `Skipped`, with the message that a manual resend replaced it. The resend's own row shows whether it worked. |
+| Couldn't be sent, because the rule failed before it got to its records | The row gets its 3 retries back, so the retry task still resends its stored payload. Fix the rule, then resend again. |
 | No longer exists in Syteline | The row becomes `Skipped`. There is nothing left to send. |
-| Was a delete | The row gets its 3 retries back. A deleted record can't be reloaded, so the [retry task](Replication-Log-and-Retries#the-retry-task) resends the delete from its stored payload. |
-| Has no source row pointer | The row gets its 3 retries back, for the same reason. This applies to rows logged before the source row pointer was stored. |
+| Was a delete | If the row is out of retries, it gets its 3 retries back. A deleted record can't be reloaded, so the [retry task](Replication-Log-and-Retries#the-retry-task) resends the delete from its stored payload. |
+| Has no source row pointer | The same. This applies to rows logged before the source row pointer was stored. |
+| Has no source row pointer and no stored payload | Nothing can resend the row. The task's messages count these. Choose **Every record changed in the period** to send those records' current data. |
 
 ## Things to know
 
-- **Use an open-ended period for a recovery.** With Changed To left blank, a record changed several times since the start is still included. With a Changed To in the past, a record that was changed again after it isn't picked up by date, only if it has a failed row in the period.
+- **Use an open-ended period for a recovery.** With Changed To left blank there is no end date at all, so a record changed several times since the start is still included, and the result doesn't depend on the server's clock. With a Changed To in the past, a record that was changed again after it isn't picked up by date, only if it has a failed row in the period.
 - **"Every record changed" needs a Record Date.** The source IDO has to have the `RecordDate` property, which standard Syteline IDOs do.
 - **It can't resend a delete that never failed.** If a delete was never replicated, for example because triggers were inactive, nothing in Syteline or the log says the record existed.
-- **One resend looks at 10,000 failed rows at most.** The task's messages say when it reached that. Run it again for the rest.
+- **One resend reloads the records of 10,000 failed rows at most.** The task's messages say when it reached that. Run it again for the rest: the rows it has resent are `Skipped` by then, so the next run takes the following ones.
+- **While a resend runs, the retry task leaves its records alone.** The resend takes the failed rows it is about to reload out of the retry queue first, so a stored payload can't be sent after the current data.
 - **Dates are read in these forms:** `2026-11-18 14:00:00`, `20261118 14:00:00`, or the server's own date format. If the task says a date couldn't be read, enter it in the first form.
 
 ## Running it without the form
@@ -51,5 +54,5 @@ Background task: `ue_AIR_ResendReplications` (see [Installation](Installation#4-
 | 1. Background task number | `BG~TASKID~` |
 | 2. Rule number | The rule to resend for |
 | 3. From | The start of the period |
-| 4. To | The end of the period. Blank means now. |
+| 4. To | The end of the period. Blank means no end. |
 | 5. Scope | `Failures` or `Everything` |

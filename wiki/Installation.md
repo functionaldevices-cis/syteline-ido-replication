@@ -81,6 +81,9 @@ Create three Background Task Definitions.
 
 ## Upgrading
 
-1. Import the new IDO export, then run **Refresh Form Metadata**.
-2. Import the new forms, then unload global form objects.
-3. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**, then **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).
+1. Add any new columns first. Compare `SQL Columns.csv` with your tables, append the rows you don't have on the SQL Columns form, and refresh or recreate the view of each table you changed. An IDO property bound to a column that doesn't exist makes every save to that IDO fail. For the replication log that means no log rows are written, and so nothing is retried.
+2. Import the new IDO export, then run **Refresh Form Metadata**.
+3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed.
+4. Import the new forms and strings, then unload global form objects.
+5. Create any new Background Task Definitions listed in [step 4](#4-background-tasks).
+6. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**, then **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).
