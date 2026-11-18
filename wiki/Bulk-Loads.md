@@ -15,7 +15,7 @@ Background task: `ue_AIR_ReplicateRecordToExternalSystems` (see [Installation](I
 | 2. Filter | An IDO filter that selects the records, for example `CustNum LIKE 'C%'`. Blank selects every record. |
 | 3. IDO name | The IDO collection, for example `SLCustomers` |
 | 4. Record cap | The most records to load |
-| 5. Rule number | Optional. Blank runs every active rule for the IDO. |
+| 5. Rule number | Optional. Blank runs every active rule for the IDO. A rule named here runs even when it isn't active, so you can test a rule before switching it on. The Test tab passes the rule you are on. |
 
 Example parameters:
 
@@ -33,6 +33,19 @@ BG~TASKID~, CustNum LIKE 'C%', SLCustomers, 5000
 | Salesforce | Upserts, or deletes if the rule allows | Upserts |
 | Replication log | Every record | Every record for 100 or fewer; otherwise failures and warnings only |
 | Messages | Replication log only | Also written to the background task's log |
+
+## Reading the result
+
+A bulk run shows as **failed** when a rule fails, or when nothing could be sent because no rule or no record matched. Open the task's **Task Messages** to see why:
+
+| Task message | Meaning |
+| --- | --- |
+| `Nothing was sent: IDO '...' has no active replication rules.` | No active rule has that IDO Name. Check the spelling and **Is Active**. |
+| `Nothing was sent: no '...' record matches the filter "...".` | The filter selected no records |
+| `Rule '2' (SalesforceRESTAPI): FAILED for 1 record(s). ...` | The send was tried and failed. The error follows. |
+| `Rule '2' (SalesforceRESTAPI): succeeded for 1 record(s).` | The target accepted the records |
+
+Each record's outcome is also in the [replication log](Replication-Log-and-Retries).
 
 ## Tips
 
