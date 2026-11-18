@@ -550,8 +550,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
-         <RevisionNo>7</RevisionNo>
-         <RevisionDate>2026-11-18T12:50:00</RevisionDate>
+         <RevisionNo>8</RevisionNo>
+         <RevisionDate>2026-11-18T12:54:12</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -712,6 +712,16 @@ END</Expression>
                <BoundToColumn>rule_num</BoundToColumn>
                <ColumnTableAlias>log</ColumnTableAlias>
                <PropertyAttributes />
+            </Property>
+            <Property Name="Source" Key="0" Binding="BOUND" Sequence="21">
+               <PropertyClass>ShortDesc</PropertyClass>
+               <PseudoKeyFlag>0</PseudoKeyFlag>
+               <BoundToColumn>source</BoundToColumn>
+               <ColumnTableAlias>log</ColumnTableAlias>
+               <PropertyAttributes>
+                  <IsRequired>1</IsRequired>
+                  <InlineList>ENTRIES(Event: After-Insert,Event: After-Update,Event: Before-Delete,Event: Unknown,BG Task: Bulk,BG Task: Test) DISPLAY(1) VALUE(1)</InlineList>
+               </PropertyAttributes>
             </Property>
             <Property Name="Status" Key="0" Binding="BOUND" Sequence="18">
                <PropertyClass>ShortDesc</PropertyClass>

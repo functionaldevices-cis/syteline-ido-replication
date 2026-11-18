@@ -54,7 +54,7 @@ Source and operation. Every run has both, and both go to the replication log (`S
 | A background task run (a bulk load) | `BG Task: Bulk` | `Upsert`, or the operation it passes |
 | The Rules form's Test tab, which passes `Test` as the operation | `BG Task: Test` | `Upsert` |
 
-The values are constants in the Rules ECA (`OperationInsert`, `SourceEventAfterInsert` and so on) and must match the `Operation` and `Source` inline lists on `ue_AIR_IDOReplicationLogs`. They are stored as written, with no short codes and no strings.
+The values are constants in the Rules ECA (`OperationInsert`, `SourceEventAfterInsert` and so on) and must match the `Operation` and `Source` inline lists on `ue_AIR_IDOReplicationLogs` (columns `operation` and `source`, both required). They are stored as written, with no short codes and no strings.
 
 1. A trigger created by the Config assembly calls `ue_ReplicateRecordToExternalSystems` with the IDO name, a query filter, a record cap, an optional rule number (blank means every active rule) and an optional operation (`Insert`, `Update` or `Delete`; blank, as from background tasks, becomes `Upsert`). It returns early when there are no active rules.
 2. `LoadReplicationRulesAndMaps` loads the active rules for that IDO along with their map fields. Each map field has a single source: `Name`, `SourceType` (`IDOProperty` or `Literal`), `SourceValue` and `SourceTransformation` on `ue_AIR_IDOReplicationMapFields`. Replication does not use the `Sources` subcollection or the derived `JSON` property.
