@@ -17,9 +17,11 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request replaces its earlier run. Runs on main are never cancelled, so every commit on main
+# finishes its build and publishes its DLLs, even when two merges land close together.
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   shared-code:
