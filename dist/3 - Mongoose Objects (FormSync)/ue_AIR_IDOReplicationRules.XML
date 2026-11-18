@@ -509,7 +509,7 @@
                <ContainerSequence>4</ContainerSequence>
                <DataSource>object2.SourceValue</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>V(SourceValueListSource)</ComboListSource>
+               <ComboListSource>INLINE ENTRIES(V(SourceValueChoices)) DISPLAY(1) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -1797,11 +1797,10 @@
                <ScriptLine>         return value + "\\" + description;</ScriptLine>
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
-               <ScriptLine>      // THE SOURCE VALUE COLUMN OF THE FIELD MAP TAKES ITS WHOLE LIST SOURCE FROM A FORM VARIABLE: ITS LIST SOURCE IS  V(SourceValueListSource)</ScriptLine>
-               <ScriptLine>      // THIS METHOD SETS THAT VARIABLE FOR THE CURRENT FIELD MAP ROW:</ScriptLine>
-               <ScriptLine>      //    SOURCE TYPE IDOProperty: AN INLINE LIST OF THE PROPERTIES OF THE RULE'S IDO, SO A PROPERTY IS PICKED AND NOT TYPED.</ScriptLine>
-               <ScriptLine>      //    ANYTHING ELSE (Literal): BLANK, SO THE COLUMN HAS NO LIST SOURCE AT ALL. A LITERAL IS FREE TEXT, AND AN INLINE LIST WITH</ScriptLine>
-               <ScriptLine>      //    NO ENTRIES WOULD STILL SHOW A DROP-DOWN WITH NOTHING IN IT.</ScriptLine>
+               <ScriptLine>      // THE SOURCE VALUE COLUMN OF THE FIELD MAP IS A DROP-DOWN. ITS LIST SOURCE IS  INLINE ENTRIES(V(SourceValueChoices)) DISPLAY(1) VALUE(1)</ScriptLine>
+               <ScriptLine>      // SO ITS LIST COMES FROM THE FORM VARIABLE SourceValueChoices, WHICH THIS METHOD SETS FOR THE CURRENT FIELD MAP ROW:</ScriptLine>
+               <ScriptLine>      //    SOURCE TYPE IDOProperty: THE PROPERTIES OF THE RULE'S IDO, SO A PROPERTY IS PICKED AND NOT TYPED.</ScriptLine>
+               <ScriptLine>      //    ANYTHING ELSE (Literal): AN EMPTY LIST, BECAUSE A LITERAL IS FREE TEXT.</ScriptLine>
                <ScriptLine>      // IT RUNS WHEN ANOTHER FIELD MAP ROW BECOMES CURRENT, WHEN A ROW IS ADDED, WHEN THE ROW'S SOURCE TYPE IS CHANGED, AND WHEN THE</ScriptLine>
                <ScriptLine>      // RULE'S IDO NAME IS CHANGED.</ScriptLine>
                <ScriptLine>      // A VALUE THAT ISN'T IN THE LIST CAN STILL BE TYPED. REPLICATION REPORTS A PROPERTY THE IDO DOESN'T HAVE IN THE REPLICATION LOG.</ScriptLine>
@@ -1832,14 +1831,12 @@
                <ScriptLine>            entries = "";</ScriptLine>
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         string listSource = entries != "" ? "INLINE ENTRIES(" + entries + ") DISPLAY(1) VALUE(1)" : "";</ScriptLine>
+               <ScriptLine>         var choicesVariable = this.ThisForm.Variables("SourceValueChoices");</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         var listSourceVariable = this.ThisForm.Variables("SourceValueListSource");</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>         if (listSourceVariable.Value != listSource)</ScriptLine>
+               <ScriptLine>         if (choicesVariable.Value != entries)</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            listSourceVariable.Value = listSource;</ScriptLine>
+               <ScriptLine>            choicesVariable.Value = entries;</ScriptLine>
                <ScriptLine />
                <ScriptLine>            try</ScriptLine>
                <ScriptLine>            {</ScriptLine>
@@ -1847,7 +1844,7 @@
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>            catch (Exception)</ScriptLine>
                <ScriptLine>            {</ScriptLine>
-               <ScriptLine>               // THE LIST SOURCE IS STILL READ FROM THE VARIABLE THE NEXT TIME THE COLUMN LOADS ITS LIST</ScriptLine>
+               <ScriptLine>               // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE COLUMN READS ITS LIST SOURCE</ScriptLine>
                <ScriptLine>            }</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
