@@ -48,6 +48,7 @@ The language version is the .NET Framework default (C# 7.3). Avoid newer syntax 
 ## Rules for changes
 
 - **Helpers and models are duplicated.** `Helpers/` and `Models/` exist in both projects and are identical except for the namespace. Make every change in both.
+- **Record caps: 0 is no cap, -1 is the default of 200.** Use `SytelineInternalAPI.NoRecordCap` and `SytelineInternalAPI.DefaultRecordCap`, not the numbers.
 - **Never throw from replication.** See [Architecture](Architecture#the-never-throw-rule).
 - **No company-specific values.** This is an open-source project for any Syteline instance. Make URLs, names and sites settings on a credential or rule.
 - **Go through IDOs.** Use `SytelineInternalAPI`, not direct SQL.

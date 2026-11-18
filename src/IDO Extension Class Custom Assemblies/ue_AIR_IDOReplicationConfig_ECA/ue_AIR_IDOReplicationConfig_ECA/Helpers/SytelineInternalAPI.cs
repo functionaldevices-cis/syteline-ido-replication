@@ -65,7 +65,16 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Helpers {
 
         }
 
-        public LoadRecordsResponseData LoadRecords(string IDOName, string filter, string orderBy, List<string> properties, int recordCap = 0)
+        // RECORD CAPS IN A LOAD REQUEST. THESE ARE EASY TO GET BACKWARDS, SO USE THE NAMES AND NOT THE NUMBERS:
+        //    0  LOADS EVERY RECORD THAT MATCHES. THERE IS NO CAP.
+        //   -1  USES THE DEFAULT CAP, WHICH IS 200 RECORDS. IT DOES NOT MEAN "NO CAP".
+        //   ANY NUMBER ABOVE 0 IS THE CAP ITSELF.
+
+        public const int NoRecordCap = 0;
+
+        public const int DefaultRecordCap = -1;
+
+        public LoadRecordsResponseData LoadRecords(string IDOName, string filter, string orderBy, List<string> properties, int recordCap = NoRecordCap)
         {
 
             // GENERIC SYSTEM PROPS

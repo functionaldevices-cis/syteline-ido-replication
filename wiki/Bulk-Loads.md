@@ -14,7 +14,7 @@ Background task: `ue_AIR_ReplicateRecordToExternalSystems` (see [Installation](I
 | 1. Background task number | `BG~TASKID~` |
 | 2. Filter | An IDO filter that selects the records, for example `CustNum LIKE 'C%'`. Blank selects every record. |
 | 3. IDO name | The IDO collection, for example `SLCustomers` |
-| 4. Record cap | The most records to load |
+| 4. Record cap | The most records to load. `0` loads every record that matches the filter. `-1` loads the default of 200, not every record. |
 | 5. Rule number | Optional. Blank runs every active rule for the IDO. A rule named here runs even when it isn't active, so you can test a rule before switching it on. The Test tab passes the rule you are on. |
 | 6. Operation | Optional. Leave it blank for a bulk load: the records are sent as `Upsert` (insert or update, whichever applies), and the log's Source is `BG Task: Bulk`. The Test tab passes `Test`, which sends the same way and is logged with the Source `BG Task: Test`. |
 

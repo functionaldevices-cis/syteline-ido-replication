@@ -48,11 +48,12 @@ Folder: `dist/3 - Mongoose Objects (FormSync)/`
 | `ue_AIR_IDOReplicationRules` | Rules, field maps and target options |
 | `ue_AIR_IDOReplicationCredentials` | Credentials for external targets |
 | `ue_AIR_IDOReplicationLogs` | The replication log |
+| `ue_AIR_IDOReplicationResend` | Resend a rule's records by hand |
 | `ue_AIR_ImportJob`, `ue_AIR_JobFileInputWindow` | Import Map window opened from the Rules form (not working yet) |
 
 ## 4. Background tasks
 
-Create two Background Task Definitions.
+Create three Background Task Definitions.
 
 **Replication** (for [bulk loads](Bulk-Loads))
 - Task name: `ue_AIR_ReplicateRecordToExternalSystems`
@@ -63,7 +64,14 @@ Create two Background Task Definitions.
 - Task name: `ue_AIR_RetryFailedReplications`
 - Calls the `ue_AIR_IDOReplicationRules` IDO method `ue_RetryFailedReplications`
 - Parameters: `BG~TASKID~, 90`. The second parameter is how many days to keep successful log rows. `0` keeps them forever.
-- Schedule it, for example hourly.
+- Schedule it to run every minute. Each failed record gets 3 retries, one per run.
+- Make sure two runs can't overlap, or a record could be resent twice. Set the task definition to allow one run at a time.
+
+**Resend** (see [Resending Records](Resending-Records))
+- Task name: `ue_AIR_ResendReplications`
+- Calls the `ue_AIR_IDOReplicationRules` IDO method `ue_ResendReplications`
+- Parameters: `BG~TASKID~, <rule number>, <from>, <to>, <Failures or Everything>`. The Resend form fills these in.
+- Not scheduled. The form submits it.
 
 ## 5. Configure
 
@@ -73,6 +81,9 @@ Create two Background Task Definitions.
 
 ## Upgrading
 
-1. Import the new IDO export, then run **Refresh Form Metadata**.
-2. Import the new forms, then unload global form objects.
-3. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**, then **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).
+1. Add any new columns first. Compare `SQL Columns.csv` with your tables, append the rows you don't have on the SQL Columns form, and refresh or recreate the view of each table you changed. An IDO property bound to a column that doesn't exist makes every save to that IDO fail. For the replication log that means no log rows are written, and so nothing is retried.
+2. Import the new IDO export, then run **Refresh Form Metadata**.
+3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed.
+4. Import the new forms and strings, then unload global form objects.
+5. Create any new Background Task Definitions listed in [step 4](#4-background-tasks).
+6. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**, then **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).

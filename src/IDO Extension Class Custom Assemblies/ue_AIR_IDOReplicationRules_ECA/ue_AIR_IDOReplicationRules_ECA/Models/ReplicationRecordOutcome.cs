@@ -35,6 +35,10 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string Warning { get; set; } = "";
 
+        // THE RowPointer OF THE SOURCE RECORD IN SYTELINE. "" WHEN IT ISN'T KNOWN. IT IS LOGGED, AND NEVER SENT TO THE TARGET.
+
+        public string SourceRowPointer { get; set; } = "";
+
         public ReplicationRecordOutcome(string recordID, string payload, string status, string errorMessage = "")
         {
             this.RecordID = recordID ?? "";

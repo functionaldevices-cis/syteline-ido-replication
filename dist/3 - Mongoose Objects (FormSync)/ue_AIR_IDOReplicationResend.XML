@@ -1,0 +1,490 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FormsAndObjectsExport Version="010000">
+   <Forms Type="1">
+      <Form Name="ue_AIR_IDOReplicationResend" Scope="1" ScopeName="[NULL]">
+         <Caption>fue_AIR_IDOReplicationResend</Caption>
+         <Type>0</Type>
+         <StandardOperations>953</StandardOperations>
+         <Flags>1048778</Flags>
+         <Height>37</Height>
+         <LeftPos>0</LeftPos>
+         <TopPos>0</TopPos>
+         <Width>120</Width>
+         <HelpContextID>-1</HelpContextID>
+         <PaneZeroSize>36</PaneZeroSize>
+         <PrimaryDataSource>V(fds_DataSource)</PrimaryDataSource>
+         <MasterDeviceID>0</MasterDeviceID>
+         <Components>
+            <Component Name="CredentialNameEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>16</TabOrder>
+               <TopPos>6.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>40</Width>
+               <Caption>C(CredentialNameStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.CredentialName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(CredentialNameStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="CredentialNameStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>15</TabOrder>
+               <TopPos>6.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>sAIRCredentialName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sAIRCredentialName</EffectiveCaption>
+            </Component>
+            <Component Name="FormCollectionGrid">
+               <DeviceID>-1</DeviceID>
+               <Type>14</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>37</Height>
+               <ListHeight>0</ListHeight>
+               <Width>100</Width>
+               <Caption>fue_AIR_IDOReplicationResend</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>objects</DataSource>
+               <Binding>3</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>fue_AIR_IDOReplicationResend</EffectiveCaption>
+            </Component>
+            <Component Name="FromDateDateCombo">
+               <DeviceID>-1</DeviceID>
+               <Type>26</Type>
+               <TabOrder>21</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>22</Width>
+               <Caption>C(FromDateStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.sFromDate</DataSource>
+               <Binding>6</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>DateTime</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(FromDateStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="FromDateStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>20</TabOrder>
+               <TopPos>11.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>ue_AIR_sResendFrom</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sResendFrom</EffectiveCaption>
+            </Component>
+            <Component Name="IDONameGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.IDOName</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>IDOName</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="IDONameEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>14</TabOrder>
+               <TopPos>4.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>40</Width>
+               <Caption>C(IDONameStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.IDOName</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>IDOName</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(IDONameStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="IDONameStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>13</TabOrder>
+               <TopPos>4.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="IsActiveGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sIsActive</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>object.IsActive</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sIsActive</EffectiveCaption>
+            </Component>
+            <Component Name="ResendButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>30</TabOrder>
+               <TopPos>18.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>ue_AIR_sResend</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>Resend</EventToGenerate>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sResend</EffectiveCaption>
+            </Component>
+            <Component Name="ResendGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>9.5</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>12</Height>
+               <ListHeight>0</ListHeight>
+               <Width>62</Width>
+               <Caption>ue_AIR_sResend</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sResend</EffectiveCaption>
+            </Component>
+            <Component Name="RuleNumGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sue_AIR_RuleNum</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.RuleNum</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
+            </Component>
+            <Component Name="RuleNumEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>12</TabOrder>
+               <TopPos>2.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>C(RuleNumStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.RuleNum</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(RuleNumStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="RuleNumStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>11</TabOrder>
+               <TopPos>2.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>sue_AIR_RuleNum</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
+            </Component>
+            <Component Name="ScopeCombo">
+               <DeviceID>-1</DeviceID>
+               <Type>27</Type>
+               <TabOrder>25</TabOrder>
+               <TopPos>15.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>40</Width>
+               <Caption>C(ScopeStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.sScope</DataSource>
+               <Binding>6</Binding>
+               <ComboListSource>INLINE ENTRIES(Failures\Only the records that failed,Everything\Every record changed in the period) DISPLAY(2) VALUE(1)</ComboListSource>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>C(ScopeStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="ScopeStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>24</TabOrder>
+               <TopPos>15.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>ue_AIR_sResendScope</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sResendScope</EffectiveCaption>
+            </Component>
+            <Component Name="TargetTypeGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>ue_AIR_sTargetType</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object.TargetType</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sTargetType</EffectiveCaption>
+            </Component>
+            <Component Name="ToDateDateCombo">
+               <DeviceID>-1</DeviceID>
+               <Type>26</Type>
+               <TabOrder>23</TabOrder>
+               <TopPos>13.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>22</Width>
+               <Caption>C(ToDateStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.sToDate</DataSource>
+               <Binding>6</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>DateTime</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(ToDateStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="ToDateStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>22</TabOrder>
+               <TopPos>13.8</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>ue_AIR_sResendTo</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sResendTo</EffectiveCaption>
+            </Component>
+         </Components>
+         <EventHandlers>
+            <EventHandler Name="Resend" Sequence="0">
+               <ResponseType>19</ResponseType>
+               <Response>TASKNAME(V(BGTaskName))TASKPARMS(V(BGTaskParms))TASKSTATUS(V(BGTaskStatus))TASKNUMBER(BGTaskNumber) ERRORMESSAGE(mBackEndMessage) SUCCESSMESSAGE(mBackEndMessage)</Response>
+            </EventHandler>
+         </EventHandlers>
+         <Variables>
+            <Variable Name="BGTaskName">
+               <Value>ue_AIR_ResendReplications</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="BGTaskParms">
+               <Value>BG~TASKID~, P(RuleNum), V(sFromDate), V(sToDate), V(sScope)</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="fds_DataSource">
+               <Value>ue_AIR_IDOReplicationRules( OBJNAME(sReplicationRules) LOCKMODE(Row) )</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="InitialCommand">
+               <Value>FilterInPlace</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="sScope">
+               <Value>Failures</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+         </Variables>
+      </Form>
+   </Forms>
+</FormsAndObjectsExport>
