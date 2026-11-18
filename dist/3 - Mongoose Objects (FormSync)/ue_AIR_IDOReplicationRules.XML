@@ -593,7 +593,7 @@
                <ContainerSequence>5</ContainerSequence>
                <DataSource>object.Option01</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option01Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option01ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -658,7 +658,7 @@
                <ContainerSequence>8</ContainerSequence>
                <DataSource>object.Option02</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option02Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option02ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -723,7 +723,7 @@
                <ContainerSequence>11</ContainerSequence>
                <DataSource>object.Option03</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option03Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option03ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -788,7 +788,7 @@
                <ContainerSequence>14</ContainerSequence>
                <DataSource>object.Option04</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option04Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option04ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -853,7 +853,7 @@
                <ContainerSequence>17</ContainerSequence>
                <DataSource>object.Option05</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option05Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option05ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -918,7 +918,7 @@
                <ContainerSequence>20</ContainerSequence>
                <DataSource>object.Option06</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option06Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option06ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -983,7 +983,7 @@
                <ContainerSequence>23</ContainerSequence>
                <DataSource>object.Option07</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option07Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option07ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1048,7 +1048,7 @@
                <ContainerSequence>26</ContainerSequence>
                <DataSource>object.Option08</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option08Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option08ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1113,7 +1113,7 @@
                <ContainerSequence>29</ContainerSequence>
                <DataSource>object.Option09</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option09Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option09ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1178,7 +1178,7 @@
                <ContainerSequence>32</ContainerSequence>
                <DataSource>object.Option10</DataSource>
                <Binding>1</Binding>
-               <ComboListSource>INLINE ENTRIES(V(Option10Choices)) DISPLAY(1,2) VALUE(1)</ComboListSource>
+               <ComboListSource>V(Option10ListSource)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>True</Hidden>
@@ -1710,8 +1710,9 @@
                <ScriptLine>         // EACH OPTION HAS TWO INPUTS BOUND TO THE SAME PROPERTY: OptionNNEdit, A TEXT BOX, AND OptionNNCombo, A COMBOBOX. A SCRIPT</ScriptLine>
                <ScriptLine>         // CAN'T CHANGE A COMPONENT'S TYPE, SO THE SCRIPT SHOWS THE COMBOBOX WHEN THE OPTION HAS CHOICES AND THE TEXT BOX WHEN IT DOESN'T.</ScriptLine>
                <ScriptLine>         //</ScriptLine>
-               <ScriptLine>         // THE COMBOBOX'S LIST SOURCE IS  INLINE ENTRIES(V(OptionNNChoices)) DISPLAY(1,2) VALUE(1)  SO ITS LIST COMES FROM THE FORM</ScriptLine>
-               <ScriptLine>         // VARIABLE OptionNNChoices, WHICH THIS SCRIPT SETS TO THE OPTION'S CHOICES FOR THE RULE'S TARGET TYPE.</ScriptLine>
+               <ScriptLine>         // THE COMBOBOX TAKES ITS WHOLE LIST SOURCE FROM A FORM VARIABLE: ITS LIST SOURCE IS  V(OptionNNListSource)  AND THIS SCRIPT SETS</ScriptLine>
+               <ScriptLine>         // THAT VARIABLE TO  INLINE ENTRIES(&lt;THE CHOICES&gt;) DISPLAY(1,2) VALUE(1)  FOR THE RULE'S TARGET TYPE, OR TO BLANK WHEN THE OPTION HAS</ScriptLine>
+               <ScriptLine>         // NO CHOICES. THE FIELD MAP'S SOURCE VALUE COLUMN WORKS THE SAME WAY (UpdateSourceValueChoices).</ScriptLine>
                <ScriptLine>         //</ScriptLine>
                <ScriptLine>         // THE CREDENTIAL'S VALUES AREN'T SHOWN ON THIS FORM. THEY ARE ENTERED, LABELLED AND MASKED ON THE CREDENTIALS FORM.</ScriptLine>
                <ScriptLine />
@@ -1751,16 +1752,16 @@
                <ScriptLine>            string[] choices = isUsed ? options[counter].Value : new string[0];</ScriptLine>
                <ScriptLine>            bool hasChoices = choices.Length &gt; 0;</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            // HAND THE CHOICES TO THE COMBOBOX THROUGH ITS FORM VARIABLE. WHEN THEY CHANGE, FOR EXAMPLE ON MOVING TO A RULE WITH ANOTHER</ScriptLine>
+               <ScriptLine>            // HAND THE LIST SOURCE TO THE COMBOBOX THROUGH ITS FORM VARIABLE. WHEN IT CHANGES, FOR EXAMPLE ON MOVING TO A RULE WITH ANOTHER</ScriptLine>
                <ScriptLine>            // TARGET TYPE, THE COMBOBOX IS TOLD TO LOAD ITS LIST AGAIN.</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            var choicesVariable = this.ThisForm.Variables($"Option{(counter+1):00}Choices");</ScriptLine>
-               <ScriptLine>            string entries = string.Join(",", choices);</ScriptLine>
+               <ScriptLine>            var listSourceVariable = this.ThisForm.Variables($"Option{(counter+1):00}ListSource");</ScriptLine>
+               <ScriptLine>            string listSource = hasChoices ? "INLINE ENTRIES(" + string.Join(",", choices) + ") DISPLAY(1,2) VALUE(1)" : "";</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            if (choicesVariable.Value != entries)</ScriptLine>
+               <ScriptLine>            if (listSourceVariable.Value != listSource)</ScriptLine>
                <ScriptLine>            {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>               choicesVariable.Value = entries;</ScriptLine>
+               <ScriptLine>               listSourceVariable.Value = listSource;</ScriptLine>
                <ScriptLine />
                <ScriptLine>               try</ScriptLine>
                <ScriptLine>               {</ScriptLine>
@@ -1768,7 +1769,7 @@
                <ScriptLine>               }</ScriptLine>
                <ScriptLine>               catch (Exception)</ScriptLine>
                <ScriptLine>               {</ScriptLine>
-               <ScriptLine>                  // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE COMBOBOX READS ITS LIST SOURCE</ScriptLine>
+               <ScriptLine>                  // THE LIST SOURCE IS STILL READ FROM THE VARIABLE THE NEXT TIME THE COMBOBOX LOADS ITS LIST</ScriptLine>
                <ScriptLine>               }</ScriptLine>
                <ScriptLine />
                <ScriptLine>            }</ScriptLine>
