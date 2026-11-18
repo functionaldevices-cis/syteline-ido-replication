@@ -24,7 +24,6 @@ retries_remaining,dbo,ue_AIR_idorepl_log_mst,GenericIntType,-3,NO
 attempt_count,dbo,ue_AIR_idorepl_log_mst,GenericIntType,-1,NO
 last_attempt_date,dbo,ue_AIR_idorepl_log_mst,DateTimeType,,YES
 credential_name,dbo,ue_AIR_idorepl_log_mst,LongDescType,,NO
-read_only,dbo,ue_AIR_idorepl_log_mst,ListYesNoType,-1,NO
 rule_num,dbo,ue_AIR_idorepl_mapfield_mst,GenericIntType,,NO
 field_seq,dbo,ue_AIR_idorepl_mapfield_mst,SequenceType,,NO
 name,dbo,ue_AIR_idorepl_mapfield_mst,LongDescType,,NO
