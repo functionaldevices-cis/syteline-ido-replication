@@ -35,11 +35,12 @@ Each map field is one field in the output record.
 | Field Seq | The order of the field in the output |
 | Name | The output field name, as the target expects it |
 | Source Type | `IDOProperty` or `Literal` |
-| Source Value | For `IDOProperty`, the IDO property name. For `Literal`, the fixed value to send. |
+| Source Value | For `IDOProperty`, the IDO property name: pick it from the drop-down, which lists the properties of the rule's IDO, user-defined fields included. For `Literal`, type the fixed value to send. The list is empty for a `Literal`. |
 | Transformation | Optional. See below. |
 
 Notes:
-- Property names must exist on the IDO. The properties of every active rule for an IDO are loaded together, so one misspelled property makes the load fail for all of that IDO's rules.
+- Property names must exist on the IDO. Picking from the drop-down avoids a misspelled name, but a name can still be typed, and a property can be renamed or removed later. A rule with a property the IDO doesn't have fails with a `Failed` row in the [replication log](Replication-Log-and-Retries) that names the property. The IDO's other rules still replicate.
+- Choose the rule's IDO Name before filling in the field map, because the drop-down lists that IDO's properties. If you change a rule's IDO Name later, the list changes with it, but the Source Values already entered stay as they are, so check them.
 - A map field with a blank Source Value is left out, unless its Source Type is `Literal`.
 - Without a transformation, a value is sent with the type the IDO returns (number, date, text).
 - Output field names should be unique within a rule.

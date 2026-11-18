@@ -1,4 +1,5 @@
-# Builds both extension class assemblies, so a change that doesn't compile is caught before it is merged.
+# Builds both extension class assemblies and compiles every form script, so a change that doesn't compile is caught
+# before it is merged.
 #
 # The build only proves the code compiles. Nothing here runs against Syteline, so behavior, forms and IDOs still
 # have to be tested there.
@@ -32,6 +33,46 @@ jobs:
 
       - name: Compare Helpers/ and Models/ between the two projects
         run: bash .github/scripts/compare-shared-code.sh
+
+  # A form's script lives inside its FormSync export and is compiled by Syteline when the form opens. One compile error
+  # there stops every script on the form, so each script is extracted and compiled here against the same Infor DLLs.
+  form-scripts:
+    name: Form scripts compile
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract the form scripts
+        run: python .github/scripts/extract-form-scripts.py "$env:RUNNER_TEMP\form-scripts"
+
+      - name: Compile each form script
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $csc = & $vswhere -latest -products * -find "MSBuild\**\Bin\Roslyn\csc.exe" | Select-Object -First 1
+
+          if (-not $csc) {
+            Write-Host "::error::Couldn't find the C# compiler (csc.exe) in the runner's Visual Studio."
+            exit 1
+          }
+
+          # The .NET Framework's own System.Web is used, not the copy in Lib.
+          $references = Get-ChildItem "src/IDO Extension Class Custom Assemblies/Lib/*.dll" |
+            Where-Object { $_.Name -ne "System.Web.dll" } |
+            ForEach-Object { "/reference:$($_.FullName)" }
+
+          $failed = $false
+
+          foreach ($script in Get-ChildItem "$env:RUNNER_TEMP\form-scripts\*.cs") {
+            Write-Host "Compiling $($script.Name)"
+            & $csc /nologo /target:library /langversion:7.3 "/out:$env:RUNNER_TEMP\form-scripts\$($script.BaseName).dll" @references $script.FullName
+
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::error::The form script $($script.BaseName) doesn't compile. The errors are listed above."
+              $failed = $true
+            }
+          }
+
+          if ($failed) { exit 1 }
 
   build:
     name: Build ${{ matrix.assembly }}

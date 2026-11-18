@@ -29,6 +29,7 @@ msbuild "src/IDO Extension Class Custom Assemblies/ue_AIR_IDOReplicationConfig_E
 Every pull request, and every push to `main`, runs the **Build** workflow (`.github/workflows/build.yml`). It:
 - builds both assemblies on a Windows runner, the same way as the commands above
 - fails if `Helpers/` or `Models/` differ between the two projects by more than the project name. To run that check yourself: `bash .github/scripts/compare-shared-code.sh`
+- compiles every form script. A form's script is stored inside its FormSync export and compiled by Syteline when the form opens, where one compile error stops every script on the form. `.github/scripts/extract-form-scripts.py` writes each script to a `.cs` file, and the workflow compiles it against the DLLs in `Lib/`.
 
 Each run also publishes the two built DLLs. Open the run from the pull request's **Checks** tab and download them under **Artifacts**. They are kept for 14 days, and you can upload them to Syteline in place of a local build.
 
