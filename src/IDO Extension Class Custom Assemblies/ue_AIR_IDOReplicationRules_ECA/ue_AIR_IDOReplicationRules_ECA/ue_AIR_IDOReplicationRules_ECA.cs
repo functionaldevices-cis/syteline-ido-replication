@@ -328,6 +328,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             ruleResult.Operation = operation;
+            ruleResult.CredentialName = replicationRule.CredentialName ?? "";
             return ruleResult;
 
         }
@@ -777,6 +778,19 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // THE CREDENTIAL NAME WRITTEN TO A LOG ROW. THE ROW KEEPS ITS OWN COPY, A SNAPSHOT, SO IT STILL SAYS WHICH CREDENTIAL WAS USED
+        // AFTER THE RULE OR THE CREDENTIAL IS CHANGED OR DELETED. THE COLUMN IS REQUIRED, SO A RULE WITH NO CREDENTIAL, OR A FAILURE
+        // BEFORE THE RULE WAS LOADED, IS WRITTEN AS NoCredentialName AND NOT LEFT BLANK, WHICH WOULD FAIL THE INSERT.
+
+        private const string NoCredentialName = "(none)";
+
+        private static string LoggedCredentialName(string credentialName)
+        {
+            return string.IsNullOrWhiteSpace(credentialName) ? NoCredentialName : credentialName.Trim();
+        }
+
+
+
         private IDOUpdateItem BuildLogRow(SytelineInternalAPI sytelineAPI, ReplicationRuleResult ruleResult, string IDOName, string operation, ReplicationRecordOutcome outcome, DateTime attemptDate)
         {
 
@@ -818,6 +832,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "RuleNum", int.TryParse(ruleResult.RuleNum, NumberStyles.Integer, CultureInfo.InvariantCulture, out ruleNumber) ? (object)ruleNumber : null },
                 { "IDOName", IDOName },
                 { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
+                { "CredentialName", LoggedCredentialName(ruleResult.CredentialName) },
                 { "Operation", operation != "" ? operation : null },
                 { "RecordID", recordID != "" ? recordID : null },
                 { "Payload", payload },
@@ -1071,7 +1086,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             countSucceeded++;
                         }
 
-                        logUpdates.Add(this.BuildLogRetryUpdate(sytelineAPI, retriedRow.Item.ItemID, outcome.Status, outcome.ErrorMessage, stillFailed ? Math.Max(retriedRow.RetriesRemaining - 1, 0) : 0, retriedRow.AttemptCount, attemptDate));
+                        logUpdates.Add(this.BuildLogRetryUpdate(sytelineAPI, retriedRow.Item.ItemID, outcome.Status, outcome.ErrorMessage, stillFailed ? Math.Max(retriedRow.RetriesRemaining - 1, 0) : 0, retriedRow.AttemptCount, attemptDate, LoggedCredentialName(replicationRule.CredentialName)));
 
                     }
 
@@ -1156,7 +1171,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private IDOUpdateItem BuildLogRetryUpdate(SytelineInternalAPI sytelineAPI, string itemID, string status, string errorMessage, int retriesRemaining, int previousAttemptCount, DateTime attemptDate)
+        // credentialName IS THE CREDENTIAL THE RETRY USED. NULL LEAVES THE ROW'S CREDENTIAL NAME AS IT IS, FOR A ROW THAT WASN'T RESENT.
+
+        private IDOUpdateItem BuildLogRetryUpdate(SytelineInternalAPI sytelineAPI, string itemID, string status, string errorMessage, int retriesRemaining, int previousAttemptCount, DateTime attemptDate, string credentialName = null)
         {
 
             errorMessage = errorMessage ?? "";
@@ -1166,14 +1183,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
-            return sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
+            List<IDOUpdateProperty> propertyUpdates = new List<IDOUpdateProperty>()
             {
                 new IDOUpdateProperty("Status", status, true),
                 new IDOUpdateProperty("ErrorMessage", errorMessage, true),
                 new IDOUpdateProperty("RetriesRemaining", retriesRemaining, true),
                 new IDOUpdateProperty("AttemptCount", previousAttemptCount + 1, true),
                 new IDOUpdateProperty("LastAttemptDate", attemptDate, true)
-            });
+            };
+
+            if (credentialName != null)
+            {
+                propertyUpdates.Add(new IDOUpdateProperty("CredentialName", credentialName, true));
+            }
+
+            return sytelineAPI.BuildUpdateItem(itemID, propertyUpdates);
 
         }
 
@@ -1484,6 +1508,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 properties: new List<string>(){
                     { "RuleNum" },
                     { "TargetType" },
+                    { "CredentialName" },
                     { "CredentialValue01" },
                     { "CredentialValue02" },
                     { "CredentialValue03" },
