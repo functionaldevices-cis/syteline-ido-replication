@@ -49,7 +49,7 @@ Two less common cases:
 
 Special cases:
 - If a rule fails before its records are built, it gets one `Failed` row with no payload.
-- If the source records can't be loaded (for example, a field map names a property the IDO doesn't have), every rule for the IDO gets one such row, each with its own rule number, target type and credential name.
+- If a rule's source records can't be loaded, most often because its field map names a property the IDO doesn't have, that rule gets one such row. The IDO's other rules still replicate. The record's change isn't replicated for the failed rule and can't be retried from the log, so after fixing the field map, run a [bulk load](Bulk-Loads) for the records that changed in the meantime.
 - A payload over 4,000 characters isn't stored. The row says so, and it can't be retried.
 
 ## Statuses

@@ -208,51 +208,55 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 if (replicationRules.Keys.Count > 0)
                 {
 
-                    // LOAD THE REPLICATION RECORD
+                    // LOAD THE REPLICATION RECORD(S). A RULE WHOSE RECORDS COULDN'T BE LOADED ISN'T IN recordsByRule: IT ALREADY HAS A FAILED
+                    // RESULT IN ruleResults, AND THE OTHER RULES STILL RUN.
 
-                    LoadRecordsResponseData replicationRecordsResponse = sytelineAPI.LoadRecords(
-                        IDOName: IDOName,
-                        properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
-                        filter: queryFilter,
-                        orderBy: "",
-                        recordCap: recordCap
-                    );
+                    Dictionary<string, LoadRecordsResponseData> recordsByRule = this.LoadSourceRecords(sytelineAPI, IDOName, queryFilter, recordCap, replicationRules, operation, ruleResults);
 
-                    recordCountLoaded = replicationRecordsResponse.Items.Count;
+                    // EVERY RULE IS LOADED WITH THE SAME FILTER AND RECORD CAP, SO THE COUNTS ONLY DIFFER IF A RECORD CHANGED BETWEEN TWO LOADS
+
+                    recordCountLoaded = recordsByRule.Values.Select(recordsResponse => recordsResponse.Items.Count).DefaultIfEmpty(0).Max();
 
                     // TRIGGER RUNS LOG EVERY RECORD. BACKGROUND TASK RUNS LOG EVERY RECORD UP TO LogAllRecordsLimit, AND ONLY FAILURES ABOVE IT.
 
                     bool logEveryRecord = BGTaskNum <= 0 || recordCountLoaded <= LogAllRecordsLimit;
 
-                    utils.WriteLogMessage("Count records found: " + replicationRecordsResponse.Items.Count.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
-
-                    if (recordCountLoaded == 0)
+                    if (recordsByRule.Count > 0)
                     {
-                        nothingToSend = true;
-                        utils.WriteLogMessage("Nothing was sent: no '" + IDOName + "' record matches the filter \"" + queryFilter + "\".");
+
+                        utils.WriteLogMessage("Count records found: " + recordCountLoaded.ToString() + " records. (Record cap was " + recordCap.ToString() + ").");
+
+                        if (recordCountLoaded == 0)
+                        {
+                            nothingToSend = true;
+                            utils.WriteLogMessage("Nothing was sent: no '" + IDOName + "' record matches the filter \"" + queryFilter + "\".");
+                        }
+
                     }
 
                     // STEP THROUGH EACH RULE
                     // REMAP THE RECORD(S) BASED ON THE MAP
                     // SEND
 
-                    if (replicationRecordsResponse.Items.Count > 0)
+                    foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
                     {
 
-                        foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                        LoadRecordsResponseData replicationRecordsResponse;
+
+                        if (!recordsByRule.TryGetValue(replicationRuleKeyValPair.Key, out replicationRecordsResponse) || replicationRecordsResponse.Items.Count == 0)
                         {
-
-                            // EACH RULE IS ISOLATED, SO ONE FAILING TARGET DOESN'T STOP THE OTHERS
-
-                            ruleResults.Add(this.ReplicateRule(
-                                replicationRule: replicationRuleKeyValPair.Value,
-                                replicationRecordsResponse: replicationRecordsResponse,
-                                operation: operation,
-                                logEveryRecord: logEveryRecord,
-                                utils: utils
-                            ));
-
+                            continue;
                         }
+
+                        // EACH RULE IS ISOLATED, SO ONE FAILING TARGET DOESN'T STOP THE OTHERS
+
+                        ruleResults.Add(this.ReplicateRule(
+                            replicationRule: replicationRuleKeyValPair.Value,
+                            replicationRecordsResponse: replicationRecordsResponse,
+                            operation: operation,
+                            logEveryRecord: logEveryRecord,
+                            utils: utils
+                        ));
 
                     }
 
@@ -264,7 +268,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 string setupErrorMessage = "Replication setup failed for IDO '" + IDOName + "': " + this.DescribeException(ex);
 
-                // A FAILURE AFTER THE RULES WERE LOADED (FOR EXAMPLE, THE SOURCE RECORDS COULDN'T BE LOADED) STOPS EVERY RULE THAT HASN'T RUN YET.
+                // AN UNEXPECTED FAILURE AFTER THE RULES WERE LOADED STOPS EVERY RULE THAT HASN'T RUN YET.
                 // EACH OF THOSE GETS ITS OWN RESULT, SO ITS LOG ROW CARRIES THE RULE'S NUMBER, TARGET TYPE AND CREDENTIAL NAME.
 
                 List<ReplicationRule> rulesWithoutResult = replicationRules.Values
@@ -273,19 +277,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 foreach (ReplicationRule replicationRule in rulesWithoutResult)
                 {
-
-                    ruleResults.Add(new ReplicationRuleResult(
-                        ruleNum: replicationRule.RuleNum ?? "",
-                        targetType: replicationRule.TargetType ?? "",
-                        recordCount: 0,
-                        success: false,
-                        errorMessage: setupErrorMessage,
-                        operation: operation
-                    )
-                    {
-                        CredentialName = replicationRule.CredentialName ?? ""
-                    });
-
+                    ruleResults.Add(BuildFailedRuleResult(replicationRule, setupErrorMessage, operation));
                 }
 
                 // A FAILURE BEFORE THE RULES WERE LOADED HAS NO RULE TO NAME, SO IT GETS ONE RESULT WITH NO TARGET TYPE OR CREDENTIAL
@@ -396,6 +388,170 @@ namespace ue_AIR_IDOReplicationRules_ECA
             ruleResult.Operation = operation;
             ruleResult.CredentialName = replicationRule.CredentialName ?? "";
             return ruleResult;
+
+        }
+
+
+
+        // A FAILED RESULT FOR A RULE THAT NEVER GOT AS FAR AS REMAPPING ITS RECORDS. IT BECOMES ONE FAILED LOG ROW WITHOUT A PAYLOAD.
+
+        private static ReplicationRuleResult BuildFailedRuleResult(ReplicationRule replicationRule, string errorMessage, string operation)
+        {
+
+            return new ReplicationRuleResult(
+                ruleNum: replicationRule.RuleNum ?? "",
+                targetType: replicationRule.TargetType ?? "",
+                recordCount: 0,
+                success: false,
+                errorMessage: errorMessage,
+                operation: operation
+            )
+            {
+                CredentialName = replicationRule.CredentialName ?? ""
+            };
+
+        }
+
+
+
+        // LOADS THE SOURCE RECORDS FOR EVERY RULE AND RETURNS THEM KEYED BY RULE NUMBER.
+        //
+        // NORMALLY THAT IS ONE LOAD, WITH THE UNION OF EVERY RULE'S SOURCE PROPERTIES, AND EVERY RULE SHARES ITS RESULT. IF THAT LOAD
+        // FAILS, MOST OFTEN BECAUSE ONE RULE'S FIELD MAP NAMES A PROPERTY THE IDO DOESN'T HAVE, EACH RULE'S RECORDS ARE LOADED ON
+        // THEIR OWN, SO ONLY THE RULE THAT CAN'T BE LOADED FAILS. A FAILED RULE IS LEFT OUT OF THE RETURNED DICTIONARY AND GETS A
+        // FAILED RESULT IN ruleResults.
+
+        private Dictionary<string, LoadRecordsResponseData> LoadSourceRecords(SytelineInternalAPI sytelineAPI, string IDOName, string queryFilter, int recordCap, Dictionary<string, ReplicationRule> replicationRules, string operation, List<ReplicationRuleResult> ruleResults)
+        {
+
+            Dictionary<string, LoadRecordsResponseData> recordsByRule = new Dictionary<string, LoadRecordsResponseData>();
+            Exception combinedLoadException;
+
+            try
+            {
+
+                LoadRecordsResponseData combinedResponse = sytelineAPI.LoadRecords(
+                    IDOName: IDOName,
+                    properties: replicationRules.Values.Select(rule => rule.SourceIDOProperties).SelectMany(innerList => innerList).Distinct().ToList(),
+                    filter: queryFilter,
+                    orderBy: "",
+                    recordCap: recordCap
+                );
+
+                foreach (string loadedRuleNum in replicationRules.Keys)
+                {
+                    recordsByRule[loadedRuleNum] = combinedResponse;
+                }
+
+                return recordsByRule;
+
+            }
+            catch (Exception ex)
+            {
+                combinedLoadException = ex;
+            }
+
+            // THE COMBINED LOAD FAILED. THE IDO'S PROPERTY NAMES ARE ONLY USED TO SAY WHICH PROPERTY IS WRONG IN THE MESSAGE.
+            // WHETHER A RULE FAILS IS DECIDED BY ITS OWN LOAD, NOT BY THIS LIST.
+
+            HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
+
+            // THE FIRST SET OF RECORDS THAT LOADED. A RULE WHOSE FIELD MAP HAS ONLY LITERAL VALUES HAS NO PROPERTIES TO LOAD, SO IT
+            // USES THESE RECORDS. THAT IS WHY RULES WITH SOURCE PROPERTIES GO FIRST.
+
+            LoadRecordsResponseData firstLoadedResponse = null;
+
+            foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules.OrderBy(keyValPair => keyValPair.Value.SourceIDOProperties.Count == 0 ? 1 : 0))
+            {
+
+                ReplicationRule replicationRule = replicationRuleKeyValPair.Value;
+                Exception ruleLoadException = combinedLoadException;
+
+                // WITH ONE RULE, ITS OWN LOAD WOULD BE THE COMBINED LOAD AGAIN, SO IT ISN'T REPEATED
+
+                if (replicationRules.Count > 1)
+                {
+
+                    if (replicationRule.SourceIDOProperties.Count == 0 && firstLoadedResponse != null)
+                    {
+                        recordsByRule[replicationRuleKeyValPair.Key] = firstLoadedResponse;
+                        continue;
+                    }
+
+                    try
+                    {
+
+                        LoadRecordsResponseData ruleResponse = sytelineAPI.LoadRecords(
+                            IDOName: IDOName,
+                            properties: replicationRule.SourceIDOProperties,
+                            filter: queryFilter,
+                            orderBy: "",
+                            recordCap: recordCap
+                        );
+
+                        recordsByRule[replicationRuleKeyValPair.Key] = ruleResponse;
+                        firstLoadedResponse = firstLoadedResponse ?? ruleResponse;
+
+                        continue;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        ruleLoadException = ex;
+                    }
+
+                }
+
+                string loadErrorMessage = "Rule '" + replicationRule.RuleNum + "' couldn't load its records from IDO '" + IDOName + "': " + this.DescribeException(ruleLoadException);
+
+                if (idoPropertyNames == null)
+                {
+                    loadErrorMessage += " Check that every IDO Property in the rule's field map exists on the IDO.";
+                }
+                else
+                {
+
+                    List<string> unknownProperties = replicationRule.SourceIDOProperties.Where(propertyName => !idoPropertyNames.Contains((propertyName ?? "").Trim())).ToList();
+
+                    if (unknownProperties.Count > 0)
+                    {
+                        loadErrorMessage += " The rule's field map names " + (unknownProperties.Count == 1 ? "a property" : "properties") + " the IDO doesn't have: " + string.Join(", ", unknownProperties) + ".";
+                    }
+
+                }
+
+                ruleResults.Add(BuildFailedRuleResult(replicationRule, loadErrorMessage, operation));
+
+            }
+
+            return recordsByRule;
+
+        }
+
+
+
+        // THE NAMES OF AN IDO'S PROPERTIES, COMPARED WITHOUT REGARD TO CASE. NULL WHEN THEY COULDN'T BE READ.
+
+        private HashSet<string> LoadIDOPropertyNames(string IDOName)
+        {
+
+            try
+            {
+
+                HashSet<string> propertyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in this.Context.Commands.GetPropertyInfo(IDOName).Properties)
+                {
+                    propertyNames.Add(propertyInfo.Name);
+                }
+
+                return propertyNames.Count > 0 ? propertyNames : null;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
 
         }
 
