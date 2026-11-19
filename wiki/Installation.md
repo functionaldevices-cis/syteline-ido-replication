@@ -88,14 +88,14 @@ Do steps 2 to 4 together, at a quiet time. Between them the IDOs, the assemblies
 3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed.
 4. Import the new forms and strings, then unload global form objects.
 5. Create any new Background Task Definitions listed in [step 4](#4-background-tasks).
-6. Carry over and remove columns that were renamed or dropped. A column of yours that is no longer in `SQL Columns.csv` isn't used any more. Do these in order, after step 3, so the new assembly is already writing the new column:
-   1. **Copy a renamed column's values into its new column.** The table below lists the renames and the statement for each. Run it against the application database. Without the copy, every row written before the upgrade loses that value.
+6. Carry over and remove columns that were renamed or dropped. A column of yours that is no longer in `SQL Columns.csv` isn't used any more. Do these in order, once the new assemblies are in place (step 3 above) and before anyone uses the Resend form:
+   1. **Copy a renamed column's values into its new column.** The table below lists the renames and the statement for each. Run it against the application database, at a quiet time. It is safe to run more than once. Without the copy, every row written before the upgrade loses that value.
    2. **Check that no IDO property is still bound to the old column.** Open the IDO that used it on the IDOs form. If a property is still bound to it, delete that property first: a property bound to a missing column makes every save to that IDO fail.
    3. **Delete the old column**, then refresh or recreate the table's view again.
 
    | Table | Old column | New column | Copy statement |
    | --- | --- | --- | --- |
-   | `ue_AIR_idorepl_log_mst` | `source_row_pointer` | `record_row_pointer` | `UPDATE ue_AIR_idorepl_log_mst SET record_row_pointer = source_row_pointer WHERE record_row_pointer IS NULL` |
+   | `ue_AIR_idorepl_log_mst` | `source_row_pointer` | `record_row_pointer` | `UPDATE ue_AIR_idorepl_log_mst SET record_row_pointer = source_row_pointer WHERE record_row_pointer IS NULL AND source_row_pointer IS NOT NULL` |
 
-   If you can't run SQL against the database, the log rows written before the upgrade have no record row pointer. [Resend Errors](Resending-Records) then can't reload their records. A failed row with a stored payload is left to the retry task, which sends that stored payload. A failed row with no stored payload can't be resent at all, and isn't listed on the Resend form. Before you upgrade, click **Resend All Errors** for each rule so no failed rows are left waiting, or afterward use **Bulk Resync** to send those records' current data.
+   If you can't run SQL against the database, the log rows written before the upgrade have no record row pointer. [Resend Errors](Resending-Records) then can't reload their records. A failed row with a stored payload is left to the retry task, which sends that stored payload. A failed row with no stored payload can't be resent, isn't listed on the Resend form, and stays `Failed`. To send those records' current data, use **Bulk Resync** after the upgrade.
 7. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**. It keeps each trigger active or inactive as it was, so an IDO that was replicating before the upgrade should show **Active**. If it shows **Inactive** or **Partly Active** and it should replicate, click **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).
