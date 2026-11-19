@@ -8,7 +8,7 @@ Form: **IDO Replication Configs** (`ue_AIR_IDOReplicationConfigs`). It lists eve
 
 1. Find the IDO on the form.
 2. Click **Setup Triggers**.
-3. Click **Activate All**. New triggers are created inactive, so nothing replicates until you activate them.
+3. Click **Activate All**. New triggers are created inactive, so nothing replicates until you activate them. The status shows **Inactive** until you do.
 
 The IDO also needs at least one active [rule](Replication-Rules-and-Field-Maps). With triggers but no active rules, the replication method returns without sending anything.
 
@@ -19,7 +19,7 @@ The IDO also needs at least one active [rule](Replication-Rules-and-Field-Maps).
 | Setup Triggers | Creates the three event handlers and their actions, inactive |
 | Activate All | Activates the IDO's replication triggers |
 | Deactivate All | Deactivates them. Use this to pause replication for an IDO without removing anything. |
-| Fix Triggers | Removes and re-creates the triggers. The new triggers are inactive, so click **Activate All** afterward. |
+| Fix Triggers | Removes and re-creates the triggers. Each trigger that was active before is active again afterward, and each that was inactive stays inactive. |
 | Remove Triggers | Deletes the IDO's replication triggers and their actions |
 | Configure Rules | Opens the Rules form |
 
@@ -28,10 +28,12 @@ The IDO also needs at least one active [rule](Replication-Rules-and-Field-Maps).
 | Status | Meaning |
 | --- | --- |
 | Not Setup | The IDO has no replication triggers |
-| Setup | All three triggers exist and their actions match what this version expects |
+| Active | All three triggers exist, their actions match what this version expects, and all of them are active. Changes to the IDO's records are replicated. |
+| Inactive | The triggers are set up, but none is active, so nothing replicates. This is the status right after **Setup Triggers** and after **Deactivate All**. Click **Activate All**. |
+| Partly Active | The triggers are set up, but only some are active. For example, inserts replicate and deletes don't. The **Is Active** column in the trigger grid shows which. Click **Activate All**. |
 | Broken | Some triggers exist, but one is missing or its action doesn't match. Click **Fix Triggers**. |
 
-The status doesn't say whether the triggers are active. Check the **Active** column in the trigger grid.
+If **Fix Triggers** fails partway, the error says what state the triggers are in and what to click next.
 
 A status of **Broken** is expected after an upgrade that changes the trigger action. The comparison is exact, so any edit to a trigger's action parameters also shows as Broken.
 

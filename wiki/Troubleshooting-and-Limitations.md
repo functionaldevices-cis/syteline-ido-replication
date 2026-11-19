@@ -4,8 +4,8 @@
 
 Check these in order:
 
-1. **Triggers exist.** On the IDO Replication Configs form, the IDO's status is **Setup**. If it's **Not Setup**, click **Setup Triggers**. If it's **Broken**, click **Fix Triggers**.
-2. **Triggers are active.** The status doesn't show this. Check the Active column in the trigger grid, or click **Activate All**. Triggers are inactive after **Setup Triggers** and after **Fix Triggers**.
+1. **Triggers exist.** On the IDO Replication Configs form, look at the IDO's status. If it's **Not Setup**, click **Setup Triggers**. If it's **Broken**, click **Fix Triggers**.
+2. **Triggers are active.** The status is **Active**. If it's **Inactive** or **Partly Active**, click **Activate All**. Triggers are inactive after **Setup Triggers**. **Fix Triggers** keeps each trigger active or inactive as it was.
 3. **A rule is active.** The IDO has at least one rule with **Is Active** checked, and the rule's IDO Name matches the IDO collection name exactly.
 4. **The change went through the IDO.** Changes made by stored procedures or direct SQL don't fire triggers.
 5. **The log.** Look in `ue_AIR_IDOReplicationLogs` for `Failed` rows for the IDO.
