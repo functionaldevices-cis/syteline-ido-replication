@@ -77,7 +77,15 @@ A rule carries ten credential values (from its linked credential) and ten option
 
 ## Triggers
 
-`SetupTriggers` in the Config assembly inserts `EventHandlers` rows (description `ue_AIR_ReplicationTrigger`) for `IdoPostItemInsert`, `IdoPostItemUpdate` and `IdoOnItemDelete`, then one `EventActions` row for each. It also inserts and deletes a temporary `CustomAIR` handler to work around a sequencing problem when several handlers are inserted at once.
+`SetupTriggers` in the Config assembly inserts `EventHandlers` rows (description `ue_AIR_ReplicationTrigger`) for `IdoPostItemInsert`, `IdoPostItemUpdate` and `IdoOnItemDelete`, then one `EventActions` row for each. It also inserts and deletes a temporary `CustomAIR` handler to work around a sequencing problem when several handlers are inserted at once. The handlers are created inactive.
+
+`FixTriggers` reads which handlers are active, removes them all, calls `SetupTriggers`, and then activates the ones that were active before. The method isn't transactional, so a failure partway leaves what was already done. It throws in that case, and the error says what was done and what to click next.
+
+`ue_UpdateAESTriggers` returns 0 when the action worked and 1 when it didn't, and puts a message that says what it did in `results`. The form binds `results` to the variable `ResultsByRef`.
+
+The Configs form reads two status properties on `ue_AIR_IDOReplicationConfigs`:
+- `ue_EventHandlersStatus` (`Not Setup`, `Setup`, `Broken`) decides which buttons show. The form keeps it loaded through a hidden grid column.
+- `ue_EventHandlersStatusDetail` (`Not Setup`, `Active`, `Inactive`, `Partly Active`, `Broken`) is the status the form displays, in the detail area and as a grid column. It counts the active handlers in the `EventHandler` table.
 
 The action's `Parameters` string is compared exactly by two derived properties:
 - `ue_AIR_IDOReplicationConfigs.ue_EventHandlersAreSetup` (drives the Setup or Broken status)
