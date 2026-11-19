@@ -123,7 +123,7 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 - It ignores rows for inactive rules.
 - It deletes `Succeeded` and `Skipped` rows older than the number of days you set. `Failed` rows are kept.
 
-**Resending by hand:** each failed record gets 3 automatic retries, one per run of the retry task, which is meant to run every minute. For anything left after that, the IDO Replication Resend form (`ue_AIR_IDOReplicationResend`) resends one rule's records for a period you choose: only the records that failed, or every record changed in the period. It reloads each record and sends its current values.
+**Resending by hand:** each failed record gets 3 automatic retries, one per run of the retry task, which is meant to run every minute. For anything left after that, the IDO Replication Resend form (`ue_AIR_IDOReplicationResend`) resends one rule's records. **Resend Errors** resends every record that has a failed row in the log. **Bulk Resync** resends the records changed in a period you choose, narrowed by a filter and a limit if you want. Both reload each record and send its current values.
 
 ## Building
 

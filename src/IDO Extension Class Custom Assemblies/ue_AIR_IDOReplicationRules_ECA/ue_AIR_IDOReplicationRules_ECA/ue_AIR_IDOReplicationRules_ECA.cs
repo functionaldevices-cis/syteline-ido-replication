@@ -1374,17 +1374,22 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /*
         /* Name:     ue_ResendReplications
-        /* Purpose:  Background task method. Resends one rule's records by hand, for a period of time. It reloads
-        /*           the records from SyteLine and sends their current values, so it never sends old data.
+        /* Purpose:  Background task method behind the IDO Replication Resend form. Resends one rule's records by
+        /*           hand. It reloads the records from SyteLine and sends their current values, so it never sends
+        /*           old data. Both scopes go through the same RunReplication as every other run, with the source
+        /*           "BG Task: Resend".
         /*
-        /*           scope "Everything" resends every record changed in the period (by RecordDate), plus every record
-        /*           that has a Failed log row in the period. scope "Failures" resends only the records that have a
-        /*           Failed log row in the period. Both go through the same RunReplication as every other run, with
-        /*           the source "BG Task: Resend".
-        /*
-        /*           A failed row whose record was resent is marked Skipped. A failed row that can't be reloaded gets
+        /*           scope "Failures" (the form's Resend Errors) resends the records that have a Failed log row. A
+        /*           failed row whose record was resent is marked Skipped. A failed row that can't be reloaded gets
         /*           its retries back, so the retry task resends it from its stored payload: a failed delete, or a
-        /*           row with no source row pointer. A blank To date means no upper limit. Never throws.
+        /*           row with no source row pointer. queryFilter and recordCap aren't used.
+        /*
+        /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by
+        /*           RecordDate) that match queryFilter, up to recordCap records. A failed row whose record it resent
+        /*           is marked Skipped. It doesn't go looking for other failed records.
+        /*
+        /*           Both dates are optional, in both scopes. A blank date puts no limit on that side. recordCap is
+        /*           text so a blank value can be passed: blank or 0 means no limit. Never throws.
         /*
         /**********************************************************************************************************/
         /**********************************************************************************************************/
@@ -1406,7 +1411,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const int ResendUnsendableRowLimit = 1000;
 
         [IDOMethod(MethodFlags.None, "Infobar")]
-        public int ue_ResendReplications(int BGTaskNum = -1, string ruleNum = "", string fromDate = "", string toDate = "", string scope = "")
+        public int ue_ResendReplications(int BGTaskNum = -1, string ruleNum = "", string fromDate = "", string toDate = "", string scope = "", string queryFilter = "", string recordCap = "")
         {
 
             SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
@@ -1420,7 +1425,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             try
             {
-                return this.ResendReplications(sytelineAPI, utils, BGTaskNum, ruleNum, fromDate, toDate, scope);
+                return this.ResendReplications(sytelineAPI, utils, BGTaskNum, ruleNum, fromDate, toDate, scope, queryFilter, recordCap);
             }
             catch (Exception ex)
             {
@@ -1432,7 +1437,28 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private int ResendReplications(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string fromDate, string toDate, string scope)
+        // WHAT THE RUNS OF ONE RESEND HAVE DONE SO FAR
+
+        private class ResendProgress
+        {
+
+            // THE RowPointer OF EVERY SOURCE RECORD A RUN LOADED
+
+            public HashSet<string> RowPointersLoaded { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // THE ONES THAT COUNT AS RESENT: THEIR RUN GOT AS FAR AS ITS RECORDS
+
+            public HashSet<string> RowPointersResent { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            public bool AnyRuleFailed { get; set; } = false;
+
+            public bool AnyRunNeverSent { get; set; } = false;
+
+        }
+
+
+
+        private int ResendReplications(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string fromDate, string toDate, string scope, string queryFilter, string recordCap)
         {
 
             // CHECK WHAT WAS ASKED FOR
@@ -1453,17 +1479,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return BackgroundTaskFailedReturnCode;
             }
 
-            DateTime rangeStart;
+            // BOTH DATES ARE OPTIONAL. A BLANK DATE PUTS NO LIMIT ON THAT SIDE, AND THE FILTERS THEN HAVE NO DATE FOR IT AT ALL, SO THE RESULT
+            // DOESN'T DEPEND ON THIS SERVER'S CLOCK AGREEING WITH THE DATES SYTELINE STAMPED ON THE RECORDS.
+
+            DateTime? rangeStart = null;
             DateTime? rangeEnd = null;
 
-            if (!TryParseResendDate(fromDate, out rangeStart))
+            if (!string.IsNullOrWhiteSpace(fromDate))
             {
-                utils.WriteLogMessage("Nothing was resent: the From date '" + fromDate + "' couldn't be read as a date and time.");
-                return BackgroundTaskFailedReturnCode;
-            }
 
-            // A BLANK To DATE MEANS NO UPPER LIMIT. THE FILTERS THEN HAVE NO END DATE AT ALL, SO THE RESULT DOESN'T DEPEND ON THIS SERVER'S
-            // CLOCK AGREEING WITH THE DATES SYTELINE STAMPED ON THE RECORDS.
+                DateTime parsedRangeStart;
+
+                if (!TryParseResendDate(fromDate, out parsedRangeStart))
+                {
+                    utils.WriteLogMessage("Nothing was resent: the From date '" + fromDate + "' couldn't be read as a date and time.");
+                    return BackgroundTaskFailedReturnCode;
+                }
+
+                rangeStart = parsedRangeStart;
+
+            }
 
             if (!string.IsNullOrWhiteSpace(toDate))
             {
@@ -1476,13 +1511,31 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     return BackgroundTaskFailedReturnCode;
                 }
 
-                if (parsedRangeEnd < rangeStart)
+                if (rangeStart.HasValue && parsedRangeEnd < rangeStart.Value)
                 {
                     utils.WriteLogMessage("Nothing was resent: the To date is before the From date.");
                     return BackgroundTaskFailedReturnCode;
                 }
 
                 rangeEnd = parsedRangeEnd;
+
+            }
+
+            // THE FILTER AND THE LIMIT BELONG TO A BULK RESYNC ONLY. THE LIMIT ARRIVES AS TEXT. BLANK OR 0 MEANS NO LIMIT (SEE THE RECORD CAP
+            // RULE: 0 IS NO CAP, AND -1 WOULD BE THE DEFAULT CAP OF 200, SO A NEGATIVE NUMBER IS REFUSED).
+
+            queryFilter = (queryFilter ?? "").Trim();
+
+            int bulkRecordCap = SytelineInternalAPI.NoRecordCap;
+
+            if (resendEverything && !string.IsNullOrWhiteSpace(recordCap))
+            {
+
+                if (!int.TryParse(recordCap.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out bulkRecordCap) || bulkRecordCap < 0)
+                {
+                    utils.WriteLogMessage("Nothing was resent: the limit '" + recordCap + "' isn't a whole number of 0 or more. If the filter has a comma in it, the task may have split the filter into two parameters there.");
+                    return BackgroundTaskFailedReturnCode;
+                }
 
             }
 
@@ -1504,12 +1557,82 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return BackgroundTaskFailedReturnCode;
             }
 
-            utils.WriteLogMessage("Resending " + (resendEverything ? "everything" : "failures") + " for rule '" + ruleNum + "' (" + IDOName + ") from " + rangeStart.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + (rangeEnd.HasValue ? " to " + rangeEnd.Value.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) : " onward") + ".");
+            // THE RULE'S FAILED LOG ROWS
 
-            // THE RULE'S FAILED LOG ROWS IN THE PERIOD, IN THREE GROUPS. EACH GROUP IS LOADED ON ITS OWN, SO ONE KIND OF ROW CAN'T USE UP
-            // THE ROW LIMIT AND KEEP ANOTHER KIND FROM BEING REACHED.
+            string failedRowsFilter = "Status = 'Failed' AND RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName);
 
-            string failedRowsFilter = "Status = 'Failed' AND RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " AND " + ResendDateFilter("CreateDate", rangeStart, rangeEnd);
+            return resendEverything
+                ? this.ResendBulk(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, queryFilter, bulkRecordCap, failedRowsFilter)
+                : this.ResendFailures(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, failedRowsFilter);
+
+        }
+
+
+
+        // RUNS ONE REPLICATION FOR A RESEND AND ADDS WHAT IT DID TO progress. A RECORD COUNTS AS RESENT ONLY WHEN THE RULE GOT AS FAR AS ITS
+        // RECORDS: EITHER IT SUCCEEDED, OR IT FAILED WITH AN OUTCOME PER RECORD, WHICH MEANS EACH RECORD HAS A NEW FAILED ROW WITH A PAYLOAD
+        // AND ITS OWN RETRIES. NEVER THROWS, SO THE CALLER ALWAYS GETS TO PUT THE FAILED ROWS IT CHANGED BACK IN ORDER.
+
+        private void RunResendFilter(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string IDOName, string ruleNum, string filter, int recordCap, ResendProgress progress)
+        {
+
+            try
+            {
+
+                ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, recordCap, ruleNum, OperationUpsert, SourceTaskResend);
+
+                bool neverSent = runResult.RuleResults.Any(ruleResult => !ruleResult.Success && ruleResult.RecordOutcomes.Count == 0);
+
+                if (runResult.RuleResults.Any(ruleResult => !ruleResult.Success))
+                {
+                    progress.AnyRuleFailed = true;
+                }
+
+                progress.RowPointersLoaded.UnionWith(runResult.SourceRowPointersLoaded);
+
+                if (neverSent)
+                {
+                    progress.AnyRunNeverSent = true;
+                }
+                else
+                {
+                    progress.RowPointersResent.UnionWith(runResult.SourceRowPointersLoaded);
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                utils.WriteLogMessage("A resend run stopped: " + this.DescribeException(ex));
+
+                progress.AnyRuleFailed = true;
+                progress.AnyRunNeverSent = true;
+
+            }
+
+        }
+
+
+
+        // RESEND ERRORS: RESENDS THE RECORDS THAT HAVE A FAILED LOG ROW, BY RowPointer
+
+        private int ResendFailures(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, DateTime? rangeStart, DateTime? rangeEnd, string failedRowsFilter)
+        {
+
+            utils.WriteLogMessage("Resending failures for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("failed", rangeStart, rangeEnd) + ".");
+
+            // WITH DATES, ONLY THE ROWS THAT FAILED IN THE PERIOD ARE TAKEN. THE FORM PASSES NONE, WHICH TAKES EVERY FAILED ROW OF THE RULE.
+
+            string dateFilter = ResendDateFilter("CreateDate", rangeStart, rangeEnd);
+
+            if (dateFilter != "")
+            {
+                failedRowsFilter += " AND " + dateFilter;
+            }
+
+            // THE FAILED ROWS ARE LOADED IN THREE GROUPS. EACH GROUP IS LOADED ON ITS OWN, SO ONE KIND OF ROW CAN'T USE UP THE ROW LIMIT AND
+            // KEEP ANOTHER KIND FROM BEING REACHED.
+
             string notReloadableFilter = "( SourceRowPointer IS NULL OR Operation = " + sytelineAPI.QuoteFilterValue(OperationDelete) + " )";
 
             // 1. ROWS WHOSE RECORD CAN BE RELOADED: THEY SAY WHICH SOURCE RECORD THEY ARE FOR AND AREN'T A DELETE (A DELETED RECORD CAN'T BE LOADED)
@@ -1548,7 +1671,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 recordCap: ResendUnsendableRowLimit
             );
 
-            utils.WriteLogMessage("Failed replication log rows in the period whose record can be reloaded: " + reloadableRows.Count + "." + (reloadableResponse.Items.Count >= ResendFailedRowLimit ? " That is the most one resend takes, so run it again for the rest." : ""));
+            utils.WriteLogMessage("Failed replication log rows whose record can be reloaded: " + reloadableRows.Count + "." + (reloadableResponse.Items.Count >= ResendFailedRowLimit ? " That is the most one resend takes, so run it again for the rest." : ""));
 
             List<string> failedRowPointers = reloadableRows
                 .Select(reloadableRow => reloadableRow.SourceRowPointer)
@@ -1563,53 +1686,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 new IDOUpdateProperty("RetriesRemaining", 0, true)
             })).ToList());
 
-            // RUN ONE REPLICATION PER FILTER. A RECORD COUNTS AS RESENT ONLY WHEN THE RULE GOT AS FAR AS ITS RECORDS: EITHER IT SUCCEEDED, OR
-            // IT FAILED WITH AN OUTCOME PER RECORD, WHICH MEANS EACH RECORD HAS A NEW FAILED ROW WITH A PAYLOAD AND ITS OWN RETRIES.
+            // RELOAD THE RECORDS WITH A FAILED ROW, A BATCH AT A TIME. EVERY ONE OF THEM IS SENT, SO THE LOADS HAVE NO RECORD CAP (0, NOT -1,
+            // WHICH IS THE DEFAULT CAP OF 200).
 
-            HashSet<string> rowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            HashSet<string> rowPointersResent = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            bool anyRuleFailed = false;
-            bool anyRunNeverSent = false;
+            ResendProgress progress = new ResendProgress();
 
-            // A RESEND SENDS EVERY RECORD ITS FILTER SELECTS, SO IT LOADS WITH NO RECORD CAP (0, NOT -1, WHICH IS THE DEFAULT CAP OF 200)
-
-            void RunFilter(string filter)
+            for (int i = 0; i < failedRowPointers.Count; i += ResendRowPointerBatchSize)
             {
-
-                ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, SytelineInternalAPI.NoRecordCap, ruleNum, OperationUpsert, SourceTaskResend);
-
-                bool neverSent = runResult.RuleResults.Any(ruleResult => !ruleResult.Success && ruleResult.RecordOutcomes.Count == 0);
-
-                if (runResult.RuleResults.Any(ruleResult => !ruleResult.Success))
-                {
-                    anyRuleFailed = true;
-                }
-
-                rowPointersLoaded.UnionWith(runResult.SourceRowPointersLoaded);
-
-                if (neverSent)
-                {
-                    anyRunNeverSent = true;
-                }
-                else
-                {
-                    rowPointersResent.UnionWith(runResult.SourceRowPointersLoaded);
-                }
-
-            }
-
-            if (resendEverything)
-            {
-                RunFilter(ResendDateFilter("RecordDate", rangeStart, rangeEnd));
-            }
-
-            // THE RECORDS WITH A FAILED ROW, LESS ANY THE DATE RANGE ALREADY SENT
-
-            List<string> rowPointersToLoad = failedRowPointers.Where(rowPointer => !rowPointersResent.Contains(rowPointer)).ToList();
-
-            for (int i = 0; i < rowPointersToLoad.Count; i += ResendRowPointerBatchSize)
-            {
-                RunFilter(sytelineAPI.BuildInFilter(RowPointerPropertyName, rowPointersToLoad.Skip(i).Take(ResendRowPointerBatchSize)));
+                this.RunResendFilter(sytelineAPI, utils, BGTaskNum, IDOName, ruleNum, sytelineAPI.BuildInFilter(RowPointerPropertyName, failedRowPointers.Skip(i).Take(ResendRowPointerBatchSize)), SytelineInternalAPI.NoRecordCap, progress);
             }
 
             // BRING THE RELOADABLE FAILED ROWS UP TO DATE:
@@ -1626,20 +1710,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
             foreach (var reloadableRow in reloadableRows)
             {
 
-                if (rowPointersResent.Contains(reloadableRow.SourceRowPointer))
+                if (progress.RowPointersResent.Contains(reloadableRow.SourceRowPointer))
                 {
 
-                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(reloadableRow.Item.ItemID, new List<IDOUpdateProperty>()
-                    {
-                        new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
-                        new IDOUpdateProperty("ErrorMessage", "Superseded by a manual resend of this record's current data.", true),
-                        new IDOUpdateProperty("RetriesRemaining", 0, true)
-                    }));
+                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, reloadableRow.Item.ItemID));
 
                     countSuperseded++;
 
                 }
-                else if (!rowPointersLoaded.Contains(reloadableRow.SourceRowPointer) && !anyRunNeverSent)
+                else if (!progress.RowPointersLoaded.Contains(reloadableRow.SourceRowPointer) && !progress.AnyRunNeverSent)
                 {
 
                     failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(reloadableRow.Item.ItemID, new List<IDOUpdateProperty>()
@@ -1678,14 +1757,173 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             this.UpdateLogRows(sytelineAPI, utils, failedRowUpdates);
 
-            utils.WriteLogMessage("Resend finished. Records reloaded and sent: " + rowPointersResent.Count + ". Failed rows replaced by the resend: " + countSuperseded + ". Failed rows whose record no longer exists: " + countGone + ". Failed rows the resend couldn't send, left for the retry task: " + countLeftForRetry + ". Failed deletes and rows with no source record, handed back to the retry task: " + requeueResponse.Items.Count + ".");
+            utils.WriteLogMessage("Resend finished. Records reloaded and sent: " + progress.RowPointersResent.Count + ". Failed rows replaced by the resend: " + countSuperseded + ". Failed rows whose record no longer exists: " + countGone + ". Failed rows the resend couldn't send, left for the retry task: " + countLeftForRetry + ". Failed deletes and rows with no source record, handed back to the retry task: " + requeueResponse.Items.Count + ".");
 
             if (unsendableResponse.Items.Count > 0)
             {
-                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) in the period have no stored payload and no source record to reload, so nothing can resend them. Resend everything for the period to send their records' current data.");
+                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) have no stored payload and no source record to reload, so nothing can resend them. Use a bulk resync to send their records' current data.");
             }
 
-            return anyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
+            return progress.AnyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
+
+        }
+
+
+
+        // BULK RESYNC: RESENDS THE RECORDS CHANGED IN THE PERIOD THAT MATCH THE FILTER, UP TO THE LIMIT, IN ONE RUN
+
+        private int ResendBulk(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, DateTime? rangeStart, DateTime? rangeEnd, string queryFilter, int recordCap, string failedRowsFilter)
+        {
+
+            // THE PERIOD AND THE FILTER ARE BOTH OPTIONAL. WITH NEITHER, EVERY RECORD OF THE IDO IS RESENT.
+
+            List<string> filters = new List<string>();
+            string dateFilter = ResendDateFilter("RecordDate", rangeStart, rangeEnd);
+
+            if (dateFilter != "")
+            {
+                filters.Add("( " + dateFilter + " )");
+            }
+
+            if (queryFilter != "")
+            {
+                filters.Add("( " + queryFilter + " )");
+            }
+
+            string filter = string.Join(" AND ", filters);
+
+            utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
+
+            // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED, NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
+            // SEND SOME OF THEM, AND THEN THEIR FAILED ROWS ARE OUT OF DATE.
+
+            LoadRecordsResponseData failedResponse = sytelineAPI.LoadRecords(
+                IDOName: "ue_AIR_IDOReplicationLogs",
+                properties: new List<string>() { "RowPointer", "SourceRowPointer", "RetriesRemaining" },
+                filter: failedRowsFilter + " AND SourceRowPointer IS NOT NULL AND Operation <> " + sytelineAPI.QuoteFilterValue(OperationDelete),
+                orderBy: "CreateDate DESC",
+                recordCap: ResendFailedRowLimit
+            );
+
+            var failedRows = failedResponse.Items.Select(item => new
+            {
+                Item = item,
+                SourceRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["SourceRowPointer"]].Value ?? "").Trim(),
+                RetriesRemaining = ParseWholeNumber(item.PropertyValues[failedResponse.PropertyKeys["RetriesRemaining"]].Value)
+            }).Where(failedRow => failedRow.SourceRowPointer != "").ToList();
+
+            // TAKE THE ONES THAT STILL HAVE RETRIES OUT OF THE RETRY TASK'S QUEUE WHILE THE RESYNC RUNS. THE RETRY TASK RUNS EVERY MINUTE, AND
+            // UNTIL THE RESYNC HAS WRITTEN ITS OWN ROWS IT WOULD SEE NOTHING NEWER FOR A RECORD AND COULD SEND A STORED PAYLOAD AFTER THE CURRENT
+            // DATA. A ROW THAT IS ALREADY OUT OF RETRIES ISN'T IN THAT QUEUE, SO IT IS LEFT AS IT IS.
+
+            var rowsAwaitingRetry = failedRows.Where(failedRow => failedRow.RetriesRemaining > 0).ToList();
+
+            this.UpdateLogRows(sytelineAPI, utils, rowsAwaitingRetry.Select(failedRow => sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+            {
+                new IDOUpdateProperty("RetriesRemaining", 0, true)
+            })).ToList());
+
+            // ONE RUN, WITH THE LIMIT AS ITS RECORD CAP
+
+            ResendProgress progress = new ResendProgress();
+
+            this.RunResendFilter(sytelineAPI, utils, BGTaskNum, IDOName, ruleNum, filter, recordCap, progress);
+
+            // BRING THE FAILED ROWS UP TO DATE:
+            //   - ITS RECORD WAS SENT AGAIN: THE RESYNC WROTE A NEWER ROW FOR IT (FAILED OR NOT), SO THIS ONE IS SKIPPED.
+            //   - ITS RECORD WASN'T PART OF THE RESYNC: IT GETS BACK THE RETRIES IT HAD. A ROW THAT HAD NONE IS LEFT ALONE, SO A RESYNC NEVER
+            //     PUTS AN OLD FAILURE BACK IN THE RETRY TASK'S QUEUE.
+
+            List<IDOUpdateItem> failedRowUpdates = new List<IDOUpdateItem>();
+            int countSuperseded = 0;
+
+            foreach (var failedRow in failedRows)
+            {
+
+                if (progress.RowPointersResent.Contains(failedRow.SourceRowPointer))
+                {
+
+                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, failedRow.Item.ItemID));
+
+                    countSuperseded++;
+
+                }
+                else if (failedRow.RetriesRemaining > 0)
+                {
+
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    {
+                        new IDOUpdateProperty("RetriesRemaining", failedRow.RetriesRemaining, true)
+                    }));
+
+                }
+
+            }
+
+            this.UpdateLogRows(sytelineAPI, utils, failedRowUpdates);
+
+            utils.WriteLogMessage("Bulk resync finished. Records loaded and sent: " + progress.RowPointersResent.Count + (recordCap > 0 && progress.RowPointersLoaded.Count >= recordCap ? " (the limit, so there may be more)" : "") + ". Failed rows replaced by the resync: " + countSuperseded + "." + (failedResponse.Items.Count >= ResendFailedRowLimit ? " The rule has " + ResendFailedRowLimit + " or more failed rows, and only the newest " + ResendFailedRowLimit + " were checked." : ""));
+
+            return progress.AnyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
+
+        }
+
+
+
+        // THE UPDATE THAT MARKS A FAILED ROW AS REPLACED BY A RESEND OF ITS RECORD
+
+        private static IDOUpdateItem BuildSupersededUpdate(SytelineInternalAPI sytelineAPI, string itemID)
+        {
+
+            return sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
+            {
+                new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
+                new IDOUpdateProperty("ErrorMessage", "Superseded by a manual resend of this record's current data.", true),
+                new IDOUpdateProperty("RetriesRemaining", 0, true)
+            });
+
+        }
+
+
+
+        // READS A WHOLE NUMBER FROM A PROPERTY VALUE. ANYTHING THAT ISN'T A NUMBER COUNTS AS 0.
+
+        private static int ParseWholeNumber(string text)
+        {
+
+            decimal number;
+
+            return decimal.TryParse((text ?? "").Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out number) && number >= int.MinValue && number <= int.MaxValue
+                ? (int)number
+                : 0;
+
+        }
+
+
+
+        // SAYS WHICH PERIOD A RESEND COVERS, FOR THE TASK'S MESSAGES. verb IS WHAT HAPPENED IN THE PERIOD ("changed" OR "failed").
+
+        private static string DescribeResendPeriod(string verb, DateTime? rangeStart, DateTime? rangeEnd)
+        {
+
+            const string format = "yyyy-MM-dd HH:mm:ss";
+
+            if (rangeStart.HasValue && rangeEnd.HasValue)
+            {
+                return verb + " from " + rangeStart.Value.ToString(format, CultureInfo.InvariantCulture) + " to " + rangeEnd.Value.ToString(format, CultureInfo.InvariantCulture);
+            }
+
+            if (rangeStart.HasValue)
+            {
+                return verb + " from " + rangeStart.Value.ToString(format, CultureInfo.InvariantCulture) + " onward";
+            }
+
+            if (rangeEnd.HasValue)
+            {
+                return verb + " up to " + rangeEnd.Value.ToString(format, CultureInfo.InvariantCulture);
+            }
+
+            return "with no date limit";
 
         }
 
@@ -1713,19 +1951,24 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
         // A FILTER FOR A DATE PROPERTY WITHIN A PERIOD, WITH THE DATES WRITTEN SO SQL SERVER READS THEM THE SAME WAY IN ANY LANGUAGE.
-        // WITH NO END DATE, THE PERIOD HAS NO UPPER LIMIT.
+        // A SIDE WITH NO DATE HAS NO LIMIT, AND WITH NEITHER DATE THE FILTER IS BLANK.
 
-        private static string ResendDateFilter(string propertyName, DateTime rangeStart, DateTime? rangeEnd)
+        private static string ResendDateFilter(string propertyName, DateTime? rangeStart, DateTime? rangeEnd)
         {
 
-            string filter = propertyName + " >= '" + rangeStart.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'";
+            List<string> filters = new List<string>();
+
+            if (rangeStart.HasValue)
+            {
+                filters.Add(propertyName + " >= '" + rangeStart.Value.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'");
+            }
 
             if (rangeEnd.HasValue)
             {
-                filter += " AND " + propertyName + " <= '" + rangeEnd.Value.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'";
+                filters.Add(propertyName + " <= '" + rangeEnd.Value.ToString("yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture) + "'");
             }
 
-            return filter;
+            return string.Join(" AND ", filters);
 
         }
 

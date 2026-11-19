@@ -1173,8 +1173,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>27</RevisionNo>
-         <RevisionDate>2026-11-18T16:09:00</RevisionDate>
+         <RevisionNo>28</RevisionNo>
+         <RevisionDate>2026-11-19T14:49:38</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -1287,6 +1287,16 @@ END</Expression>
                      <COMDataType>VARIANT</COMDataType>
                   </Parameter>
                   <Parameter Name="fromDate" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="queryFilter" Sequence="6">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="recordCap" Sequence="7">
                      <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
                      <INPUT />
                      <COMDataType>VARIANT</COMDataType>

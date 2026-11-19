@@ -4,18 +4,33 @@ The retry task resends a failed record up to 3 times on its own. For anything it
 
 Form: `ue_AIR_IDOReplicationResend`
 
-## Using the form
+Select a rule in the list. Everything on the form applies to that one rule. The form has two groups:
 
-1. Select the rule to resend for. One resend covers one rule.
-2. Set **Changed From** to the start of the period. Leave **Changed To** blank for no end, which takes everything from the start onward.
-3. Choose what to resend:
+| Group | What it resends |
+| --- | --- |
+| Resend Errors | Every record that has a `Failed` row in the replication log for the rule |
+| Bulk Resync | The records changed in a period that you choose, narrowed by a filter and a limit if you want |
 
-   | Choice | Resends |
-   | --- | --- |
-   | Only the records that failed | Every record that has a `Failed` row in the replication log for this rule in the period |
-   | Every record changed in the period | Every record whose Record Date falls in the period, plus the records that failed in it |
+Both run as a background task, so the form doesn't wait. Look at the task's messages for the result.
 
-4. Click **Resend**. It runs as a background task, so the form doesn't wait. Look at the task's messages for the result.
+## Resend Errors
+
+The grid lists the rule's `Failed` log rows, newest first. It shows up to 200 rows. The resend takes all of them, not only the ones shown.
+
+Click **Resend All Errors**. There is nothing to fill in.
+
+The grid doesn't change when you click, because the task runs in the background. Refresh the form after the task finishes to see what is left.
+
+## Bulk Resync
+
+1. **Changed From** and **Changed To** set the period, by each record's Record Date. Both are optional. A blank date puts no limit on that side.
+2. **Filter** is an IDO filter on the rule's IDO, as on the Rules form's Test tab, for example `Item LIKE 'AB%'`. It is optional. Don't use a comma in it: the background task separates its parameters with commas.
+3. **Limit** is the most records to send. `0` means no limit.
+4. Click **Resync**.
+
+With no dates, no filter and a limit of 0, a bulk resync sends every record of the rule's IDO.
+
+A bulk resync doesn't look for failed records. It sends what the period and the filter select. If one of those records has a `Failed` row, that row is brought up to date, as described below.
 
 ## What gets sent
 
@@ -27,6 +42,8 @@ A resend reloads each record from Syteline and sends its **current** values. It 
 
 ## What happens to the failed rows
 
+After **Resend Errors**:
+
 | The failed row's record | Result |
 | --- | --- |
 | Was reloaded and sent again | The row becomes `Skipped`, with the message that a manual resend replaced it. The resend's own row shows whether it worked. |
@@ -34,15 +51,22 @@ A resend reloads each record from Syteline and sends its **current** values. It 
 | No longer exists in Syteline | The row becomes `Skipped`. There is nothing left to send. |
 | Was a delete | If the row is out of retries, it gets its 3 retries back. A deleted record can't be reloaded, so the [retry task](Replication-Log-and-Retries#the-retry-task) resends the delete from its stored payload. |
 | Has no source row pointer | The same. This applies to rows logged before the source row pointer was stored. |
-| Has no source row pointer and no stored payload | Nothing can resend the row. The task's messages count these. Choose **Every record changed in the period** to send those records' current data. |
+| Has no source row pointer and no stored payload | Nothing can resend the row. The task's messages count these. Use **Bulk Resync** to send those records' current data. |
+
+After **Bulk Resync**:
+
+| The failed row's record | Result |
+| --- | --- |
+| Was part of the resync | The row becomes `Skipped`, with the message that a manual resend replaced it. |
+| Wasn't part of the resync | The row is left as it was, with the retries it had. A bulk resync never gives an old failure its retries back. |
 
 ## Things to know
 
-- **Use an open-ended period for a recovery.** With Changed To left blank there is no end date at all, so a record changed several times since the start is still included, and the result doesn't depend on the server's clock. With a Changed To in the past, a record that was changed again after it isn't picked up by date, only if it has a failed row in the period.
-- **"Every record changed" needs a Record Date.** The source IDO has to have the `RecordDate` property, which standard Syteline IDOs do.
+- **Use an open-ended period for a recovery.** With Changed To left blank there is no end date at all, so a record changed several times since the start is still included, and the result doesn't depend on the server's clock. With a Changed To in the past, a record that was changed again after it isn't picked up.
+- **A period needs a Record Date.** To use Changed From or Changed To, the source IDO has to have the `RecordDate` property, which standard Syteline IDOs do.
 - **It can't resend a delete that never failed.** If a delete was never replicated, for example because triggers were inactive, nothing in Syteline or the log says the record existed.
-- **One resend reloads the records of 10,000 failed rows at most.** The task's messages say when it reached that. Run it again for the rest: the rows it has resent are `Skipped` by then, so the next run takes the following ones.
-- **While a resend runs, the retry task leaves its records alone.** The resend takes the failed rows it is about to reload out of the retry queue first, so a stored payload can't be sent after the current data.
+- **One Resend Errors run reloads the records of 10,000 failed rows at most.** The task's messages say when it reached that. Run it again for the rest: the rows it has resent are `Skipped` by then, so the next run takes the following ones.
+- **While a resend runs, the retry task leaves its records alone.** The resend takes the failed rows it may replace out of the retry queue first, so a stored payload can't be sent after the current data. A bulk resync puts back the retries of the rows it didn't replace.
 - **Dates are read in these forms:** `2026-11-18 14:00:00`, `20261118 14:00:00`, or the server's own date format. If the task says a date couldn't be read, enter it in the first form.
 
 ## Running it without the form
@@ -53,6 +77,10 @@ Background task: `ue_AIR_ResendReplications` (see [Installation](Installation#4-
 | --- | --- |
 | 1. Background task number | `BG~TASKID~` |
 | 2. Rule number | The rule to resend for |
-| 3. From | The start of the period |
+| 3. From | The start of the period. Blank means no start. |
 | 4. To | The end of the period. Blank means no end. |
-| 5. Scope | `Failures` or `Everything` |
+| 5. Scope | `Failures` (Resend Errors) or `Everything` (Bulk Resync) |
+| 6. Filter | An IDO filter. Only used by `Everything`. |
+| 7. Limit | The most records to send. Blank or `0` means no limit. Only used by `Everything`. |
+
+With `Failures`, a From or To date takes only the rows that failed in that period. The form passes neither, which takes every failed row of the rule.
