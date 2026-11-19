@@ -81,7 +81,7 @@ Create three Background Task Definitions.
 
 ## Upgrading
 
-1. Add any new columns first. Compare `SQL Columns.csv` with your tables, append the rows you don't have on the SQL Columns form, and refresh or recreate the view of each table you changed. An IDO property bound to a column that doesn't exist makes every save to that IDO fail. For the replication log that means no log rows are written, and so nothing is retried.
+1. Add any new columns first. Compare `SQL Columns.csv` with your tables, append the rows you don't have on the SQL Columns form, and refresh or recreate the view of each table you changed. An IDO property bound to a column that doesn't exist makes every save to that IDO fail. For the replication log that means no log rows are written, and so nothing is retried. A column of yours that is no longer in the file was renamed or dropped. Leave it in place until the new IDO export is imported and no IDO property is bound to it, then delete it. The log table's `source_row_pointer` is one: it is now `record_row_pointer`.
 2. Import the new IDO export, then run **Refresh Form Metadata**.
 3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed.
 4. Import the new forms and strings, then unload global form objects.

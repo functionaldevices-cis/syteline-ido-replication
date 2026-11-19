@@ -188,7 +188,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             public bool NothingToSend = false;
 
-            public HashSet<string> SourceRowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            public HashSet<string> RecordRowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         }
 
@@ -265,7 +265,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         {
                             foreach (IDOItem loadedItem in recordsResponse.Items)
                             {
-                                runResult.SourceRowPointersLoaded.Add(loadedItem.PropertyValues[rowPointerIndex].Value ?? "");
+                                runResult.RecordRowPointersLoaded.Add(loadedItem.PropertyValues[rowPointerIndex].Value ?? "");
                             }
                         }
 
@@ -400,7 +400,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // EACH REMAPPED RECORD'S SOURCE RowPointer, KEYED THE SAME WAY. IT ISN'T PART OF THE RECORD, SO IT IS NEVER SENT. BuildOutcome READS IT.
 
-            this.sourceRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
+            this.recordRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
 
             try
             {
@@ -411,7 +411,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     fields: replicationRule.MapFieldsList,
                     recordsResponseData: replicationRecordsResponse,
                     transformWarnings: transformWarnings,
-                    sourceRowPointers: this.sourceRowPointersByRecord
+                    recordRowPointers: this.recordRowPointersByRecord
                 );
 
                 if (transformWarnings.Count > 0)
@@ -521,7 +521,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
             bool idoHasRowPointer = idoPropertyNames == null || idoPropertyNames.Contains(RowPointerPropertyName);
 
-            // AN IDO WITH NO RowPointer PROPERTY IS LOADED WITHOUT IT. ITS LOG ROWS THEN HAVE NO SOURCE ROW POINTER.
+            // AN IDO WITH NO RowPointer PROPERTY IS LOADED WITHOUT IT. ITS LOG ROWS THEN HAVE NO RECORD ROW POINTER.
 
             if (!idoHasRowPointer)
             {
@@ -964,10 +964,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage: errorMessage
             );
 
-            string sourceRowPointer;
+            string recordRowPointer;
 
             outcome.Warning = warning;
-            outcome.SourceRowPointer = this.sourceRowPointersByRecord.TryGetValue(record, out sourceRowPointer) ? sourceRowPointer : "";
+            outcome.RecordRowPointer = this.recordRowPointersByRecord.TryGetValue(record, out recordRowPointer) ? recordRowPointer : "";
             return outcome;
 
         }
@@ -1091,7 +1091,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // THE SOURCE RowPointer OF EACH REMAPPED RECORD OF THE RULE BEING SENT, KEYED BY THE RECORD (REFERENCE EQUALITY). ReplicateRule SETS IT.
         // A RECORD THAT ISN'T IN IT, SUCH AS ONE THE RETRY TASK READ BACK FROM A STORED PAYLOAD, HAS NO KNOWN SOURCE RowPointer.
 
-        private Dictionary<Dictionary<string, object>, string> sourceRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
+        private Dictionary<Dictionary<string, object>, string> recordRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
 
 
 
@@ -1283,10 +1283,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
-            // THE SOURCE ROW POINTER IS ONLY WRITTEN WHEN IT IS A GUID, WHICH IS WHAT THE COLUMN HOLDS
+            // THE RECORD ROW POINTER IS ONLY WRITTEN WHEN IT IS A GUID, WHICH IS WHAT THE COLUMN HOLDS
 
-            Guid sourceRowPointerGuid;
-            bool hasSourceRowPointer = Guid.TryParse(outcome.SourceRowPointer ?? "", out sourceRowPointerGuid);
+            Guid recordRowPointerGuid;
+            bool hasRecordRowPointer = Guid.TryParse(outcome.RecordRowPointer ?? "", out recordRowPointerGuid);
 
             // ONLY A FAILED RECORD WITH A STORED PAYLOAD CAN BE RETRIED
 
@@ -1302,7 +1302,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "Source", source },
                 { "Operation", operation },
                 { "RecordID", recordID != "" ? recordID : null },
-                { "SourceRowPointer", hasSourceRowPointer ? sourceRowPointerGuid.ToString() : null },
+                { "RecordRowPointer", hasRecordRowPointer ? recordRowPointerGuid.ToString() : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
                 { "ErrorMessage", errorMessage != "" ? errorMessage : null },
@@ -1382,7 +1382,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           scope "Failures" (the form's Resend Errors) resends the records that have a Failed log row. A
         /*           failed row whose record was resent is marked Skipped. A failed row that can't be reloaded gets
         /*           its retries back, so the retry task resends it from its stored payload: a failed delete, or a
-        /*           row with no source row pointer. queryFilter and recordCap aren't used.
+        /*           row with no record row pointer. queryFilter and recordCap aren't used.
         /*
         /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by
         /*           RecordDate) that match queryFilter, up to recordCap records. A failed row whose record it resent
@@ -1597,7 +1597,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     progress.NothingToSend = true;
                 }
 
-                progress.RowPointersLoaded.UnionWith(runResult.SourceRowPointersLoaded);
+                progress.RowPointersLoaded.UnionWith(runResult.RecordRowPointersLoaded);
 
                 if (neverSent)
                 {
@@ -1605,7 +1605,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 }
                 else
                 {
-                    progress.RowPointersResent.UnionWith(runResult.SourceRowPointersLoaded);
+                    progress.RowPointersResent.UnionWith(runResult.RecordRowPointersLoaded);
                 }
 
             }
@@ -1642,14 +1642,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
             // THE FAILED ROWS ARE LOADED IN THREE GROUPS. EACH GROUP IS LOADED ON ITS OWN, SO ONE KIND OF ROW CAN'T USE UP THE ROW LIMIT AND
             // KEEP ANOTHER KIND FROM BEING REACHED.
 
-            string notReloadableFilter = "( SourceRowPointer IS NULL OR Operation = " + sytelineAPI.QuoteFilterValue(OperationDelete) + " )";
+            string notReloadableFilter = "( RecordRowPointer IS NULL OR Operation = " + sytelineAPI.QuoteFilterValue(OperationDelete) + " )";
 
             // 1. ROWS WHOSE RECORD CAN BE RELOADED: THEY SAY WHICH SOURCE RECORD THEY ARE FOR AND AREN'T A DELETE (A DELETED RECORD CAN'T BE LOADED)
 
             LoadRecordsResponseData reloadableResponse = sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_IDOReplicationLogs",
-                properties: new List<string>() { "RowPointer", "SourceRowPointer" },
-                filter: failedRowsFilter + " AND SourceRowPointer IS NOT NULL AND Operation <> " + sytelineAPI.QuoteFilterValue(OperationDelete),
+                properties: new List<string>() { "RowPointer", "RecordRowPointer" },
+                filter: failedRowsFilter + " AND RecordRowPointer IS NOT NULL AND Operation <> " + sytelineAPI.QuoteFilterValue(OperationDelete),
                 orderBy: "CreateDate ASC",
                 recordCap: ResendFailedRowLimit
             );
@@ -1658,8 +1658,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
             {
                 Item = item,
                 LogRowPointer = (item.PropertyValues[reloadableResponse.PropertyKeys["RowPointer"]].Value ?? "").Trim(),
-                SourceRowPointer = (item.PropertyValues[reloadableResponse.PropertyKeys["SourceRowPointer"]].Value ?? "").Trim()
-            }).Where(reloadableRow => reloadableRow.SourceRowPointer != "").ToList();
+                RecordRowPointer = (item.PropertyValues[reloadableResponse.PropertyKeys["RecordRowPointer"]].Value ?? "").Trim()
+            }).Where(reloadableRow => reloadableRow.RecordRowPointer != "").ToList();
 
             // 2. ROWS THAT CAN'T BE RELOADED BUT HAVE A STORED PAYLOAD, AND ARE OUT OF RETRIES: THE RETRY TASK CAN RESEND THEM
 
@@ -1684,7 +1684,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             utils.WriteLogMessage("Failed replication log rows whose record can be reloaded: " + reloadableRows.Count + "." + (reloadableResponse.Items.Count >= ResendFailedRowLimit ? " That is the most one resend takes, so run it again for the rest." : ""));
 
             List<string> failedRowPointers = reloadableRows
-                .Select(reloadableRow => reloadableRow.SourceRowPointer)
+                .Select(reloadableRow => reloadableRow.RecordRowPointer)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -1726,7 +1726,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 string itemID = currentItemIDs.TryGetValue(reloadableRow.LogRowPointer, out string currentItemID) ? currentItemID : reloadableRow.Item.ItemID;
 
-                if (progress.RowPointersResent.Contains(reloadableRow.SourceRowPointer))
+                if (progress.RowPointersResent.Contains(reloadableRow.RecordRowPointer))
                 {
 
                     failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, itemID));
@@ -1734,7 +1734,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     countSuperseded++;
 
                 }
-                else if (!progress.RowPointersLoaded.Contains(reloadableRow.SourceRowPointer) && !progress.AnyRunNeverSent)
+                else if (!progress.RowPointersLoaded.Contains(reloadableRow.RecordRowPointer) && !progress.AnyRunNeverSent)
                 {
 
                     failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
@@ -1773,11 +1773,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             this.UpdateLogRows(sytelineAPI, utils, failedRowUpdates);
 
-            utils.WriteLogMessage("Resend finished. Records reloaded and sent: " + progress.RowPointersResent.Count + ". Failed rows replaced by the resend: " + countSuperseded + ". Failed rows whose record no longer exists: " + countGone + ". Failed rows the resend couldn't send, left for the retry task: " + countLeftForRetry + ". Failed deletes and rows with no source record, handed back to the retry task: " + requeueResponse.Items.Count + ".");
+            utils.WriteLogMessage("Resend finished. Records reloaded and sent: " + progress.RowPointersResent.Count + ". Failed rows replaced by the resend: " + countSuperseded + ". Failed rows whose record no longer exists: " + countGone + ". Failed rows the resend couldn't send, left for the retry task: " + countLeftForRetry + ". Failed deletes and rows with no record row pointer, handed back to the retry task: " + requeueResponse.Items.Count + ".");
 
             if (unsendableResponse.Items.Count > 0)
             {
-                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) have no stored payload and no record that can be reloaded (a delete, or no source record), so nothing can resend them. Use a bulk resync to send their records' current data.");
+                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) have no stored payload and no record that can be reloaded (a delete, or no record row pointer), so nothing can resend them. Use a bulk resync to send their records' current data.");
             }
 
             return progress.AnyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
@@ -1810,13 +1810,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
 
-            // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED (NOT A DELETE, AND WITH A SOURCE ROW POINTER), NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
+            // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED (NOT A DELETE, AND WITH A RECORD ROW POINTER), NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
             // SEND SOME OF THEM, AND THEN THEIR FAILED ROWS ARE OUT OF DATE.
 
             LoadRecordsResponseData failedResponse = sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_IDOReplicationLogs",
-                properties: new List<string>() { "RowPointer", "SourceRowPointer", "RetriesRemaining" },
-                filter: failedRowsFilter + " AND SourceRowPointer IS NOT NULL AND Operation <> " + sytelineAPI.QuoteFilterValue(OperationDelete),
+                properties: new List<string>() { "RowPointer", "RecordRowPointer", "RetriesRemaining" },
+                filter: failedRowsFilter + " AND RecordRowPointer IS NOT NULL AND Operation <> " + sytelineAPI.QuoteFilterValue(OperationDelete),
                 orderBy: "CreateDate DESC",
                 recordCap: ResendFailedRowLimit
             );
@@ -1825,9 +1825,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
             {
                 Item = item,
                 LogRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["RowPointer"]].Value ?? "").Trim(),
-                SourceRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["SourceRowPointer"]].Value ?? "").Trim(),
+                RecordRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["RecordRowPointer"]].Value ?? "").Trim(),
                 RetriesRemaining = ParseWholeNumber(item.PropertyValues[failedResponse.PropertyKeys["RetriesRemaining"]].Value)
-            }).Where(failedRow => failedRow.SourceRowPointer != "").ToList();
+            }).Where(failedRow => failedRow.RecordRowPointer != "").ToList();
 
             // TAKE THE ONES THAT STILL HAVE RETRIES OUT OF THE RETRY TASK'S QUEUE WHILE THE RESYNC RUNS. THE RETRY TASK RUNS EVERY MINUTE, AND
             // UNTIL THE RESYNC HAS WRITTEN ITS OWN ROWS IT WOULD SEE NOTHING NEWER FOR A RECORD AND COULD SEND A STORED PAYLOAD AFTER THE CURRENT
@@ -1864,7 +1864,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 string itemID = currentItemIDs.TryGetValue(failedRow.LogRowPointer, out string currentItemID) ? currentItemID : failedRow.Item.ItemID;
 
-                if (progress.RowPointersResent.Contains(failedRow.SourceRowPointer))
+                if (progress.RowPointersResent.Contains(failedRow.RecordRowPointer))
                 {
 
                     failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, itemID));
@@ -2650,12 +2650,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData, Dictionary<Dictionary<string, object>, string> transformWarnings = null, Dictionary<Dictionary<string, object>, string> sourceRowPointers = null)
+        private List<Dictionary<string, object>> RemapRecords(List<ReplicationField> fields, LoadRecordsResponseData recordsResponseData, Dictionary<Dictionary<string, object>, string> transformWarnings = null, Dictionary<Dictionary<string, object>, string> recordRowPointers = null)
         {
 
             Dictionary<string, object> remappedRecord;
             List<Dictionary<string, object>> remappedRecords = new List<Dictionary<string, object>>();
-            int rowPointerIndex = sourceRowPointers != null ? RowPointerIndex(recordsResponseData) : -1;
+            int rowPointerIndex = recordRowPointers != null ? RowPointerIndex(recordsResponseData) : -1;
 
             foreach (IDOItem record in recordsResponseData.Items)
             {
@@ -2664,7 +2664,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 if (rowPointerIndex >= 0)
                 {
-                    sourceRowPointers[remappedRecord] = record.PropertyValues[rowPointerIndex].Value ?? "";
+                    recordRowPointers[remappedRecord] = record.PropertyValues[rowPointerIndex].Value ?? "";
                 }
 
                 foreach (ReplicationField field in fields)

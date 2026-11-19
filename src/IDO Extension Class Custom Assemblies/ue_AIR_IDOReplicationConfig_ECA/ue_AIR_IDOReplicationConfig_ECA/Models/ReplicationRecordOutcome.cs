@@ -37,7 +37,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
 
         // THE RowPointer OF THE SOURCE RECORD IN SYTELINE. "" WHEN IT ISN'T KNOWN. IT IS LOGGED, AND NEVER SENT TO THE TARGET.
 
-        public string SourceRowPointer { get; set; } = "";
+        public string RecordRowPointer { get; set; } = "";
 
         public ReplicationRecordOutcome(string recordID, string payload, string status, string errorMessage = "")
         {
