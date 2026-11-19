@@ -249,6 +249,10 @@
          <TableName>Strings</TableName>
          <String>Attempt Count</String>
       </String>
+      <String Name="ue_AIR_sBulkResync" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Bulk Resync</String>
+      </String>
       <String Name="ue_AIR_sErrorMessage" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Error Message</String>
@@ -273,21 +277,29 @@
          <TableName>Strings</TableName>
          <String>RecordID</String>
       </String>
-      <String Name="ue_AIR_sResend" Scope="1" ScopeName="[NULL]">
+      <String Name="ue_AIR_sResendAllErrors" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
-         <String>Resend</String>
+         <String>Resend All Errors</String>
+      </String>
+      <String Name="ue_AIR_sResendErrors" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Resend Errors</String>
       </String>
       <String Name="ue_AIR_sResendFrom" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Changed From</String>
       </String>
-      <String Name="ue_AIR_sResendScope" Scope="1" ScopeName="[NULL]">
+      <String Name="ue_AIR_sResendLimit" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
-         <String>Resend</String>
+         <String>Limit (0 for no limit)</String>
       </String>
       <String Name="ue_AIR_sResendTo" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
-         <String>Changed To (blank for now)</String>
+         <String>Changed To</String>
+      </String>
+      <String Name="ue_AIR_sResync" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Resync</String>
       </String>
       <String Name="ue_AIR_sRetriesRemaining" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>

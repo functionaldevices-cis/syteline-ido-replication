@@ -6,15 +6,58 @@
          <Type>0</Type>
          <StandardOperations>953</StandardOperations>
          <Flags>1048778</Flags>
-         <Height>37</Height>
+         <Height>38</Height>
          <LeftPos>0</LeftPos>
          <TopPos>0</TopPos>
-         <Width>120</Width>
+         <Width>150</Width>
          <HelpContextID>-1</HelpContextID>
-         <PaneZeroSize>36</PaneZeroSize>
-         <PrimaryDataSource>V(fds_DataSource)</PrimaryDataSource>
+         <PaneZeroSize>30</PaneZeroSize>
+         <PrimaryDataSource>V(fds_DataSource)  V(fds_SC2)</PrimaryDataSource>
          <MasterDeviceID>0</MasterDeviceID>
          <Components>
+            <Component Name="BulkResyncButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>38</TabOrder>
+               <TopPos>33.5</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>ue_AIR_sResync</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>BulkResync</EventToGenerate>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sResync</EffectiveCaption>
+            </Component>
+            <Component Name="BulkResyncGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>23.5</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>13</Height>
+               <ListHeight>0</ListHeight>
+               <Width>100</Width>
+               <Caption>ue_AIR_sBulkResync</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sBulkResync</EffectiveCaption>
+            </Component>
             <Component Name="CredentialNameEdit">
                <DeviceID>-1</DeviceID>
                <Type>1</Type>
@@ -60,13 +103,148 @@
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>sAIRCredentialName</EffectiveCaption>
             </Component>
+            <Component Name="FailedLogsErrorMessageGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>40</Width>
+               <Caption>ue_AIR_sErrorMessage</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FailedLogsGrid</ContainerName>
+               <ContainerSequence>2</ContainerSequence>
+               <DataSource>object2.ErrorMessage</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>LongerDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sErrorMessage</EffectiveCaption>
+            </Component>
+            <Component Name="FailedLogsGrid">
+               <DeviceID>-1</DeviceID>
+               <Type>14</Type>
+               <TabOrder>21</TabOrder>
+               <TopPos>13</TopPos>
+               <LeftPos>4</LeftPos>
+               <Height>8.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>96</Width>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>objects2</DataSource>
+               <Binding>8</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+            </Component>
+            <Component Name="FailedLogsLastAttemptDateGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>18</Width>
+               <Caption>ue_AIR_sLastAttemptDate</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FailedLogsGrid</ContainerName>
+               <ContainerSequence>3</ContainerSequence>
+               <DataSource>object2.LastAttemptDate</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>DateTime</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sLastAttemptDate</EffectiveCaption>
+            </Component>
+            <Component Name="FailedLogsOperationGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>ue_AIR_sOperation</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FailedLogsGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object2.Operation</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sOperation</EffectiveCaption>
+            </Component>
+            <Component Name="FailedLogsRecordIDGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>ue_AIR_sRecordID</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FailedLogsGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object2.RecordID</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>LongDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sRecordID</EffectiveCaption>
+            </Component>
+            <Component Name="FailedLogsRetriesRemainingGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>5.88235294117647</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12</Width>
+               <Caption>ue_AIR_sRetriesRemaining</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FailedLogsGrid</ContainerName>
+               <ContainerSequence>4</ContainerSequence>
+               <DataSource>object2.RetriesRemaining</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sRetriesRemaining</EffectiveCaption>
+            </Component>
             <Component Name="FormCollectionGrid">
                <DeviceID>-1</DeviceID>
                <Type>14</Type>
                <TabOrder>0</TabOrder>
                <TopPos>0</TopPos>
                <LeftPos>0</LeftPos>
-               <Height>37</Height>
+               <Height>38</Height>
                <ListHeight>0</ListHeight>
                <Width>100</Width>
                <Caption>fue_AIR_IDOReplicationResend</Caption>
@@ -85,8 +263,8 @@
             <Component Name="FromDateDateCombo">
                <DeviceID>-1</DeviceID>
                <Type>26</Type>
-               <TabOrder>21</TabOrder>
-               <TopPos>11.5</TopPos>
+               <TabOrder>31</TabOrder>
+               <TopPos>25</TopPos>
                <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
@@ -109,8 +287,8 @@
             <Component Name="FromDateStatic">
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
-               <TabOrder>20</TabOrder>
-               <TopPos>11.8</TopPos>
+               <TabOrder>30</TabOrder>
+               <TopPos>25.3</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
@@ -126,30 +304,6 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>ue_AIR_sResendFrom</EffectiveCaption>
-            </Component>
-            <Component Name="IDONameGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>0</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sIDOName</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>FormCollectionGrid</ContainerName>
-               <ContainerSequence>1</ContainerSequence>
-               <DataSource>object.IDOName</DataSource>
-               <Binding>1</Binding>
-               <Flags>384</Flags>
-               <ReadOnly>True</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <MenuName>StdDefault</MenuName>
-               <PropertyClassName>IDOName</PropertyClassName>
-               <Post301Format />
-               <EffectiveCaption>sIDOName</EffectiveCaption>
             </Component>
             <Component Name="IDONameEdit">
                <DeviceID>-1</DeviceID>
@@ -174,6 +328,30 @@
                <PropertyClassName>IDOName</PropertyClassName>
                <Post301Format />
                <EffectiveCaption>C(IDONameStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="IDONameGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sIDOName</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.IDOName</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>IDOName</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sIDOName</EffectiveCaption>
             </Component>
             <Component Name="IDONameStatic">
                <DeviceID>-1</DeviceID>
@@ -220,72 +398,136 @@
                <Post301Format />
                <EffectiveCaption>sIsActive</EffectiveCaption>
             </Component>
-            <Component Name="ResendButton">
+            <Component Name="QueryFilterEdit">
                <DeviceID>-1</DeviceID>
-               <Type>8</Type>
-               <TabOrder>30</TabOrder>
-               <TopPos>18.5</TopPos>
+               <Type>1</Type>
+               <TabOrder>35</TabOrder>
+               <TopPos>29</TopPos>
                <LeftPos>21.5</LeftPos>
-               <Height>1.5</Height>
+               <Height>1.3</Height>
                <ListHeight>0</ListHeight>
-               <Width>15</Width>
-               <Caption>ue_AIR_sResend</Caption>
+               <Width>70</Width>
+               <Caption>C(QueryFilterStatic)</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
                <ContainerSequence>0</ContainerSequence>
-               <Binding>0</Binding>
-               <EventToGenerate>Resend</EventToGenerate>
+               <DataSource>variables.sQueryFilter</DataSource>
+               <Binding>6</Binding>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format />
-               <EffectiveCaption>ue_AIR_sResend</EffectiveCaption>
-            </Component>
-            <Component Name="ResendGroupBox">
-               <DeviceID>-1</DeviceID>
-               <Type>6</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>9.5</TopPos>
-               <LeftPos>2</LeftPos>
-               <Height>12</Height>
-               <ListHeight>0</ListHeight>
-               <Width>62</Width>
-               <Caption>ue_AIR_sResend</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName />
-               <ContainerSequence>0</ContainerSequence>
-               <Binding>0</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format />
-               <EffectiveCaption>ue_AIR_sResend</EffectiveCaption>
-            </Component>
-            <Component Name="RuleNumGridCol">
-               <DeviceID>-1</DeviceID>
-               <Type>15</Type>
-               <TabOrder>0</TabOrder>
-               <TopPos>0</TopPos>
-               <LeftPos>0</LeftPos>
-               <Height>0</Height>
-               <ListHeight>0</ListHeight>
-               <Width>12.5</Width>
-               <Caption>sue_AIR_RuleNum</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName>FormCollectionGrid</ContainerName>
-               <ContainerSequence>0</ContainerSequence>
-               <DataSource>object.RuleNum</DataSource>
-               <Binding>1</Binding>
-               <Flags>384</Flags>
-               <ReadOnly>True</ReadOnly>
                <Hidden>False</Hidden>
                <HelpContextID>0</HelpContextID>
                <MenuName>StdDefault</MenuName>
-               <PropertyClassName>GenericInt</PropertyClassName>
                <Post301Format />
-               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
+               <EffectiveCaption>C(QueryFilterStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="QueryFilterStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>34</TabOrder>
+               <TopPos>29.3</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>sFilter</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>sFilter</EffectiveCaption>
+            </Component>
+            <Component Name="RecordCapEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>1</Type>
+               <TabOrder>37</TabOrder>
+               <TopPos>31</TopPos>
+               <LeftPos>21.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>15</Width>
+               <Caption>C(RecordCapStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>variables.sRecordCap(INITIALVALUE(0))</DataSource>
+               <Binding>6</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <Post301Format />
+               <EffectiveCaption>C(RecordCapStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="RecordCapStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>36</TabOrder>
+               <TopPos>31.3</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>17</Width>
+               <Caption>ue_AIR_sResendLimit</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sResendLimit</EffectiveCaption>
+            </Component>
+            <Component Name="ResendErrorsButton">
+               <DeviceID>-1</DeviceID>
+               <Type>8</Type>
+               <TabOrder>20</TabOrder>
+               <TopPos>10.8</TopPos>
+               <LeftPos>4</LeftPos>
+               <Height>1.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>ue_AIR_sResendAllErrors</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <EventToGenerate>ResendErrors</EventToGenerate>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sResendAllErrors</EffectiveCaption>
+            </Component>
+            <Component Name="ResendErrorsGroupBox">
+               <DeviceID>-1</DeviceID>
+               <Type>6</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>9</TopPos>
+               <LeftPos>2</LeftPos>
+               <Height>13.5</Height>
+               <ListHeight>0</ListHeight>
+               <Width>100</Width>
+               <Caption>ue_AIR_sResendErrors</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sResendErrors</EffectiveCaption>
             </Component>
             <Component Name="RuleNumEdit">
                <DeviceID>-1</DeviceID>
@@ -311,6 +553,30 @@
                <Post301Format />
                <EffectiveCaption>C(RuleNumStatic)</EffectiveCaption>
             </Component>
+            <Component Name="RuleNumGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>0</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>12.5</Width>
+               <Caption>sue_AIR_RuleNum</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.RuleNum</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>GenericInt</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
+            </Component>
             <Component Name="RuleNumStatic">
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
@@ -331,51 +597,6 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>sue_AIR_RuleNum</EffectiveCaption>
-            </Component>
-            <Component Name="ScopeCombo">
-               <DeviceID>-1</DeviceID>
-               <Type>27</Type>
-               <TabOrder>25</TabOrder>
-               <TopPos>15.5</TopPos>
-               <LeftPos>21.5</LeftPos>
-               <Height>1.3</Height>
-               <ListHeight>0</ListHeight>
-               <Width>40</Width>
-               <Caption>C(ScopeStatic)</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName />
-               <ContainerSequence>0</ContainerSequence>
-               <DataSource>variables.sScope</DataSource>
-               <Binding>6</Binding>
-               <ComboListSource>INLINE ENTRIES(Failures\Only the records that failed,Everything\Every record changed in the period) DISPLAY(2) VALUE(1)</ComboListSource>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <MenuName>StdDefault</MenuName>
-               <Post301Format />
-               <EffectiveCaption>C(ScopeStatic)</EffectiveCaption>
-            </Component>
-            <Component Name="ScopeStatic">
-               <DeviceID>-1</DeviceID>
-               <Type>0</Type>
-               <TabOrder>24</TabOrder>
-               <TopPos>15.8</TopPos>
-               <LeftPos>3</LeftPos>
-               <Height>0.7</Height>
-               <ListHeight>0</ListHeight>
-               <Width>17</Width>
-               <Caption>ue_AIR_sResendScope</Caption>
-               <MaxCharacters>0</MaxCharacters>
-               <ContainerName />
-               <ContainerSequence>0</ContainerSequence>
-               <Binding>0</Binding>
-               <Flags>1</Flags>
-               <ReadOnly>False</ReadOnly>
-               <Hidden>False</Hidden>
-               <HelpContextID>0</HelpContextID>
-               <Post301Format>JUSTIFY(R)</Post301Format>
-               <EffectiveCaption>ue_AIR_sResendScope</EffectiveCaption>
             </Component>
             <Component Name="TargetTypeGridCol">
                <DeviceID>-1</DeviceID>
@@ -404,8 +625,8 @@
             <Component Name="ToDateDateCombo">
                <DeviceID>-1</DeviceID>
                <Type>26</Type>
-               <TabOrder>23</TabOrder>
-               <TopPos>13.5</TopPos>
+               <TabOrder>33</TabOrder>
+               <TopPos>27</TopPos>
                <LeftPos>21.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
@@ -428,8 +649,8 @@
             <Component Name="ToDateStatic">
                <DeviceID>-1</DeviceID>
                <Type>0</Type>
-               <TabOrder>22</TabOrder>
-               <TopPos>13.8</TopPos>
+               <TabOrder>32</TabOrder>
+               <TopPos>27.3</TopPos>
                <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
@@ -448,9 +669,25 @@
             </Component>
          </Components>
          <EventHandlers>
-            <EventHandler Name="Resend" Sequence="0">
+            <EventHandler Name="BulkResync" Sequence="0">
                <ResponseType>19</ResponseType>
-               <Response>TASKNAME(V(BGTaskName))TASKPARMS(V(BGTaskParms))TASKSTATUS(V(BGTaskStatus))TASKNUMBER(BGTaskNumber) ERRORMESSAGE(mBackEndMessage) SUCCESSMESSAGE(mBackEndMessage)</Response>
+               <Response>TASKNAME(V(BGTaskName))TASKPARMS(V(BGTaskParmsBulk))TASKSTATUS(V(BGTaskStatus))TASKNUMBER(BGTaskNumber) ERRORMESSAGE(mBackEndMessage) SUCCESSMESSAGE(mBackEndMessage)</Response>
+            </EventHandler>
+            <EventHandler Name="ResendErrors" Sequence="0">
+               <ResponseType>19</ResponseType>
+               <Response>TASKNAME(V(BGTaskName))TASKPARMS(V(BGTaskParmsErrors))TASKSTATUS(V(BGTaskStatus))TASKNUMBER(BGTaskNumber) ERRORMESSAGE(mBackEndMessage) SUCCESSMESSAGE(mBackEndMessage)</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormRefreshCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormRefreshCurrentCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
+            <EventHandler Name="StdObjectSelectCurrentCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
             </EventHandler>
          </EventHandlers>
          <Variables>
@@ -460,8 +697,14 @@
                <Value3 />
                <Description />
             </Variable>
-            <Variable Name="BGTaskParms">
-               <Value>BG~TASKID~, P(RuleNum), V(sFromDate), V(sToDate), V(sScope)</Value>
+            <Variable Name="BGTaskParmsBulk">
+               <Value>BG~TASKID~, P(RuleNum), V(sFromDate), V(sToDate), Everything, V(sQueryFilter), V(sRecordCap)</Value>
+               <Value2 />
+               <Value3 />
+               <Description />
+            </Variable>
+            <Variable Name="BGTaskParmsErrors">
+               <Value>BG~TASKID~, P(RuleNum), , , Failures, , 0</Value>
                <Value2 />
                <Value3 />
                <Description />
@@ -472,14 +715,14 @@
                <Value3 />
                <Description />
             </Variable>
-            <Variable Name="InitialCommand">
-               <Value>FilterInPlace</Value>
+            <Variable Name="fds_SC2">
+               <Value>OBJECT2( ue_AIR_IDOReplicationLogs( CA(RSV) OBJNAME(oFailedLogs) FILTERPERM(Status = 'Failed' AND RuleNum = FP(RuleNum) AND IDOName = FP(IDOName) AND (Payload IS NOT NULL OR (SourceRowPointer IS NOT NULL AND Operation &lt;&gt; 'Delete'))) ORDERBY(CreateDate DESC) LOCKMODE(Row) ) )</Value>
                <Value2 />
                <Value3 />
                <Description />
             </Variable>
-            <Variable Name="sScope">
-               <Value>Failures</Value>
+            <Variable Name="InitialCommand">
+               <Value>FilterInPlace</Value>
                <Value2 />
                <Value3 />
                <Description />

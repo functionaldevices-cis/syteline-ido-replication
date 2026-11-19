@@ -70,7 +70,7 @@ Create three Background Task Definitions.
 **Resend** (see [Resending Records](Resending-Records))
 - Task name: `ue_AIR_ResendReplications`
 - Calls the `ue_AIR_IDOReplicationRules` IDO method `ue_ResendReplications`
-- Parameters: `BG~TASKID~, <rule number>, <from>, <to>, <Failures or Everything>`. The Resend form fills these in.
+- Parameters: `BG~TASKID~, <rule number>, <from>, <to>, <Failures or Everything>, <filter>, <limit>`. The Resend form fills these in.
 - Not scheduled. The form submits it.
 
 ## 5. Configure
