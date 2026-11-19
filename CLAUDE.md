@@ -106,3 +106,24 @@ An IDO method's name in the IDO must exactly match the C# method name, `ue_` pre
 ## Pull requests
 
 After pushing changes to a branch, always open a pull request against `main` without asking first. If the branch already has an open pull request, the push updates it.
+
+### Review your own change before every push
+
+Before every push, have the change reviewed by a separate agent that hasn't seen your reasoning. That covers the push that opens a pull request and each later push to it. The Claude Code Review check that runs on each pull request keeps finding real bugs in first passes, and finding them first saves a round trip.
+
+This applies to every change: C#, the IDO and form exports, the SQL files, and documentation on its own. One review per push is enough. Small fixes you make because of the review don't need a second review.
+
+1. **Commit the change, then run `git fetch origin main`.** The reviewer reads what the branch adds over `main`. Have it start with `git diff --stat origin/main...HEAD` and then read `git diff -I'^[A-Za-z0-9+/=]{60,}$' origin/main...HEAD`. The `-I` option leaves out the base64 lines of the two assemblies embedded in the IDO export. A re-export rewrites about 4,000 of those lines, and without it they bury the changes that matter. On a later push, also tell the reviewer which commits are new since the last push.
+2. **Start a subagent as the reviewer.** Tell it to report findings and not to edit files. Give it the diff command, the repository path and what the change is meant to do. Don't give it your conclusions or tell it the change is correct. If the session has a code review skill, you can run it as well, but it doesn't replace the subagent, because the subagent is the one that gets the checklist below.
+3. **Give it this checklist.** Ask it to look for:
+   - an assumption about Mongoose or Syteline that isn't verified in the code or in the section "Mongoose facts that are easy to get wrong" in this file
+   - a path where a failure loses data, a log row or a retry
+   - a path that can throw out of a trigger
+   - a helper or model changed in one project and not the other
+   - a schema, IDO or form change that `wiki/Installation.md` (its install steps and its Upgrading section) and the README's install steps don't mention
+   - documentation that says something the code doesn't do
+   - a rule in this file that the change breaks, for example a hand-edited IDO without its revision bumped, two places that must hold the same string and no longer do, or an `<AssemblyImage>` edited by hand (a re-export that replaces the whole image is normal)
+4. **Check each finding against the code.** Fix the ones that are real. Nothing runs locally, so some findings can't be confirmed either way. Don't change code for those, and don't drop them: list them as unverified.
+5. **Put a "Self-review" note in the pull request description.** Say what the review found, what you changed, and what is left unverified. If it found nothing, say that. Update the note on each later push.
+
+The Claude Code Review check still runs afterward. Treat it as the second check, not the first.
