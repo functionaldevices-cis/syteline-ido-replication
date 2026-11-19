@@ -19,7 +19,7 @@ One row per record per rule.
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
-| SourceRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored. |
+| RecordRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored. |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried |

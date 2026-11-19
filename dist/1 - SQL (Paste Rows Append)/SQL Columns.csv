@@ -25,7 +25,7 @@ attempt_count,dbo,ue_AIR_idorepl_log_mst,GenericIntType,1,NO
 last_attempt_date,dbo,ue_AIR_idorepl_log_mst,DateTimeType,,YES
 credential_name,dbo,ue_AIR_idorepl_log_mst,LongDescType,,NO
 source,dbo,ue_AIR_idorepl_log_mst,ShortDescType,,NO
-source_row_pointer,dbo,ue_AIR_idorepl_log_mst,RowPointerType,,YES
+record_row_pointer,dbo,ue_AIR_idorepl_log_mst,RowPointerType,,YES
 rule_num,dbo,ue_AIR_idorepl_mapfield_mst,GenericIntType,,NO
 field_seq,dbo,ue_AIR_idorepl_mapfield_mst,SequenceType,,NO
 name,dbo,ue_AIR_idorepl_mapfield_mst,LongDescType,,NO
