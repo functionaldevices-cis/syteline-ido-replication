@@ -15,11 +15,11 @@ Both run as a background task, so the form doesn't wait. Look at the task's mess
 
 ## Resend Errors
 
-The grid lists the rule's `Failed` log rows, newest first. It shows up to 200 rows. The resend takes all of them, not only the ones shown.
+The grid lists the rule's `Failed` log rows that the button acts on, newest first. It shows up to 200 rows. The button takes all of them, not only the ones shown. A failed row with no stored payload and no source record isn't listed, because nothing can resend it. Those rows are on the [replication log](Replication-Log-and-Retries) form.
 
 Click **Resend All Errors**. There is nothing to fill in.
 
-The grid doesn't change when you click, because the task runs in the background. Refresh the form after the task finishes to see what is left.
+The grid doesn't change when you click, because the task runs in the background. Refresh the form after the task finishes to see what is left. A row for a failed delete, or one with no source record, stays listed until the retry task has sent its stored payload.
 
 ## Bulk Resync
 
@@ -28,7 +28,7 @@ The grid doesn't change when you click, because the task runs in the background.
 3. **Limit** is the most records to send. `0` means no limit.
 4. Click **Resync**.
 
-With no dates, no filter and a limit of 0, a bulk resync sends every record of the rule's IDO.
+With no dates, no filter and a limit of 0, a bulk resync sends every record of the rule's IDO. If nothing matches the period and the filter, the task shows as failed and its messages say so.
 
 A bulk resync doesn't look for failed records. It sends what the period and the filter select. If one of those records has a `Failed` row, that row is brought up to date, as described below.
 
@@ -66,7 +66,7 @@ After **Bulk Resync**:
 - **A period needs a Record Date.** To use Changed From or Changed To, the source IDO has to have the `RecordDate` property, which standard Syteline IDOs do.
 - **It can't resend a delete that never failed.** If a delete was never replicated, for example because triggers were inactive, nothing in Syteline or the log says the record existed.
 - **One Resend Errors run reloads the records of 10,000 failed rows at most.** The task's messages say when it reached that. Run it again for the rest: the rows it has resent are `Skipped` by then, so the next run takes the following ones.
-- **While a resend runs, the retry task leaves its records alone.** The resend takes the failed rows it may replace out of the retry queue first, so a stored payload can't be sent after the current data. A bulk resync puts back the retries of the rows it didn't replace.
+- **While a resend runs, the retry task leaves its records alone.** The resend takes the failed rows it may replace out of the retry queue first, so a stored payload can't be sent after the current data. A bulk resync does this for the failed rows whose record can be reloaded and that still have retries, and puts back the retries of the ones it didn't replace. If the task is stopped partway, those rows are left with no retries. Click **Resend All Errors** to pick them up.
 - **Dates are read in these forms:** `2026-11-18 14:00:00`, `20261118 14:00:00`, or the server's own date format. If the task says a date couldn't be read, enter it in the first form.
 
 ## Running it without the form

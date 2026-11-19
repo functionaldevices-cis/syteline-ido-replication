@@ -685,6 +685,10 @@
                <ResponseType>28</ResponseType>
                <Response>object2 COLID(object)</Response>
             </EventHandler>
+            <EventHandler Name="StdObjectSelectCurrentCompleted" Sequence="0">
+               <ResponseType>28</ResponseType>
+               <Response>object2 COLID(object)</Response>
+            </EventHandler>
          </EventHandlers>
          <Variables>
             <Variable Name="BGTaskName">
@@ -712,7 +716,7 @@
                <Description />
             </Variable>
             <Variable Name="fds_SC2">
-               <Value>OBJECT2( ue_AIR_IDOReplicationLogs( CA(RSV) OBJNAME(oFailedLogs) FILTERPERM(Status = 'Failed' AND RuleNum = FP(RuleNum)) ORDERBY(CreateDate DESC) LOCKMODE(Row) ) )</Value>
+               <Value>OBJECT2( ue_AIR_IDOReplicationLogs( CA(RSV) OBJNAME(oFailedLogs) FILTERPERM(Status = 'Failed' AND RuleNum = FP(RuleNum) AND (SourceRowPointer IS NOT NULL OR Payload IS NOT NULL)) ORDERBY(CreateDate DESC) LOCKMODE(Row) ) )</Value>
                <Value2 />
                <Value3 />
                <Description />

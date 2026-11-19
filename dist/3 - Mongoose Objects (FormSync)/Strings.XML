@@ -295,7 +295,7 @@
       </String>
       <String Name="ue_AIR_sResendTo" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
-         <String>Changed To (blank for now)</String>
+         <String>Changed To</String>
       </String>
       <String Name="ue_AIR_sResync" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>

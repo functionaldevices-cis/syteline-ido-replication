@@ -1454,6 +1454,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             public bool AnyRunNeverSent { get; set; } = false;
 
+            // A RUN FOUND NO RULE OR NO RECORD TO SEND
+
+            public bool NothingToSend { get; set; } = false;
+
         }
 
 
@@ -1588,6 +1592,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     progress.AnyRuleFailed = true;
                 }
 
+                if (runResult.NothingToSend)
+                {
+                    progress.NothingToSend = true;
+                }
+
                 progress.RowPointersLoaded.UnionWith(runResult.SourceRowPointersLoaded);
 
                 if (neverSent)
@@ -1648,6 +1657,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             var reloadableRows = reloadableResponse.Items.Select(item => new
             {
                 Item = item,
+                LogRowPointer = (item.PropertyValues[reloadableResponse.PropertyKeys["RowPointer"]].Value ?? "").Trim(),
                 SourceRowPointer = (item.PropertyValues[reloadableResponse.PropertyKeys["SourceRowPointer"]].Value ?? "").Trim()
             }).Where(reloadableRow => reloadableRow.SourceRowPointer != "").ToList();
 
@@ -1701,6 +1711,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
             //   - ITS RECORD IS GONE FROM SYTELINE: THERE IS NOTHING TO SEND, SO IT IS SKIPPED. THIS IS ONLY SAID WHEN EVERY RUN GOT AS FAR AS
             //     ITS RECORDS, BECAUSE A RUN THAT DIDN'T MAY SIMPLY NOT HAVE LOADED THE RECORD.
             //   - ANYTHING ELSE WASN'T RESENT: IT GETS ITS RETRIES BACK, SO THE RETRY TASK STILL RESENDS ITS STORED PAYLOAD.
+            //
+            // EVERY ONE OF THESE ROWS WAS ALREADY UPDATED ABOVE, SO ITS ItemID FROM THE FIRST LOAD IS OUT OF DATE. SEE LoadCurrentLogItemIDs.
+
+            Dictionary<string, string> currentItemIDs = this.LoadCurrentLogItemIDs(sytelineAPI, utils, reloadableRows.Select(reloadableRow => reloadableRow.LogRowPointer));
 
             List<IDOUpdateItem> failedRowUpdates = new List<IDOUpdateItem>();
             int countSuperseded = 0;
@@ -1710,10 +1724,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
             foreach (var reloadableRow in reloadableRows)
             {
 
+                string itemID = currentItemIDs.TryGetValue(reloadableRow.LogRowPointer, out string currentItemID) ? currentItemID : reloadableRow.Item.ItemID;
+
                 if (progress.RowPointersResent.Contains(reloadableRow.SourceRowPointer))
                 {
 
-                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, reloadableRow.Item.ItemID));
+                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, itemID));
 
                     countSuperseded++;
 
@@ -1721,7 +1737,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 else if (!progress.RowPointersLoaded.Contains(reloadableRow.SourceRowPointer) && !progress.AnyRunNeverSent)
                 {
 
-                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(reloadableRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
                     {
                         new IDOUpdateProperty("Status", ReplicationRecordOutcome.StatusSkipped, true),
                         new IDOUpdateProperty("ErrorMessage", "The record no longer exists in SyteLine, so it wasn't resent.", true),
@@ -1734,7 +1750,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 else
                 {
 
-                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(reloadableRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
                     {
                         new IDOUpdateProperty("RetriesRemaining", DefaultRetries, true)
                     }));
@@ -1794,7 +1810,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
 
-            // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED, NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
+            // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED (NOT A DELETE, AND WITH A SOURCE ROW POINTER), NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
             // SEND SOME OF THEM, AND THEN THEIR FAILED ROWS ARE OUT OF DATE.
 
             LoadRecordsResponseData failedResponse = sytelineAPI.LoadRecords(
@@ -1808,6 +1824,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             var failedRows = failedResponse.Items.Select(item => new
             {
                 Item = item,
+                LogRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["RowPointer"]].Value ?? "").Trim(),
                 SourceRowPointer = (item.PropertyValues[failedResponse.PropertyKeys["SourceRowPointer"]].Value ?? "").Trim(),
                 RetriesRemaining = ParseWholeNumber(item.PropertyValues[failedResponse.PropertyKeys["RetriesRemaining"]].Value)
             }).Where(failedRow => failedRow.SourceRowPointer != "").ToList();
@@ -1833,6 +1850,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
             //   - ITS RECORD WAS SENT AGAIN: THE RESYNC WROTE A NEWER ROW FOR IT (FAILED OR NOT), SO THIS ONE IS SKIPPED.
             //   - ITS RECORD WASN'T PART OF THE RESYNC: IT GETS BACK THE RETRIES IT HAD. A ROW THAT HAD NONE IS LEFT ALONE, SO A RESYNC NEVER
             //     PUTS AN OLD FAILURE BACK IN THE RETRY TASK'S QUEUE.
+            //
+            // THE ROWS THAT WERE TAKEN OUT OF THE RETRY QUEUE WERE ALREADY UPDATED ABOVE, SO THEIR ItemID FROM THE FIRST LOAD IS OUT OF DATE. SEE
+            // LoadCurrentLogItemIDs.
+
+            Dictionary<string, string> currentItemIDs = this.LoadCurrentLogItemIDs(sytelineAPI, utils, rowsAwaitingRetry.Select(failedRow => failedRow.LogRowPointer));
 
             List<IDOUpdateItem> failedRowUpdates = new List<IDOUpdateItem>();
             int countSuperseded = 0;
@@ -1840,10 +1862,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
             foreach (var failedRow in failedRows)
             {
 
+                string itemID = currentItemIDs.TryGetValue(failedRow.LogRowPointer, out string currentItemID) ? currentItemID : failedRow.Item.ItemID;
+
                 if (progress.RowPointersResent.Contains(failedRow.SourceRowPointer))
                 {
 
-                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, failedRow.Item.ItemID));
+                    failedRowUpdates.Add(BuildSupersededUpdate(sytelineAPI, itemID));
 
                     countSuperseded++;
 
@@ -1851,7 +1875,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 else if (failedRow.RetriesRemaining > 0)
                 {
 
-                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(failedRow.Item.ItemID, new List<IDOUpdateProperty>()
+                    failedRowUpdates.Add(sytelineAPI.BuildUpdateItem(itemID, new List<IDOUpdateProperty>()
                     {
                         new IDOUpdateProperty("RetriesRemaining", failedRow.RetriesRemaining, true)
                     }));
@@ -1862,9 +1886,61 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             this.UpdateLogRows(sytelineAPI, utils, failedRowUpdates);
 
-            utils.WriteLogMessage("Bulk resync finished. Records loaded and sent: " + progress.RowPointersResent.Count + (recordCap > 0 && progress.RowPointersLoaded.Count >= recordCap ? " (the limit, so there may be more)" : "") + ". Failed rows replaced by the resync: " + countSuperseded + "." + (failedResponse.Items.Count >= ResendFailedRowLimit ? " The rule has " + ResendFailedRowLimit + " or more failed rows, and only the newest " + ResendFailedRowLimit + " were checked." : ""));
+            utils.WriteLogMessage("Bulk resync finished. Records loaded and sent: " + progress.RowPointersResent.Count + (recordCap > 0 && progress.RowPointersResent.Count >= recordCap ? " (the limit, so there may be more)" : "") + ". Failed rows replaced by the resync: " + countSuperseded + "." + (failedResponse.Items.Count >= ResendFailedRowLimit ? " The rule has " + ResendFailedRowLimit + " or more failed rows, and only the newest " + ResendFailedRowLimit + " were checked." : ""));
 
-            return progress.AnyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
+            // LIKE A BULK LOAD, A RESYNC THAT FOUND NOTHING TO SEND SHOWS AS FAILED, SO A FILTER THAT MATCHES NO RECORD DOESN'T LOOK LIKE SUCCESS
+
+            return progress.AnyRuleFailed || progress.NothingToSend ? BackgroundTaskFailedReturnCode : 0;
+
+        }
+
+
+
+        // LOADS THE CURRENT ItemID OF REPLICATION LOG ROWS, BY THEIR RowPointer.
+        //
+        // AN ItemID HOLDS THE ROW'S RecordDate AS IT WAS WHEN THE ROW WAS LOADED, AND AN UPDATE THAT GIVES AN ItemID USES OPTIMISTIC LOCKING:
+        // IT IS REFUSED WHEN THE ROW HAS CHANGED SINCE. A RESEND UPDATES A FAILED ROW TWICE (IT TAKES THE ROW OUT OF THE RETRY QUEUE, THEN
+        // SETTLES IT), SO THE SECOND UPDATE NEEDS THE ItemID AS IT IS AFTER THE FIRST. A ROW THAT ISN'T IN THE RESULT KEEPS THE ItemID IT WAS
+        // LOADED WITH. NEVER THROWS.
+
+        private Dictionary<string, string> LoadCurrentLogItemIDs(SytelineInternalAPI sytelineAPI, Utilities utils, IEnumerable<string> logRowPointers)
+        {
+
+            Dictionary<string, string> itemIDs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            List<string> rowPointers = logRowPointers
+                .Where(rowPointer => !string.IsNullOrEmpty(rowPointer))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            for (int i = 0; i < rowPointers.Count; i += ResendRowPointerBatchSize)
+            {
+
+                try
+                {
+
+                    LoadRecordsResponseData response = sytelineAPI.LoadRecords(
+                        IDOName: "ue_AIR_IDOReplicationLogs",
+                        properties: new List<string>() { "RowPointer" },
+                        filter: sytelineAPI.BuildInFilter("RowPointer", rowPointers.Skip(i).Take(ResendRowPointerBatchSize)),
+                        orderBy: "",
+                        recordCap: SytelineInternalAPI.NoRecordCap
+                    );
+
+                    foreach (IDOItem item in response.Items)
+                    {
+                        itemIDs[(item.PropertyValues[response.PropertyKeys["RowPointer"]].Value ?? "").Trim()] = item.ItemID;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    utils.WriteLogMessage("Couldn't reload replication log rows " + (i + 1) + " to " + Math.Min(i + ResendRowPointerBatchSize, rowPointers.Count) + " before updating them: " + this.DescribeException(ex));
+                }
+
+            }
+
+            return itemIDs;
 
         }
 
