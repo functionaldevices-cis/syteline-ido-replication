@@ -35,7 +35,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA.Models
 
         public string Warning { get; set; } = "";
 
-        // THE RowPointer OF THE SOURCE RECORD IN SYTELINE. "" WHEN IT ISN'T KNOWN. IT IS LOGGED, AND NEVER SENT TO THE TARGET.
+        // THE RowPointer OF THE RECORD IN SYTELINE THAT WAS REPLICATED. "" WHEN IT ISN'T KNOWN. IT IS LOGGED, AND NEVER SENT TO THE TARGET.
 
         public string RecordRowPointer { get; set; } = "";
 

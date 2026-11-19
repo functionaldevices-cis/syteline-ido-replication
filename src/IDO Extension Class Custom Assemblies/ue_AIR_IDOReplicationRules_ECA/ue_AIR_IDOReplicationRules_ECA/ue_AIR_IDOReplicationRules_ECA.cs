@@ -398,7 +398,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             Dictionary<Dictionary<string, object>, string> transformWarnings = new Dictionary<Dictionary<string, object>, string>();
 
-            // EACH REMAPPED RECORD'S SOURCE RowPointer, KEYED THE SAME WAY. IT ISN'T PART OF THE RECORD, SO IT IS NEVER SENT. BuildOutcome READS IT.
+            // THE RowPointer OF THE SYTELINE RECORD BEHIND EACH REMAPPED RECORD, KEYED THE SAME WAY. IT ISN'T PART OF THE RECORD, SO IT IS NEVER SENT. BuildOutcome READS IT.
 
             this.recordRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
 
@@ -1088,8 +1088,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private Dictionary<string, HashSet<string>> recordIDsAwaitingRetry = new Dictionary<string, HashSet<string>>();
 
-        // THE SOURCE RowPointer OF EACH REMAPPED RECORD OF THE RULE BEING SENT, KEYED BY THE RECORD (REFERENCE EQUALITY). ReplicateRule SETS IT.
-        // A RECORD THAT ISN'T IN IT, SUCH AS ONE THE RETRY TASK READ BACK FROM A STORED PAYLOAD, HAS NO KNOWN SOURCE RowPointer.
+        // THE RowPointer OF THE SYTELINE RECORD BEHIND EACH REMAPPED RECORD OF THE RULE BEING SENT, KEYED BY THE RECORD (REFERENCE EQUALITY). ReplicateRule SETS IT.
+        // A RECORD THAT ISN'T IN IT, SUCH AS ONE THE RETRY TASK READ BACK FROM A STORED PAYLOAD, HAS NO KNOWN RowPointer.
 
         private Dictionary<Dictionary<string, object>, string> recordRowPointersByRecord = new Dictionary<Dictionary<string, object>, string>();
 
