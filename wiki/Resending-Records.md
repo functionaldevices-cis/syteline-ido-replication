@@ -15,7 +15,7 @@ Both run as a background task, so the form doesn't wait. Look at the task's mess
 
 ## Resend Errors
 
-The grid lists the rule's `Failed` log rows that the button acts on, newest first. It shows up to 200 rows. The button takes all of them, not only the ones shown. A failed row with no stored payload and no source record isn't listed, because nothing can resend it. Those rows are on the [replication log](Replication-Log-and-Retries) form.
+The grid lists the rule's `Failed` log rows that the button acts on, newest first. It shows up to 200 rows. The button takes all of them, not only the ones shown. A failed row that nothing can resend isn't listed: one with no stored payload whose record can't be reloaded, because it has no source record or was a delete. Rows logged for a different IDO, from before the rule's IDO Name was changed, aren't listed either. All of those rows are on the [replication log](Replication-Log-and-Retries) form.
 
 Click **Resend All Errors**. There is nothing to fill in.
 

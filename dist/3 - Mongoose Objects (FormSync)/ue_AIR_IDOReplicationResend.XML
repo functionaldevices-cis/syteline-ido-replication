@@ -716,7 +716,7 @@
                <Description />
             </Variable>
             <Variable Name="fds_SC2">
-               <Value>OBJECT2( ue_AIR_IDOReplicationLogs( CA(RSV) OBJNAME(oFailedLogs) FILTERPERM(Status = 'Failed' AND RuleNum = FP(RuleNum) AND (SourceRowPointer IS NOT NULL OR Payload IS NOT NULL)) ORDERBY(CreateDate DESC) LOCKMODE(Row) ) )</Value>
+               <Value>OBJECT2( ue_AIR_IDOReplicationLogs( CA(RSV) OBJNAME(oFailedLogs) FILTERPERM(Status = 'Failed' AND RuleNum = FP(RuleNum) AND IDOName = FP(IDOName) AND (Payload IS NOT NULL OR (SourceRowPointer IS NOT NULL AND Operation &lt;&gt; 'Delete'))) ORDERBY(CreateDate DESC) LOCKMODE(Row) ) )</Value>
                <Value2 />
                <Value3 />
                <Description />
