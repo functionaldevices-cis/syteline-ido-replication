@@ -1104,7 +1104,7 @@
                <EffectiveCaption>sAIRAreSetup</EffectiveCaption>
                <LayoutAttributes>MARGIN(0.4,0.1,0.4,0.1) INDEX(0) TARGET(UNKNOWN0)</LayoutAttributes>
             </Component>
-            <Component Name="ue_EventHandlersStatusGridCol">
+            <Component Name="ue_EventHandlersStatusDetailGridCol">
                <DeviceID>-1</DeviceID>
                <Type>15</Type>
                <TabOrder>7</TabOrder>
@@ -1117,6 +1117,30 @@
                <MaxCharacters>0</MaxCharacters>
                <ContainerName>FormCollectionGrid</ContainerName>
                <ContainerSequence>6</ContainerSequence>
+               <DataSource>object.ue_EventHandlersStatusDetail</DataSource>
+               <Binding>1</Binding>
+               <Flags>384</Flags>
+               <ReadOnly>True</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ShortDesc</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>sStatus</EffectiveCaption>
+            </Component>
+            <Component Name="ue_EventHandlersStatusGridCol">
+               <DeviceID>-1</DeviceID>
+               <Type>15</Type>
+               <TabOrder>8</TabOrder>
+               <TopPos>0</TopPos>
+               <LeftPos>0</LeftPos>
+               <Height>0</Height>
+               <ListHeight>0</ListHeight>
+               <Width>10</Width>
+               <Caption>sStatus</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName>FormCollectionGrid</ContainerName>
+               <ContainerSequence>7</ContainerSequence>
                <DataSource>object.ue_EventHandlersStatus</DataSource>
                <Binding>1</Binding>
                <Flags>384</Flags>

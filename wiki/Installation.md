@@ -86,4 +86,4 @@ Create three Background Task Definitions.
 3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed.
 4. Import the new forms and strings, then unload global form objects.
 5. Create any new Background Task Definitions listed in [step 4](#4-background-tasks).
-6. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**. It keeps each trigger active or inactive as it was, so the status should go back to what it was before the upgrade. If it shows **Inactive** or **Partly Active**, click **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).
+6. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**. It keeps each trigger active or inactive as it was, so an IDO that was replicating before the upgrade should show **Active**. If it shows **Inactive** or **Partly Active** and it should replicate, click **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).

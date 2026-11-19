@@ -2,7 +2,7 @@
 
 Triggers are what make replication event-driven. They are Application Event System (AES) event handlers on the source IDO that call the replication method when a record is inserted, updated or deleted.
 
-Form: **IDO Replication Configs** (`ue_AIR_IDOReplicationConfigs`). It lists every IDO collection, with its trigger status and its replication rules.
+Form: **IDO Replication Configs** (`ue_AIR_IDOReplicationConfigs`). It lists every IDO collection, with its trigger status and its replication rules. The status is also a column in the list, so you can see or filter which IDOs are replicating.
 
 ## Set up triggers on an IDO
 
@@ -33,7 +33,7 @@ The IDO also needs at least one active [rule](Replication-Rules-and-Field-Maps).
 | Partly Active | The triggers are set up, but only some are active. For example, inserts replicate and deletes don't. The **Is Active** column in the trigger grid shows which. Click **Activate All**. |
 | Broken | Some triggers exist, but one is missing or its action doesn't match. Click **Fix Triggers**. |
 
-If **Fix Triggers** fails partway, the error says what state the triggers are in and what to click next.
+If **Fix Triggers** fails partway, the error says what was done and what to click next. Refresh the form first, so the status and the buttons match what is there.
 
 A status of **Broken** is expected after an upgrade that changes the trigger action. The comparison is exact, so any edit to a trigger's action parameters also shows as Broken.
 

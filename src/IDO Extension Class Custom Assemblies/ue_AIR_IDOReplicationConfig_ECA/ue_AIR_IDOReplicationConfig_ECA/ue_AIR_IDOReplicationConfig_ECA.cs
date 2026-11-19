@@ -100,7 +100,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                     this.Message = result == 0
                         ? $"The triggers for {idoName} were created. They are inactive until you click Activate All."
-                        : $"The triggers for {idoName} couldn't be created.";
+                        : $"The triggers for {idoName} couldn't be created completely. If the status shows Broken, click Fix Triggers.";
 
                     break;
 
@@ -110,10 +110,13 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                     result = this.RemoveTriggers(
                         sytelineAPI: sytelineAPI,
-                        idoName: idoName
+                        idoName: idoName,
+                        removed: out int removed
                     );
 
-                    this.Message = $"The triggers for {idoName} were removed.";
+                    this.Message = removed > 0
+                        ? $"The triggers for {idoName} were removed."
+                        : $"{idoName} has no replication triggers, so nothing was removed.";
 
                     break;
 
@@ -213,14 +216,25 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             // REMEMBER WHICH TRIGGERS WERE ACTIVE
 
             HashSet<string> activeEventNames = ActiveEventNames(sytelineAPI, this.LoadTriggers(sytelineAPI, idoName));
-            string nextStep = "Click Setup Triggers (or Fix Triggers, if the status shows Broken)" + (activeEventNames.Count > 0 ? ", then Activate All." : ".");
+            string nextStep = "Refresh the form, then click Setup Triggers (or Fix Triggers, if the status shows Broken)" + (activeEventNames.Count > 0 ? ", then Activate All." : ".");
 
-            // REMOVE ALL TRIGGERS
+            // REMOVE ALL TRIGGERS. WHEN THIS FAILS, THE TRIGGERS THAT ARE LEFT STILL HOLD THEIR ACTIVE FLAGS, SO FIX TRIGGERS
+            // CAN BE CLICKED AGAIN.
 
-            this.RemoveTriggers(
-                sytelineAPI: sytelineAPI,
-                idoName: idoName
-            );
+            try
+            {
+
+                this.RemoveTriggers(
+                    sytelineAPI: sytelineAPI,
+                    idoName: idoName,
+                    removed: out _
+                );
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Removing the triggers for {idoName} failed, so they weren't re-created: {ex.Message} Refresh the form, then click Fix Triggers again.");
+            }
 
             // RE-CREATE ALL TRIGGERS
 
@@ -247,7 +261,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
             if (activeEventNames.Count == 0)
             {
-                this.Message = $"The triggers for {idoName} were re-created. They were inactive before, so they are inactive now.";
+                this.Message = $"The triggers for {idoName} were re-created. None was active, so they are inactive. Click Activate All if this IDO should replicate.";
                 return 0;
             }
 
@@ -384,11 +398,13 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
 
 
-        private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName)
+        private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName, out int removed)
         {
             int result = 0;
 
             LoadRecordsResponseData eventHandlerResponse = this.LoadTriggers(sytelineAPI, idoName);
+
+            removed = eventHandlerResponse.Items.Count;
 
             if (eventHandlerResponse.Items.Count > 0)
             {
