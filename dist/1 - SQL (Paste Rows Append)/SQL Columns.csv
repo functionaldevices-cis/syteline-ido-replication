@@ -53,3 +53,4 @@ option07,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 option08,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 option09,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 option10,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
+incremental_watermark_property,dbo,ue_AIR_idorepl_rule_mst,CollectionPropertyNameType,'RecordDate',NO
