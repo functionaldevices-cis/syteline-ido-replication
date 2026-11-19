@@ -15,7 +15,7 @@ Both run as a background task, so the form doesn't wait. Look at the task's mess
 
 ## Resend Errors
 
-The grid lists the rule's `Failed` log rows that the button acts on, newest first. It shows up to 200 rows. The button takes all of them, not only the ones shown. A failed row that nothing can resend isn't listed: one with no stored payload whose record can't be reloaded, because it has no source record or was a delete. Rows logged for a different IDO, from before the rule's IDO Name was changed, aren't listed either. All of those rows are on the [replication log](Replication-Log-and-Retries) form.
+The grid lists the rule's `Failed` log rows that the button acts on, newest first. It also lists failed deletes, and rows with no source record, that still have retries left. The button leaves those alone, because the retry task is about to resend them. It shows up to 200 rows. The button takes all of them, not only the ones shown. A failed row that nothing can resend isn't listed: one with no stored payload whose record can't be reloaded, because it has no source record or was a delete. Rows logged for a different IDO, from before the rule's IDO Name was changed, aren't listed either. All of those rows are on the [replication log](Replication-Log-and-Retries) form.
 
 Click **Resend All Errors**. There is nothing to fill in.
 
@@ -51,7 +51,7 @@ After **Resend Errors**:
 | No longer exists in Syteline | The row becomes `Skipped`. There is nothing left to send. |
 | Was a delete | If the row is out of retries, it gets its 3 retries back. A deleted record can't be reloaded, so the [retry task](Replication-Log-and-Retries#the-retry-task) resends the delete from its stored payload. |
 | Has no source row pointer | The same. This applies to rows logged before the source row pointer was stored. |
-| Has no source row pointer and no stored payload | Nothing can resend the row. The task's messages count these. Use **Bulk Resync** to send those records' current data. |
+| Has no stored payload, and is a delete or has no source row pointer | Nothing can resend the row. The task's messages count these. Use **Bulk Resync** to send those records' current data. |
 
 After **Bulk Resync**:
 

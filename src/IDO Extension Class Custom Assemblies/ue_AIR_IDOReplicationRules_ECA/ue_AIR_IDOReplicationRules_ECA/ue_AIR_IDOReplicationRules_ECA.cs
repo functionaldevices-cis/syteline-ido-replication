@@ -1777,7 +1777,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             if (unsendableResponse.Items.Count > 0)
             {
-                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) have no stored payload and no source record to reload, so nothing can resend them. Use a bulk resync to send their records' current data.");
+                utils.WriteLogMessage(unsendableResponse.Items.Count + (unsendableResponse.Items.Count >= ResendUnsendableRowLimit ? " or more" : "") + " failed row(s) have no stored payload and no record that can be reloaded (a delete, or no source record), so nothing can resend them. Use a bulk resync to send their records' current data.");
             }
 
             return progress.AnyRuleFailed ? BackgroundTaskFailedReturnCode : 0;
