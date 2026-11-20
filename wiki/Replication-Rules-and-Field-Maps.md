@@ -28,7 +28,7 @@ Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](
 
 ## Incremental Watermark Property
 
-This names the property of the rule's IDO that says when a record last changed. A [Bulk Resync](Resending-Records#bulk-resync) compares its Changed From and Changed To dates with it. The default is `RecordDate`.
+This field on the rule names the property of the rule's IDO that says when a record last changed. Pick it from the drop-down, which lists the IDO's date properties, including those added by an IDO that extends it. You can also type a name that isn't listed. A [Bulk Resync](Resending-Records#bulk-resync) compares its Changed From and Changed To dates with it. The default is `RecordDate`.
 
 Change it when `RecordDate` doesn't see every change. An IDO built on two tables can have a record date for each. `SLCustomers`, for example, has `RecordDate` and `AdrRecordDate`: some fields move one, and some move the other. A resync by `RecordDate` alone would miss a customer whose address changed.
 
