@@ -1,4 +1,4 @@
-﻿using Infor.DocumentManagement.ICP;
+using Infor.DocumentManagement.ICP;
 using Mongoose.Core.Extensions;
 using Mongoose.IDO;
 using Mongoose.IDO.DataAccess;
@@ -688,16 +688,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        // THE IDO'S PROPERTIES AND THE .NET TYPE THE IDO GIVES EACH ONE, KEYED BY NAME WITHOUT REGARD TO CASE. A TYPE IS NULL WHEN IT
-        // COULDN'T BE READ. RETURNS NULL WHEN THE LIST COULDN'T BE LOADED. NEVER THROWS.
+        // THE MONGOOSE DATA TYPE NAMES. Date IS THE ONLY ONE FOR A DATE OR A DATE AND TIME. THE OTHERS ARE THE REST OF THE FRAMEWORK'S LIST
+        // (MongooseTypeToClrTypeMap IN MGShared.dll).
 
-        private Dictionary<string, Type> LoadIDOPropertyTypes(string IDOName)
+        private const string DateDataType = "Date";
+
+        private static readonly HashSet<string> NonDateDataTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Binary", "Byte", "Decimal", "Float", "GUID", "Long Integer", "Short Integer", "String", "NumSortedString"
+        };
+
+        // THE IDO'S PROPERTIES AND THE MONGOOSE DATA TYPE THE IDO GIVES EACH ONE, KEYED BY NAME WITHOUT REGARD TO CASE. THE DATA TYPE IS ""
+        // WHEN THE PROPERTY HAS NONE, AS A SUBCOLLECTION DOESN'T. RETURNS NULL WHEN THE LIST COULDN'T BE LOADED. NEVER THROWS.
+
+        private Dictionary<string, string> LoadIDOPropertyDataTypes(string IDOName)
         {
 
             try
             {
 
-                Dictionary<string, Type> propertyTypes = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+                Dictionary<string, string> propertyDataTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in this.Context.Commands.GetPropertyInfo(IDOName).Properties)
                 {
@@ -707,21 +717,21 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         continue;
                     }
 
-                    Type propertyType = null;
+                    string dataType = "";
 
                     try
                     {
-                        propertyType = propertyInfo.ClrType;
+                        dataType = (propertyInfo.DataType ?? "").Trim();
                     }
                     catch (Exception)
                     {
                     }
 
-                    propertyTypes[propertyInfo.Name] = propertyType;
+                    propertyDataTypes[propertyInfo.Name] = dataType;
 
                 }
 
-                return propertyTypes.Count > 0 ? propertyTypes : null;
+                return propertyDataTypes.Count > 0 ? propertyDataTypes : null;
 
             }
             catch (Exception)
@@ -1680,7 +1690,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return false;
             }
 
-            // THE IDO'S PROPERTY LIST SPELLS THE NAME THE WAY THE IDO DOES AND SAYS WHAT TYPE THE PROPERTY IS.
+            // THE IDO'S PROPERTY LIST SPELLS THE NAME THE WAY THE IDO DOES AND SAYS WHAT DATA TYPE THE PROPERTY HAS.
             //
             // A PROPERTY THAT ISN'T LISTED NEVER STOPS THE RESYNC: THE LIST MAY NOT BE COMPLETE, AND A NAME THE IDO REALLY DOESN'T HAVE FAILS
             // THE LOAD OF THE RECORDS ANYWAY.
@@ -1688,36 +1698,41 @@ namespace ue_AIR_IDOReplicationRules_ECA
             // A PROPERTY THAT IS LISTED AS SOMETHING OTHER THAN A DATE DOES STOP IT. THE PERIOD GOES INTO THE FILTER AS QUOTED TEXT, SO A TEXT
             // PROPERTY WOULD BE COMPARED AS TEXT WITHOUT ANY ERROR, AND THE RESYNC WOULD SEND THE WRONG RECORDS AND REPORT SUCCESS.
 
-            Dictionary<string, Type> idoPropertyTypes = this.LoadIDOPropertyTypes(IDOName);
+            Dictionary<string, string> idoPropertyDataTypes = this.LoadIDOPropertyDataTypes(IDOName);
 
-            if (idoPropertyTypes != null)
+            if (idoPropertyDataTypes == null)
             {
-
-                string requestedName = watermarkProperty;
-                string nameOnIDO = idoPropertyTypes.Keys.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
-
-                if (nameOnIDO == null)
-                {
-                    utils.WriteLogMessage("IDO '" + IDOName + "' doesn't list a property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. The resync goes ahead. If its load fails, set the rule's Incremental Watermark Property to a date property of the IDO, or leave both dates blank.");
-                    return true;
-                }
-
-                watermarkProperty = nameOnIDO;
-
-                Type propertyType = idoPropertyTypes[nameOnIDO];
-
-                if (propertyType != null)
-                {
-                    propertyType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-                }
-
-                if (propertyType != null && propertyType != typeof(DateTime) && propertyType != typeof(DateTimeOffset))
-                {
-                    utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a date on IDO '" + IDOName + "' (the IDO lists it as " + propertyType.Name + "), so the period can't be compared with it. Set the rule's Incremental Watermark Property to a date property, or leave both dates blank. If it is a derived property that returns a date, give it a date property class or data type on the IDO.");
-                    return false;
-                }
-
+                utils.WriteLogMessage("The properties of IDO '" + IDOName + "' couldn't be listed, so it wasn't checked that '" + watermarkProperty + "', the rule's Incremental Watermark Property, is a date. The resync goes ahead.");
+                return true;
             }
+
+            string requestedName = watermarkProperty;
+            string nameOnIDO = idoPropertyDataTypes.Keys.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
+
+            if (nameOnIDO == null)
+            {
+                utils.WriteLogMessage("IDO '" + IDOName + "' doesn't list a property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. The resync goes ahead. If its load fails, set the rule's Incremental Watermark Property to a date property of the IDO, or leave both dates blank.");
+                return true;
+            }
+
+            watermarkProperty = nameOnIDO;
+
+            string dataType = idoPropertyDataTypes[nameOnIDO];
+
+            if (string.Equals(dataType, DateDataType, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (NonDateDataTypes.Contains(dataType))
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a date on IDO '" + IDOName + "' (its data type there is " + dataType + "), so the period can't be compared with it. Set the rule's Incremental Watermark Property to a date property, or leave both dates blank. If it is a derived property that returns a date, give it a date property class or the Date data type on the IDO.");
+                return false;
+            }
+
+            // NO DATA TYPE, OR ONE THIS CODE DOESN'T KNOW: THE RESYNC GOES AHEAD, AND SAYS THAT THE TYPE WASN'T CHECKED
+
+            utils.WriteLogMessage("IDO '" + IDOName + "' gives no data type for '" + watermarkProperty + "', the rule's Incremental Watermark Property, so it wasn't checked that it is a date. The resync goes ahead.");
 
             return true;
 
