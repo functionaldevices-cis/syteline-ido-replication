@@ -257,6 +257,10 @@
          <TableName>Strings</TableName>
          <String>Error Message</String>
       </String>
+      <String Name="ue_AIR_sIncrementalWatermarkProperty" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Incremental Watermark Property</String>
+      </String>
       <String Name="ue_AIR_sLastAttemptDate" Scope="1" ScopeName="[NULL]">
          <TableName>Strings</TableName>
          <String>Last Attempt Date</String>

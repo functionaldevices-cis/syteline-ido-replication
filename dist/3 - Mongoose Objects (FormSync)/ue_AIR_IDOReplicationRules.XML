@@ -322,7 +322,6 @@
                <ContainerSequence>1</ContainerSequence>
                <DataSource>object.IncrementalWatermarkProperty</DataSource>
                <Binding>1</Binding>
-               <SelectionEvent>RuleIDONameChanged</SelectionEvent>
                <ComboListSource>INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ComboListSource>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
@@ -1637,6 +1636,10 @@
                <ResponseType>35</ResponseType>
                <Response>UpdateSourceValueChoices()</Response>
             </EventHandler>
+            <EventHandler Name="RuleIDONameChanged" Sequence="1">
+               <ResponseType>35</ResponseType>
+               <Response>UpdateIncrementalWatermarkPropertyChoices()</Response>
+            </EventHandler>
             <EventHandler Name="StdFormCalledFormReturned" Sequence="0">
                <ResponseType>35</ResponseType>
                <Response>Test2()</Response>
@@ -1747,8 +1750,13 @@
                <ScriptLine>         Application.ShowMessage("Test");</ScriptLine>
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
-               <ScriptLine>      // THE Incremental WatermarkProperty PROPERTY OF THE FIELD MAP IS A DROP-DOWN. ITS LIST SOURCE IS  INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ScriptLine>
-               <ScriptLine>      // SO ITS LIST COMES FROM THE IDO, BUT IT MUST BE LOADED DYNAMICALLY TO GRAB EXTENDED PROPERTIES, WHICH THIS METHOD SETS FOR THE CURRENT FIELD MAP ROW:</ScriptLine>
+               <ScriptLine>      // THE RULE'S INCREMENTAL WATERMARK PROPERTY IS A DROP-DOWN. ITS LIST SOURCE IS</ScriptLine>
+               <ScriptLine>      //    INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ScriptLine>
+               <ScriptLine>      // SO ITS LIST COMES FROM THE FORM VARIABLE IncrementalWatermarkPropertyChoices, WHICH THIS METHOD SETS TO THE PROPERTIES OF THE</ScriptLine>
+               <ScriptLine>      // CURRENT RULE'S IDO. THE IDO RUNTIME IS ASKED FOR THEM (GetIDOPropertyEntries), NOT THE IDOProperties IDO, SO THE LIST INCLUDES THE</ScriptLine>
+               <ScriptLine>      // PROPERTIES OF AN IDO THAT EXTENDS THE RULE'S IDO, WHICH ARE MERGED INTO IT AT RUN TIME.</ScriptLine>
+               <ScriptLine>      // IT RUNS WHEN ANOTHER RULE BECOMES CURRENT AND WHEN THE RULE'S IDO NAME IS CHANGED.</ScriptLine>
+               <ScriptLine>      // THE LIST IS A HELP, NOT A CHECK. A BULK RESYNC CHECKS THE VALUE WHEN IT RUNS.</ScriptLine>
                <ScriptLine />
                <ScriptLine>      public void UpdateIncrementalWatermarkPropertyChoices()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
@@ -1758,29 +1766,19 @@
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            Application.ShowMessage("Debug1a");</ScriptLine>
+               <ScriptLine>            var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            GetPropertyInfoResponseData propInfo = this.IDOClient.GetPropertyInfo("BaseIdoName");</ScriptLine>
-               <ScriptLine>            </ScriptLine>
-               <ScriptLine>            Application.ShowMessage("Debug2a");</ScriptLine>
+               <ScriptLine>            string idoName = (rulesCollection.GetCurrentObjectProperty("IDOName") ?? "").Trim();</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            List&lt;string&gt; propNames = new List&lt;string&gt;();</ScriptLine>
-               <ScriptLine>            foreach (PropertyInfo prop in propInfo.Properties)</ScriptLine>
+               <ScriptLine>            if (idoName != "")</ScriptLine>
                <ScriptLine>            {</ScriptLine>
-               <ScriptLine>               propNames.Add(prop.Name);</ScriptLine>
+               <ScriptLine>               entries = this.GetIDOPropertyEntries(idoName, true);</ScriptLine>
                <ScriptLine>            }</ScriptLine>
-               <ScriptLine>            propNames.Sort();</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>             Application.ShowMessage("Debug3");</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            entries = string.Join(",", propNames);</ScriptLine>
-               <ScriptLine />
-               <ScriptLine>            Application.ShowMessage(entries);</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
                <ScriptLine>         catch (Exception)</ScriptLine>
                <ScriptLine>         {</ScriptLine>
-               <ScriptLine>            // WITH NO LIST, THE COLUMN IS STILL A FIELD THE VALUE CAN BE TYPED INTO</ScriptLine>
+               <ScriptLine>            // WITH NO LIST, THE FIELD IS STILL ONE THE VALUE CAN BE TYPED INTO</ScriptLine>
                <ScriptLine>            entries = "";</ScriptLine>
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
@@ -1797,12 +1795,13 @@
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>            catch (Exception)</ScriptLine>
                <ScriptLine>            {</ScriptLine>
-               <ScriptLine>               // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE COLUMN READS ITS LIST SOURCE</ScriptLine>
+               <ScriptLine>               // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE FIELD READS ITS LIST SOURCE</ScriptLine>
                <ScriptLine>            }</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
                <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
                <ScriptLine />
                <ScriptLine>      public void UpdateVariableUI()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
@@ -1849,7 +1848,7 @@
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>         };</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         string ruleTargetType = this.ThisForm.CurrentIDOCollection.GetCurrentObjectProperty("TargetType");</ScriptLine>
+               <ScriptLine>         string ruleTargetType = this.ThisForm.PrimaryIDOCollection.GetCurrentObjectProperty("TargetType");</ScriptLine>
                <ScriptLine>         List&lt;KeyValuePair&lt;string, string[]&gt;&gt; options = config.ContainsKey(ruleTargetType) ? config[ruleTargetType] : new List&lt;KeyValuePair&lt;string, string[]&gt;&gt;();</ScriptLine>
                <ScriptLine />
                <ScriptLine>         for (int counter = 0; counter &lt; 10; counter++) {</ScriptLine>
@@ -1921,7 +1920,7 @@
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            var rulesCollection = this.ThisForm.Components["FormCollectionGrid"].IDOCollection;</ScriptLine>
+               <ScriptLine>            var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine>            var mapFieldsCollection = this.ThisForm.Components["MapFieldsGrid"].IDOCollection;</ScriptLine>
                <ScriptLine />
                <ScriptLine>            string idoName = (rulesCollection.GetCurrentObjectProperty("IDOName") ?? "").Trim();</ScriptLine>
@@ -1960,41 +1959,80 @@
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
                <ScriptLine>      // THE NAMES OF AN IDO'S PROPERTIES, SORTED, AS INLINE LIST ENTRIES (SEPARATED BY COMMAS). THE IDO RUNTIME IS ASKED FOR THEM, SO THE</ScriptLine>
-               <ScriptLine>      // LIST IS WHAT REPLICATION CAN ACTUALLY LOAD, USER-DEFINED FIELDS INCLUDED. THEY ARE READ ONCE PER IDO AND KEPT IN TWO FORM</ScriptLine>
-               <ScriptLine>      // VARIABLES: SourcePropertyListIDO (THE IDO THE KEPT LIST IS FOR) AND SourcePropertyList (THE LIST). IF THE PROPERTIES CAN'T BE</ScriptLine>
-               <ScriptLine>      // READ, THE LIST IS EMPTY AND NOTHING IS KEPT.</ScriptLine>
+               <ScriptLine>      // LIST IS WHAT REPLICATION CAN ACTUALLY LOAD: USER-DEFINED FIELDS AND THE PROPERTIES OF AN EXTENDING IDO INCLUDED.</ScriptLine>
+               <ScriptLine>      // WITH datesOnly, THE PROPERTIES THAT CAN'T HOLD A DATE ARE LEFT OUT: THE ONES WHOSE DATA TYPE IS A KNOWN NON-DATE TYPE (TEXT, A</ScriptLine>
+               <ScriptLine>      // NUMBER AND SO ON). A PROPERTY WITH THE Date DATA TYPE IS LISTED, AND SO IS ONE WITH NO DATA TYPE, BECAUSE A DERIVED PROPERTY THAT</ScriptLine>
+               <ScriptLine>      // RETURNS A DATE MAY NOT HAVE ONE. THAT IS THE SAME RULE A BULK RESYNC APPLIES (NonDateDataTypes IN THE RULES EXTENSION CLASS). IF</ScriptLine>
+               <ScriptLine>      // NOTHING IS LEFT, EVERY PROPERTY IS LISTED.</ScriptLine>
+               <ScriptLine>      // THEY ARE READ ONCE PER IDO AND KEPT IN THREE FORM VARIABLES: SourcePropertyListIDO (THE IDO THE KEPT LISTS ARE FOR),</ScriptLine>
+               <ScriptLine>      // SourcePropertyList (EVERY PROPERTY) AND SourceDatePropertyList (THE ONES THAT CAN HOLD A DATE). IF THE PROPERTIES CAN'T BE READ, THE LIST</ScriptLine>
+               <ScriptLine>      // IS EMPTY AND NOTHING IS KEPT.</ScriptLine>
                <ScriptLine />
-               <ScriptLine>      private string GetIDOPropertyEntries(string idoName)</ScriptLine>
+               <ScriptLine>      private string GetIDOPropertyEntries(string idoName, bool datesOnly = false)</ScriptLine>
                <ScriptLine>      {</ScriptLine>
                <ScriptLine />
                <ScriptLine>         var keptIDOVariable = this.ThisForm.Variables("SourcePropertyListIDO");</ScriptLine>
                <ScriptLine>         var keptEntriesVariable = this.ThisForm.Variables("SourcePropertyList");</ScriptLine>
+               <ScriptLine>         var keptDateEntriesVariable = this.ThisForm.Variables("SourceDatePropertyList");</ScriptLine>
                <ScriptLine />
                <ScriptLine>         if (keptIDOVariable.Value == idoName)</ScriptLine>
                <ScriptLine>         {</ScriptLine>
-               <ScriptLine>            return keptEntriesVariable.Value ?? "";</ScriptLine>
+               <ScriptLine>            return (datesOnly ? keptDateEntriesVariable.Value : keptEntriesVariable.Value) ?? "";</ScriptLine>
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
                <ScriptLine>         List&lt;string&gt; propertyNames = new List&lt;string&gt;();</ScriptLine>
+               <ScriptLine>         List&lt;string&gt; datePropertyNames = new List&lt;string&gt;();</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         // THE MONGOOSE DATA TYPES THAT AREN'T A DATE, IN CAPITALS. CONTAINS IS WHAT A SUBCOLLECTION REPORTS.</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         string[] nonDateDataTypes = new string[] { "BINARY", "BYTE", "DECIMAL", "FLOAT", "GUID", "LONG INTEGER", "SHORT INTEGER", "STRING", "NUMSORTEDSTRING", "CONTAINS" };</ScriptLine>
                <ScriptLine />
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in this.IDOClient.GetPropertyInfo(idoName).Properties)</ScriptLine>
+               <ScriptLine>            GetPropertyInfoResponseData propertyInfoResponse = this.IDOClient.GetPropertyInfo(idoName);</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            // AN IDO NAME THE RUNTIME DOESN'T KNOW NORMALLY THROWS, WHICH THE CATCH BELOW HANDLES. THIS ALSO COVERS A RESPONSE WITH NO PROPERTY LIST.</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            if (propertyInfoResponse == null || propertyInfoResponse.Properties == null)</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               return "";</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in propertyInfoResponse.Properties)</ScriptLine>
                <ScriptLine>            {</ScriptLine>
                <ScriptLine />
                <ScriptLine>               string propertyName = (propertyInfo.Name ?? "").Trim();</ScriptLine>
                <ScriptLine />
                <ScriptLine>               // AN INLINE LIST ENTRY CAN'T CONTAIN A COMMA, A BACKSLASH OR A PARENTHESIS</ScriptLine>
                <ScriptLine />
-               <ScriptLine>               if (propertyName != "" &amp;&amp; propertyName.IndexOfAny(new char[] { ',', '\\', '(', ')' }) &lt; 0)</ScriptLine>
+               <ScriptLine>               if (propertyName == "" || propertyName.IndexOfAny(new char[] { ',', '\\', '(', ')' }) &gt;= 0)</ScriptLine>
                <ScriptLine>               {</ScriptLine>
-               <ScriptLine>                  propertyNames.Add(propertyName);</ScriptLine>
+               <ScriptLine>                  continue;</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               propertyNames.Add(propertyName);</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               string dataType = "";</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               try</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  dataType = (propertyInfo.DataType ?? "").Trim();</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
+               <ScriptLine>               catch (Exception)</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  // A DATA TYPE THAT CAN'T BE READ COUNTS AS NONE</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>               if (Array.IndexOf(nonDateDataTypes, dataType.ToUpperInvariant()) &lt; 0)</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  datePropertyNames.Add(propertyName);</ScriptLine>
                <ScriptLine>               }</ScriptLine>
                <ScriptLine />
                <ScriptLine>            }</ScriptLine>
                <ScriptLine />
                <ScriptLine>            propertyNames.Sort(StringComparer.OrdinalIgnoreCase);</ScriptLine>
+               <ScriptLine>            datePropertyNames.Sort(StringComparer.OrdinalIgnoreCase);</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
                <ScriptLine>         catch (Exception)</ScriptLine>
@@ -2004,17 +2042,20 @@
                <ScriptLine>         }</ScriptLine>
                <ScriptLine />
                <ScriptLine>         string entries = string.Join(",", propertyNames);</ScriptLine>
+               <ScriptLine>         string dateEntries = datePropertyNames.Count &gt; 0 ? string.Join(",", datePropertyNames) : entries;</ScriptLine>
                <ScriptLine />
                <ScriptLine>         keptEntriesVariable.Value = entries;</ScriptLine>
+               <ScriptLine>         keptDateEntriesVariable.Value = dateEntries;</ScriptLine>
                <ScriptLine>         keptIDOVariable.Value = idoName;</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         return entries;</ScriptLine>
+               <ScriptLine>         return datesOnly ? dateEntries : entries;</ScriptLine>
                <ScriptLine />
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
+               <ScriptLine />
                <ScriptLine>      public void SetValuesOnNewFieldRecord() {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         var rulesCollection = this.ThisForm.Components["FormCollectionGrid"].IDOCollection;</ScriptLine>
+               <ScriptLine>         var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine>         var mapFieldsCollection = this.ThisForm.Components["MapFieldsGrid"].IDOCollection;</ScriptLine>
                <ScriptLine />
                <ScriptLine>         string ruleNum = rulesCollection.GetCurrentObjectProperty("RuleNum");</ScriptLine>
