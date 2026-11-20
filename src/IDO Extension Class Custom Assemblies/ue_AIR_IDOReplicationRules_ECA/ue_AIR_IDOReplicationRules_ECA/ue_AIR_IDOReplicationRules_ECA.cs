@@ -688,6 +688,51 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // THE IDO'S PROPERTIES AND THE .NET TYPE THE IDO GIVES EACH ONE, KEYED BY NAME WITHOUT REGARD TO CASE. A TYPE IS NULL WHEN IT
+        // COULDN'T BE READ. RETURNS NULL WHEN THE LIST COULDN'T BE LOADED. NEVER THROWS.
+
+        private Dictionary<string, Type> LoadIDOPropertyTypes(string IDOName)
+        {
+
+            try
+            {
+
+                Dictionary<string, Type> propertyTypes = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in this.Context.Commands.GetPropertyInfo(IDOName).Properties)
+                {
+
+                    if (string.IsNullOrEmpty(propertyInfo.Name))
+                    {
+                        continue;
+                    }
+
+                    Type propertyType = null;
+
+                    try
+                    {
+                        propertyType = propertyInfo.ClrType;
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    propertyTypes[propertyInfo.Name] = propertyType;
+
+                }
+
+                return propertyTypes.Count > 0 ? propertyTypes : null;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
+
+
         private ReplicationRuleResult SendRule(ReplicationRule replicationRule, List<Dictionary<string, object>> remappedReplicationRecords, string operation, bool logEveryRecord, Utilities utils, Dictionary<Dictionary<string, object>, string> transformWarnings = null)
         {
 
@@ -1596,8 +1641,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // TABLES), SO A RULE CAN NAME A PROPERTY THAT COVERS THEM ALL, SUCH AS A DERIVED PROPERTY THAT RETURNS THE LATEST OF THEM.
         //
         // THE NAME GOES INTO A FILTER, SO IT HAS TO BE A PLAIN PROPERTY NAME. RETURNS FALSE, WITH THE REASON IN THE TASK'S MESSAGES, WHEN THE
-        // RULE'S VALUE CAN'T BE LOADED OR ISN'T A PROPERTY NAME. WHETHER THE IDO REALLY HAS THE PROPERTY IS LEFT TO THE LOAD OF THE RECORDS,
-        // AS IT IS FOR A RULE'S FIELD MAP. NEVER THROWS.
+        // RULE'S VALUE CAN'T BE LOADED, ISN'T A PROPERTY NAME, OR NAMES A PROPERTY THE IDO LISTS AS SOMETHING OTHER THAN A DATE. WHETHER THE
+        // IDO REALLY HAS THE PROPERTY IS LEFT TO THE LOAD OF THE RECORDS, AS IT IS FOR A RULE'S FIELD MAP. NEVER THROWS.
 
         private bool TryLoadWatermarkProperty(SytelineInternalAPI sytelineAPI, Utilities utils, string ruleNum, string IDOName, out string watermarkProperty)
         {
@@ -1635,24 +1680,41 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return false;
             }
 
-            // THE IDO'S PROPERTY LIST IS ONLY USED TO SPELL THE NAME THE WAY THE IDO DOES, AND FOR A CLEARER MESSAGE. IT NEVER STOPS THE
-            // RESYNC: THE LIST MAY NOT BE COMPLETE, AND A NAME THE IDO REALLY DOESN'T HAVE FAILS THE LOAD OF THE RECORDS ANYWAY.
+            // THE IDO'S PROPERTY LIST SPELLS THE NAME THE WAY THE IDO DOES AND SAYS WHAT TYPE THE PROPERTY IS.
+            //
+            // A PROPERTY THAT ISN'T LISTED NEVER STOPS THE RESYNC: THE LIST MAY NOT BE COMPLETE, AND A NAME THE IDO REALLY DOESN'T HAVE FAILS
+            // THE LOAD OF THE RECORDS ANYWAY.
+            //
+            // A PROPERTY THAT IS LISTED AS SOMETHING OTHER THAN A DATE DOES STOP IT. THE PERIOD GOES INTO THE FILTER AS QUOTED TEXT, SO A TEXT
+            // PROPERTY WOULD BE COMPARED AS TEXT WITHOUT ANY ERROR, AND THE RESYNC WOULD SEND THE WRONG RECORDS AND REPORT SUCCESS.
 
-            HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
+            Dictionary<string, Type> idoPropertyTypes = this.LoadIDOPropertyTypes(IDOName);
 
-            if (idoPropertyNames != null)
+            if (idoPropertyTypes != null)
             {
 
                 string requestedName = watermarkProperty;
-                string nameOnIDO = idoPropertyNames.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
+                string nameOnIDO = idoPropertyTypes.Keys.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
 
-                if (nameOnIDO != null)
-                {
-                    watermarkProperty = nameOnIDO;
-                }
-                else
+                if (nameOnIDO == null)
                 {
                     utils.WriteLogMessage("IDO '" + IDOName + "' doesn't list a property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. The resync goes ahead. If its load fails, set the rule's Incremental Watermark Property to a date property of the IDO, or leave both dates blank.");
+                    return true;
+                }
+
+                watermarkProperty = nameOnIDO;
+
+                Type propertyType = idoPropertyTypes[nameOnIDO];
+
+                if (propertyType != null)
+                {
+                    propertyType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+                }
+
+                if (propertyType != null && propertyType != typeof(DateTime) && propertyType != typeof(DateTimeOffset))
+                {
+                    utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a date on IDO '" + IDOName + "' (the IDO lists it as " + propertyType.Name + "), so the period can't be compared with it. Set the rule's Incremental Watermark Property to a date property, or leave both dates blank. If it is a derived property that returns a date, give it a date property class or data type on the IDO.");
+                    return false;
                 }
 
             }

@@ -34,7 +34,7 @@ Change it when `RecordDate` doesn't see every change. An IDO built on two tables
 
 To cover both, extend the IDO with a derived property that returns the latest of its record dates, and name that property here. For `SLCustomers` the expression could be `GREATEST(RecordDate, AdrRecordDate)` on SQL Server 2022 or later, or a `CASE` that picks the later one on earlier versions.
 
-The value has to be a single property name, and the property has to hold a date. It isn't used by triggers, bulk loads, retries or **Resend All Errors**.
+The value has to be a single property name, and the property has to hold a date. If the IDO lists the property as another type, such as text, a Bulk Resync with a date stops before sending anything, and the task's messages say so. A derived property needs a date property class or data type on the IDO for that reason. It isn't used by triggers, bulk loads, retries or **Resend All Errors**.
 
 ## Field maps
 
