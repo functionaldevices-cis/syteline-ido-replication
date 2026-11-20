@@ -1766,7 +1766,7 @@
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            var rulesCollection = this.ThisForm.Components["FormCollectionGrid"].IDOCollection;</ScriptLine>
+               <ScriptLine>            var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine />
                <ScriptLine>            string idoName = (rulesCollection.GetCurrentObjectProperty("IDOName") ?? "").Trim();</ScriptLine>
                <ScriptLine />
@@ -1920,7 +1920,7 @@
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            var rulesCollection = this.ThisForm.Components["FormCollectionGrid"].IDOCollection;</ScriptLine>
+               <ScriptLine>            var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine>            var mapFieldsCollection = this.ThisForm.Components["MapFieldsGrid"].IDOCollection;</ScriptLine>
                <ScriptLine />
                <ScriptLine>            string idoName = (rulesCollection.GetCurrentObjectProperty("IDOName") ?? "").Trim();</ScriptLine>
@@ -2055,7 +2055,7 @@
                <ScriptLine />
                <ScriptLine>      public void SetValuesOnNewFieldRecord() {</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         var rulesCollection = this.ThisForm.Components["FormCollectionGrid"].IDOCollection;</ScriptLine>
+               <ScriptLine>         var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
                <ScriptLine>         var mapFieldsCollection = this.ThisForm.Components["MapFieldsGrid"].IDOCollection;</ScriptLine>
                <ScriptLine />
                <ScriptLine>         string ruleNum = rulesCollection.GetCurrentObjectProperty("RuleNum");</ScriptLine>
