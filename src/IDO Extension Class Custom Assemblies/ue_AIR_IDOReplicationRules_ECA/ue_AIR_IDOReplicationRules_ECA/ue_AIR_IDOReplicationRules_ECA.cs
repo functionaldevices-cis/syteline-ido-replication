@@ -1252,7 +1252,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             {
 
                 List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
-                DateTime attemptDate = DateTime.Now;
+                DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI);
 
                 foreach (ReplicationRuleResult ruleResult in ruleResults)
                 {
@@ -2389,7 +2389,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             foreach (var group in logRows.GroupBy(logRow => new { logRow.IDOName, logRow.RuleNum, logRow.Operation }))
             {
 
-                DateTime attemptDate = DateTime.Now;
+                DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI);
                 List<IDOUpdateItem> logUpdates = new List<IDOUpdateItem>();
 
                 // ONLY ACTIVE RULES ARE RETRIED. ROWS FOR A RULE THAT'S INACTIVE OR GONE ARE LEFT AS THEY ARE.
@@ -2594,7 +2594,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // yyyyMMdd IS READ THE SAME WAY UNDER EVERY SQL SERVER DATEFORMAT. yyyy-MM-dd ISN'T: DMY LOGINS READ IT AS YEAR-DAY-MONTH.
 
-            DateTime cutoff = DateTime.Now.AddDays(-purgeAfterDays);
+            DateTime cutoff = this.LoadSiteDateTime(sytelineAPI).AddDays(-purgeAfterDays);
             string cutoffDate = cutoff.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             int countPurged = 0;
 
@@ -2629,6 +2629,72 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             utils.WriteLogMessage("Purged " + countPurged + " succeeded or skipped replication log row(s) created before " + cutoff.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".");
+
+        }
+
+
+
+        // THE CURRENT DATE AND TIME THE WAY SYTELINE STAMPS RECORDS: IN THE SITE'S TIME ZONE.
+        //
+        // THE SERVER THIS CODE RUNS ON KEEPS ITS OWN CLOCK, WHICH IN A HOSTED ENVIRONMENT IS UTC. SYTELINE WRITES CreateDate AND RecordDate
+        // IN THE SITE'S TIME ZONE, THROUGH THE DATABASE FUNCTION dbo.GetSiteDate. A TIME THIS CODE WRITES TO THE REPLICATION LOG, OR COMPARES
+        // WITH ONE OF THOSE DATES, HAS TO BE IN THE SAME TIME, OR A ROW'S LAST ATTEMPT SHOWS HOURS AWAY FROM WHEN THE ROW WAS CREATED.
+        //
+        // THE SITE'S TIME IS READ FROM THE DERIVED PROPERTY CurrentSiteDateTime ON ue_AIR_IDOReplicationRules, WHOSE EXPRESSION IS
+        // dbo.GetSiteDate(GETDATE()). A DERIVED PROPERTY NEEDS A ROW TO COME BACK ON, AND ANY RULE WILL DO. IF IT CAN'T BE READ (NO RULE, OR
+        // AN IDO THAT DOESN'T HAVE THE PROPERTY YET), THIS SERVER'S OWN TIME IS USED, AS IT WAS BEFORE. NEVER THROWS.
+
+        private DateTime LoadSiteDateTime(SytelineInternalAPI sytelineAPI)
+        {
+
+            try
+            {
+
+                LoadRecordsResponseData response = sytelineAPI.LoadRecords(
+                    IDOName: "ue_AIR_IDOReplicationRules",
+                    properties: new List<string>() { "CurrentSiteDateTime" },
+                    filter: "",
+                    orderBy: "",
+                    recordCap: 1
+                );
+
+                if (response.Items.Count > 0)
+                {
+
+                    IDOPropertyValue siteDateTimeValue = response.Items[0].PropertyValues[response.PropertyKeys["CurrentSiteDateTime"]];
+
+                    if (!siteDateTimeValue.IsNull)
+                    {
+
+                        DateTime siteDateTime;
+
+                        try
+                        {
+                            return siteDateTimeValue.GetValue<DateTime>();
+                        }
+                        catch (Exception)
+                        {
+                            // FALL THROUGH TO READING THE TEXT
+                        }
+
+                        string[] idoDateFormats = new string[] { "yyyyMMdd HH:mm:ss.fff", "yyyyMMdd HH:mm:ss", "yyyy-MM-dd HH:mm:ss.fff", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-ddTHH:mm:ss.fff", "yyyy-MM-ddTHH:mm:ss" };
+
+                        if (DateTime.TryParseExact((siteDateTimeValue.Value ?? "").Trim(), idoDateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out siteDateTime))
+                        {
+                            return siteDateTime;
+                        }
+
+                    }
+
+                }
+
+            }
+            catch (Exception)
+            {
+                // THIS SERVER'S OWN TIME IS USED BELOW
+            }
+
+            return DateTime.Now;
 
         }
 
