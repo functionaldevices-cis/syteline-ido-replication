@@ -1848,7 +1848,7 @@
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>         };</ScriptLine>
                <ScriptLine />
-               <ScriptLine>         string ruleTargetType = this.ThisForm.CurrentIDOCollection.GetCurrentObjectProperty("TargetType");</ScriptLine>
+               <ScriptLine>         string ruleTargetType = this.ThisForm.PrimaryIDOCollection.GetCurrentObjectProperty("TargetType");</ScriptLine>
                <ScriptLine>         List&lt;KeyValuePair&lt;string, string[]&gt;&gt; options = config.ContainsKey(ruleTargetType) ? config[ruleTargetType] : new List&lt;KeyValuePair&lt;string, string[]&gt;&gt;();</ScriptLine>
                <ScriptLine />
                <ScriptLine>         for (int counter = 0; counter &lt; 10; counter++) {</ScriptLine>
