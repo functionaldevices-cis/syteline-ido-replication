@@ -1251,8 +1251,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
             try
             {
 
+                // A RUN WITH NOTHING TO LOG WRITES NOTHING, AND DOESN'T ASK FOR THE SITE'S TIME EITHER. THAT INCLUDES A TRIGGER ON AN IDO WHOSE
+                // RULES ARE ALL INACTIVE, WHICH RUNS ON EVERY SAVE.
+
+                if (!ruleResults.Any(ruleResult => ruleResult.RecordOutcomes.Count > 0 || !ruleResult.Success))
+                {
+                    return;
+                }
+
                 List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
-                DateTime attemptDate = DateTime.Now;
+                DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI, utils);
 
                 foreach (ReplicationRuleResult ruleResult in ruleResults)
                 {
@@ -2389,7 +2397,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             foreach (var group in logRows.GroupBy(logRow => new { logRow.IDOName, logRow.RuleNum, logRow.Operation }))
             {
 
-                DateTime attemptDate = DateTime.Now;
+                DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI, utils);
                 List<IDOUpdateItem> logUpdates = new List<IDOUpdateItem>();
 
                 // ONLY ACTIVE RULES ARE RETRIED. ROWS FOR A RULE THAT'S INACTIVE OR GONE ARE LEFT AS THEY ARE.
@@ -2594,7 +2602,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // yyyyMMdd IS READ THE SAME WAY UNDER EVERY SQL SERVER DATEFORMAT. yyyy-MM-dd ISN'T: DMY LOGINS READ IT AS YEAR-DAY-MONTH.
 
-            DateTime cutoff = DateTime.Now.AddDays(-purgeAfterDays);
+            DateTime cutoff = this.LoadSiteDateTime(sytelineAPI, utils).AddDays(-purgeAfterDays);
             string cutoffDate = cutoff.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             int countPurged = 0;
 
@@ -2629,6 +2637,105 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             utils.WriteLogMessage("Purged " + countPurged + " succeeded or skipped replication log row(s) created before " + cutoff.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".");
+
+        }
+
+
+
+        // THE CURRENT DATE AND TIME THE WAY SYTELINE STAMPS RECORDS: IN THE SITE'S TIME ZONE.
+        //
+        // THE SERVER THIS CODE RUNS ON KEEPS ITS OWN CLOCK, WHICH IN A HOSTED ENVIRONMENT IS UTC. SYTELINE WRITES CreateDate AND RecordDate
+        // IN THE SITE'S TIME ZONE, THROUGH THE DATABASE FUNCTION dbo.GetSiteDate. A TIME THIS CODE WRITES TO THE REPLICATION LOG, OR COMPARES
+        // WITH ONE OF THOSE DATES, HAS TO BE IN THE SAME TIME, OR A ROW'S LAST ATTEMPT SHOWS HOURS AWAY FROM WHEN THE ROW WAS CREATED.
+        //
+        // THE SITE'S TIME IS READ FROM THE DERIVED PROPERTY CurrentSiteDateTime ON ue_AIR_IDOReplicationRules, WHOSE EXPRESSION IS
+        // dbo.GetSiteDate(GETDATE()). A DERIVED PROPERTY NEEDS A ROW TO COME BACK ON, AND ANY RULE WILL DO.
+        //
+        // IF IT CAN'T BE READ (NO RULE, OR AN IDO THAT DOESN'T HAVE THE PROPERTY YET), THE IDO RUNTIME'S OWN OFFSET BETWEEN THIS SERVER AND
+        // THE SITE IS USED (RuntimeSiteDateTime), AND FAILING THAT THIS SERVER'S TIME. A BACKGROUND TASK SAYS SO ONCE IN ITS MESSAGES.
+        // NEVER THROWS.
+
+        private bool siteDateTimeFallbackReported = false;
+
+        private DateTime LoadSiteDateTime(SytelineInternalAPI sytelineAPI, Utilities utils)
+        {
+
+            string reason;
+
+            try
+            {
+
+                LoadRecordsResponseData response = sytelineAPI.LoadRecords(
+                    IDOName: "ue_AIR_IDOReplicationRules",
+                    properties: new List<string>() { "CurrentSiteDateTime" },
+                    filter: "",
+                    orderBy: "",
+                    recordCap: 1
+                );
+
+                if (response.Items.Count > 0)
+                {
+
+                    IDOPropertyValue siteDateTimeValue = response.Items[0].PropertyValues[response.PropertyKeys["CurrentSiteDateTime"]];
+
+                    if (!siteDateTimeValue.IsNull)
+                    {
+                        return siteDateTimeValue.GetValue<DateTime>();
+                    }
+
+                    reason = "it came back empty";
+
+                }
+                else
+                {
+                    reason = "there is no replication rule to read it from";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                reason = this.DescribeException(ex);
+            }
+
+            DateTime fallback;
+            string fallbackDescription;
+
+            try
+            {
+                fallback = RuntimeSiteDateTime();
+                fallbackDescription = "the IDO runtime's own offset to the site's time";
+            }
+            catch (Exception)
+            {
+                fallback = DateTime.Now;
+                fallbackDescription = "this server's own time";
+            }
+
+            if (!this.siteDateTimeFallbackReported)
+            {
+
+                this.siteDateTimeFallbackReported = true;
+
+                utils?.WriteLogMessage("The site's current time couldn't be read from the CurrentSiteDateTime property of ue_AIR_IDOReplicationRules (" + reason + "), so " + fallbackDescription + " was used for the replication log. If the property is missing, import the current IDO export and refresh the IDO metadata.");
+
+            }
+
+            return fallback;
+
+        }
+
+        // THIS SERVER'S TIME PLUS THE OFFSET THE IDO RUNTIME KEEPS BETWEEN THIS SERVER AND THE SITE. THE RUNTIME WORKS THE OFFSET OUT ONCE
+        // PER PROCESS, FROM dbo.GetSiteDate, AND USES IT FOR THE DEFAULT VALUE OF A "CURRENT DATE" PROPERTY. BEING WORKED OUT ONCE, IT CAN
+        // BE AN HOUR OUT AFTER A DAYLIGHT SAVING CHANGE UNTIL THE PROCESS RESTARTS, WHICH IS WHY IT IS ONLY THE FALLBACK.
+        //
+        // IT IS A METHOD OF ITS OWN, NEVER INLINED, SO THAT A RUNTIME WITHOUT THIS MEMBER FAILS HERE, WHERE THE CALLER CATCHES IT, AND NOT
+        // WHEN LoadSiteDateTime ITSELF IS COMPILED.
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static DateTime RuntimeSiteDateTime()
+        {
+
+            return DateTime.Now + IDORuntime.ServerTimeOffset;
 
         }
 
