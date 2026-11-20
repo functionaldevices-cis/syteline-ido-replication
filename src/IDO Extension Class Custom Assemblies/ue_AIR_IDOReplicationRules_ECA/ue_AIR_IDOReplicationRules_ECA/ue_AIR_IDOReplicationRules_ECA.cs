@@ -1596,7 +1596,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // TABLES), SO A RULE CAN NAME A PROPERTY THAT COVERS THEM ALL, SUCH AS A DERIVED PROPERTY THAT RETURNS THE LATEST OF THEM.
         //
         // THE NAME GOES INTO A FILTER, SO IT HAS TO BE A PLAIN PROPERTY NAME. RETURNS FALSE, WITH THE REASON IN THE TASK'S MESSAGES, WHEN THE
-        // RULE'S VALUE CAN'T BE USED. NEVER THROWS.
+        // RULE'S VALUE CAN'T BE LOADED OR ISN'T A PROPERTY NAME. WHETHER THE IDO REALLY HAS THE PROPERTY IS LEFT TO THE LOAD OF THE RECORDS,
+        // AS IT IS FOR A RULE'S FIELD MAP. NEVER THROWS.
 
         private bool TryLoadWatermarkProperty(SytelineInternalAPI sytelineAPI, Utilities utils, string ruleNum, string IDOName, out string watermarkProperty)
         {
@@ -1630,18 +1631,30 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             if (!IsPlainPropertyName(watermarkProperty))
             {
-                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a property name. It can only hold letters, digits and underscores.");
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a property name. It has to start with a letter or an underscore, and can only hold the letters A to Z, digits and underscores.");
                 return false;
             }
 
-            // THE LIST IS ONLY USED FOR A CLEARER MESSAGE. WHEN IT CAN'T BE LOADED (NULL), THE RESYNC GOES AHEAD, AND A WRONG NAME FAILS THE LOAD.
+            // THE IDO'S PROPERTY LIST IS ONLY USED TO SPELL THE NAME THE WAY THE IDO DOES, AND FOR A CLEARER MESSAGE. IT NEVER STOPS THE
+            // RESYNC: THE LIST MAY NOT BE COMPLETE, AND A NAME THE IDO REALLY DOESN'T HAVE FAILS THE LOAD OF THE RECORDS ANYWAY.
 
             HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
 
-            if (idoPropertyNames != null && !idoPropertyNames.Contains(watermarkProperty))
+            if (idoPropertyNames != null)
             {
-                utils.WriteLogMessage("Nothing was resent: IDO '" + IDOName + "' has no property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. A period needs a date property to compare with. Set the rule's Incremental Watermark Property to one, or leave both dates blank.");
-                return false;
+
+                string requestedName = watermarkProperty;
+                string nameOnIDO = idoPropertyNames.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
+
+                if (nameOnIDO != null)
+                {
+                    watermarkProperty = nameOnIDO;
+                }
+                else
+                {
+                    utils.WriteLogMessage("IDO '" + IDOName + "' doesn't list a property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. The resync goes ahead. If its load fails, set the rule's Incremental Watermark Property to a date property of the IDO, or leave both dates blank.");
+                }
+
             }
 
             return true;
@@ -1653,12 +1666,16 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private static bool IsPlainPropertyName(string name)
         {
 
-            if (string.IsNullOrEmpty(name) || !(char.IsLetter(name[0]) || name[0] == '_'))
+            // THE SAME SHAPE MONGOOSE READS AS A PROPERTY NAME IN A FILTER: A LETTER (A TO Z) OR AN UNDERSCORE, THEN LETTERS, DIGITS AND UNDERSCORES
+
+            bool IsNameLetter(char character) => (character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z') || character == '_';
+
+            if (string.IsNullOrEmpty(name) || !IsNameLetter(name[0]))
             {
                 return false;
             }
 
-            return name.All(character => char.IsLetterOrDigit(character) || character == '_');
+            return name.All(character => IsNameLetter(character) || (character >= '0' && character <= '9'));
 
         }
 

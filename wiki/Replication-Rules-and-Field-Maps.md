@@ -30,11 +30,11 @@ Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](
 
 This names the property of the rule's IDO that says when a record last changed. A [Bulk Resync](Resending-Records#bulk-resync) compares its Changed From and Changed To dates with it. The default is `RecordDate`.
 
-Change it when `RecordDate` doesn't see every change. An IDO built on two tables has a record date for each. `SLCustomers`, for example, has `RecordDate` and `AdrRecordDate`: some fields move one, and some move the other. A resync by `RecordDate` alone would miss a customer whose address changed.
+Change it when `RecordDate` doesn't see every change. An IDO built on two tables can have a record date for each. `SLCustomers`, for example, has `RecordDate` and `AdrRecordDate`: some fields move one, and some move the other. A resync by `RecordDate` alone would miss a customer whose address changed.
 
 To cover both, extend the IDO with a derived property that returns the latest of its record dates, and name that property here. For `SLCustomers` the expression could be `GREATEST(RecordDate, AdrRecordDate)` on SQL Server 2022 or later, or a `CASE` that picks the later one on earlier versions.
 
-The value has to be a single property name. It isn't used by triggers, bulk loads, retries or **Resend All Errors**.
+The value has to be a single property name, and the property has to hold a date. It isn't used by triggers, bulk loads, retries or **Resend All Errors**.
 
 ## Field maps
 
