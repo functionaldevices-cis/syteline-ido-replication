@@ -37,6 +37,8 @@ One row per record per rule.
 
 `Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
 
+**A Salesforce rule logs `Upsert` for an insert and for an update.** Salesforce matches on the external ID and creates or updates the record either way, so `Upsert` is what happens there. The Source still says which event it was: `Event: After-Insert` or `Event: After-Update`. A delete is logged as `Delete`. An Azure Event Hubs rule logs `Insert` and `Update` as they are, because the event it sends carries that operation.
+
 Two less common cases:
 - A bulk load that passes `Insert`, `Update` or `Delete` as its operation keeps the Source `BG Task: Bulk` and logs the operation it passed.
 - `Event: Unknown` with `Upsert` means a trigger called replication without one of the three operations. Open the IDO Replication Configs form and click **Fix Triggers** for that IDO.

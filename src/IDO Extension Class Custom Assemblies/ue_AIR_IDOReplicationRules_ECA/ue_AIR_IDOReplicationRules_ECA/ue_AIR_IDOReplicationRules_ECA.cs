@@ -104,6 +104,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const string OperationUpsert = "Upsert";
 
+        // THE TARGET TYPE OF A SALESFORCE RULE
+
+        private const string TargetTypeSalesforce = "SalesforceRESTAPI";
+
         // THE SOURCE: WHAT STARTED A RUN. IT IS ONLY WRITTEN TO THE REPLICATION LOG, AND A RETRY LEAVES IT AS IT WAS.
         // THE VALUES MUST MATCH THE Source INLINE LIST ON ue_AIR_IDOReplicationLogs.
 
@@ -391,6 +395,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private ReplicationRuleResult ReplicateRule(ReplicationRule replicationRule, LoadRecordsResponseData replicationRecordsResponse, string operation, bool logEveryRecord, Utilities utils)
         {
 
+            // FROM HERE ON, THE OPERATION IS WHAT THIS RULE'S TARGET DOES WITH THE RECORDS
+
+            operation = OperationAtTarget(replicationRule.TargetType, operation);
+
             List<Dictionary<string, object>> remappedReplicationRecords = null;
             ReplicationRuleResult ruleResult;
 
@@ -464,7 +472,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 recordCount: 0,
                 success: false,
                 errorMessage: errorMessage,
-                operation: operation
+                operation: OperationAtTarget(replicationRule.TargetType, operation)
             )
             {
                 CredentialName = replicationRule.CredentialName ?? ""
@@ -816,7 +824,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     return ruleResult;
 
-                case "SalesforceRESTAPI":
+                case TargetTypeSalesforce:
 
                     // CREDENTIAL VALUES: 01 = ClientId, 02 = ClientSecret, 03 = Domain
                     // RULE OPTIONS:      01 = DestinationName (sObject), 02 = ExternalIDFieldName, 03 = DeleteBehavior (Skip OR Delete)
@@ -1355,7 +1363,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "TargetType", ruleResult.TargetType != "" ? ruleResult.TargetType : null },
                 { "CredentialName", LoggedCredentialName(ruleResult.CredentialName) },
                 { "Source", source },
-                { "Operation", operation },
+                { "Operation", OperationAtTarget(ruleResult.TargetType, operation) },
                 { "RecordID", recordID != "" ? recordID : null },
                 { "RecordRowPointer", hasRecordRowPointer ? recordRowPointerGuid.ToString() : null },
                 { "Payload", payload },
@@ -2621,6 +2629,23 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             utils.WriteLogMessage("Purged " + countPurged + " succeeded or skipped replication log row(s) created before " + cutoff.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".");
+
+        }
+
+
+
+        // WHAT A TARGET DOES WITH A RUN'S RECORDS, WHICH IS THE OPERATION THE REPLICATION LOG SHOWS FOR THE RULE.
+        //
+        // SALESFORCE UPSERTS BY EXTERNAL ID WHETHER THE RECORD WAS INSERTED OR UPDATED IN SYTELINE: IT CREATES THE RECORD WHEN NONE HAS THAT ID
+        // AND UPDATES IT WHEN ONE DOES. SO FOR A SALESFORCE RULE AN Insert OR AN Update IS AN Upsert. THE LOG ROW'S SOURCE STILL SAYS WHICH
+        // EVENT IT WAS. A Delete STAYS A Delete, AND EVERY OTHER TARGET TYPE KEEPS THE OPERATION IT WAS GIVEN.
+
+        private static string OperationAtTarget(string targetType, string operation)
+        {
+
+            return targetType == TargetTypeSalesforce && (operation == OperationInsert || operation == OperationUpdate)
+                ? OperationUpsert
+                : operation;
 
         }
 

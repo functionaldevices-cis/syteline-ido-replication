@@ -62,6 +62,7 @@ Domain works the same way as the `Domain` property of the Salesforce credential 
 ## Upserts
 
 - An insert or update in Syteline upserts the record in Salesforce: it is created if no record has that external ID, and updated if one does.
+- The [replication log](Replication-Log-and-Retries#source-and-operation) shows the Operation `Upsert` for both. Its Source column says whether the record was inserted or updated in Syteline.
 - Records are sent 200 at a time through the sObject Collections upsert API (version 61.0).
 - A batch isn't all-or-nothing. Each record succeeds or fails on its own, and each gets its own row in the [replication log](Replication-Log-and-Retries).
 
