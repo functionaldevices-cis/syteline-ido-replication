@@ -1752,11 +1752,11 @@
                <ScriptLine />
                <ScriptLine>      // THE RULE'S INCREMENTAL WATERMARK PROPERTY IS A DROP-DOWN. ITS LIST SOURCE IS</ScriptLine>
                <ScriptLine>      //    INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ScriptLine>
-               <ScriptLine>      // SO ITS LIST COMES FROM THE FORM VARIABLE IncrementalWatermarkPropertyChoices, WHICH THIS METHOD SETS TO THE DATE PROPERTIES OF THE</ScriptLine>
+               <ScriptLine>      // SO ITS LIST COMES FROM THE FORM VARIABLE IncrementalWatermarkPropertyChoices, WHICH THIS METHOD SETS TO THE PROPERTIES OF THE</ScriptLine>
                <ScriptLine>      // CURRENT RULE'S IDO. THE IDO RUNTIME IS ASKED FOR THEM (GetIDOPropertyEntries), NOT THE IDOProperties IDO, SO THE LIST INCLUDES THE</ScriptLine>
                <ScriptLine>      // PROPERTIES OF AN IDO THAT EXTENDS THE RULE'S IDO, WHICH ARE MERGED INTO IT AT RUN TIME.</ScriptLine>
                <ScriptLine>      // IT RUNS WHEN ANOTHER RULE BECOMES CURRENT AND WHEN THE RULE'S IDO NAME IS CHANGED.</ScriptLine>
-               <ScriptLine>      // A VALUE THAT ISN'T IN THE LIST CAN STILL BE TYPED. A BULK RESYNC CHECKS IT WHEN IT RUNS.</ScriptLine>
+               <ScriptLine>      // THE LIST IS A HELP, NOT A CHECK. A BULK RESYNC CHECKS THE VALUE WHEN IT RUNS.</ScriptLine>
                <ScriptLine />
                <ScriptLine>      public void UpdateIncrementalWatermarkPropertyChoices()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
@@ -1960,10 +1960,12 @@
                <ScriptLine />
                <ScriptLine>      // THE NAMES OF AN IDO'S PROPERTIES, SORTED, AS INLINE LIST ENTRIES (SEPARATED BY COMMAS). THE IDO RUNTIME IS ASKED FOR THEM, SO THE</ScriptLine>
                <ScriptLine>      // LIST IS WHAT REPLICATION CAN ACTUALLY LOAD: USER-DEFINED FIELDS AND THE PROPERTIES OF AN EXTENDING IDO INCLUDED.</ScriptLine>
-               <ScriptLine>      // WITH datesOnly, ONLY THE PROPERTIES WHOSE DATA TYPE IS Date ARE LISTED. IF THE IDO REPORTS NONE, EVERY PROPERTY IS LISTED, SO THE</ScriptLine>
-               <ScriptLine>      // LIST IS NEVER EMPTY JUST BECAUSE THE DATA TYPES COULDN'T BE READ.</ScriptLine>
+               <ScriptLine>      // WITH datesOnly, THE PROPERTIES THAT CAN'T HOLD A DATE ARE LEFT OUT: THE ONES WHOSE DATA TYPE IS A KNOWN NON-DATE TYPE (TEXT, A</ScriptLine>
+               <ScriptLine>      // NUMBER AND SO ON). A PROPERTY WITH THE Date DATA TYPE IS LISTED, AND SO IS ONE WITH NO DATA TYPE, BECAUSE A DERIVED PROPERTY THAT</ScriptLine>
+               <ScriptLine>      // RETURNS A DATE MAY NOT HAVE ONE. THAT IS THE SAME RULE A BULK RESYNC APPLIES (NonDateDataTypes IN THE RULES EXTENSION CLASS). IF</ScriptLine>
+               <ScriptLine>      // NOTHING IS LEFT, EVERY PROPERTY IS LISTED.</ScriptLine>
                <ScriptLine>      // THEY ARE READ ONCE PER IDO AND KEPT IN THREE FORM VARIABLES: SourcePropertyListIDO (THE IDO THE KEPT LISTS ARE FOR),</ScriptLine>
-               <ScriptLine>      // SourcePropertyList (EVERY PROPERTY) AND SourceDatePropertyList (THE DATE PROPERTIES). IF THE PROPERTIES CAN'T BE READ, THE LIST</ScriptLine>
+               <ScriptLine>      // SourcePropertyList (EVERY PROPERTY) AND SourceDatePropertyList (THE ONES THAT CAN HOLD A DATE). IF THE PROPERTIES CAN'T BE READ, THE LIST</ScriptLine>
                <ScriptLine>      // IS EMPTY AND NOTHING IS KEPT.</ScriptLine>
                <ScriptLine />
                <ScriptLine>      private string GetIDOPropertyEntries(string idoName, bool datesOnly = false)</ScriptLine>
@@ -1981,12 +1983,16 @@
                <ScriptLine>         List&lt;string&gt; propertyNames = new List&lt;string&gt;();</ScriptLine>
                <ScriptLine>         List&lt;string&gt; datePropertyNames = new List&lt;string&gt;();</ScriptLine>
                <ScriptLine />
+               <ScriptLine>         // THE MONGOOSE DATA TYPES THAT AREN'T A DATE, IN CAPITALS. CONTAINS IS WHAT A SUBCOLLECTION REPORTS.</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         string[] nonDateDataTypes = new string[] { "BINARY", "BYTE", "DECIMAL", "FLOAT", "GUID", "LONG INTEGER", "SHORT INTEGER", "STRING", "NUMSORTEDSTRING", "CONTAINS" };</ScriptLine>
+               <ScriptLine />
                <ScriptLine>         try</ScriptLine>
                <ScriptLine>         {</ScriptLine>
                <ScriptLine />
                <ScriptLine>            GetPropertyInfoResponseData propertyInfoResponse = this.IDOClient.GetPropertyInfo(idoName);</ScriptLine>
                <ScriptLine />
-               <ScriptLine>            // AN IDO NAME THE RUNTIME DOESN'T KNOW CAN COME BACK WITH NO PROPERTY LIST AT ALL</ScriptLine>
+               <ScriptLine>            // AN IDO NAME THE RUNTIME DOESN'T KNOW NORMALLY THROWS, WHICH THE CATCH BELOW HANDLES. THIS ALSO COVERS A RESPONSE WITH NO PROPERTY LIST.</ScriptLine>
                <ScriptLine />
                <ScriptLine>            if (propertyInfoResponse == null || propertyInfoResponse.Properties == null)</ScriptLine>
                <ScriptLine>            {</ScriptLine>
@@ -2015,10 +2021,10 @@
                <ScriptLine>               }</ScriptLine>
                <ScriptLine>               catch (Exception)</ScriptLine>
                <ScriptLine>               {</ScriptLine>
-               <ScriptLine>                  // A PROPERTY WITH NO DATA TYPE, SUCH AS A SUBCOLLECTION, JUST ISN'T A DATE</ScriptLine>
+               <ScriptLine>                  // A DATA TYPE THAT CAN'T BE READ COUNTS AS NONE</ScriptLine>
                <ScriptLine>               }</ScriptLine>
                <ScriptLine />
-               <ScriptLine>               if (string.Equals(dataType, "Date", StringComparison.OrdinalIgnoreCase))</ScriptLine>
+               <ScriptLine>               if (Array.IndexOf(nonDateDataTypes, dataType.ToUpperInvariant()) &lt; 0)</ScriptLine>
                <ScriptLine>               {</ScriptLine>
                <ScriptLine>                  datePropertyNames.Add(propertyName);</ScriptLine>
                <ScriptLine>               }</ScriptLine>
