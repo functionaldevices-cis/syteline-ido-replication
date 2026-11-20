@@ -30,7 +30,7 @@ BG~TASKID~, CustNum LIKE 'C%', SLCustomers, 5000
 | --- | --- | --- |
 | Records | The one changed record | Every record that matches the filter, up to the record cap |
 | Source in the log | `Event: After-Insert`, `Event: After-Update` or `Event: Before-Delete` | `BG Task: Bulk` |
-| Operation | `Insert`, `Update` or `Delete` | `Upsert` |
+| Operation in the log | `Insert`, `Update` or `Delete`. A Salesforce rule logs `Upsert` for an insert or an update. | `Upsert` |
 | Event Hubs | Sends `operation` = `Insert`, `Update` or `Delete` | Sends `operation` = `Upsert` |
 | Salesforce | Upserts, or deletes if the rule allows | Upserts |
 | Replication log | Every record | Every record for 100 or fewer; otherwise failures and warnings only |

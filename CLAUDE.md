@@ -61,11 +61,11 @@ Source and operation. Every run has both, and both go to the replication log (`S
 
 | Run | Source | Operation |
 | --- | --- | --- |
-| The `IdoPostItemInsert` trigger | `Event: After-Insert` | `Insert` |
-| The `IdoPostItemUpdate` trigger | `Event: After-Update` | `Update` |
+| The `IdoPostItemInsert` trigger | `Event: After-Insert` | `Insert` (`Upsert` for a Salesforce rule) |
+| The `IdoPostItemUpdate` trigger | `Event: After-Update` | `Update` (`Upsert` for a Salesforce rule) |
 | The `IdoOnItemDelete` trigger | `Event: Before-Delete` | `Delete` |
 | A trigger run that passes none of the three | `Event: Unknown` | `Upsert` |
-| A background task run (a bulk load) | `BG Task: Bulk` | `Upsert`, or the operation it passes |
+| A background task run (a bulk load) | `BG Task: Bulk` | `Upsert`, or the operation it passes (`Insert` and `Update` become `Upsert` for a Salesforce rule) |
 | The Rules form's Test tab, which passes `Test` as the operation | `BG Task: Test` | `Upsert` |
 | A manual resend (`ue_ResendReplications`) | `BG Task: Resend` | `Upsert` |
 
