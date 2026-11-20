@@ -56,16 +56,16 @@ Replication runs inside the user's save, so it must never throw out of the trigg
 
 Source and operation. Every run has both, and both go to the replication log (`Source` and `Operation` on `ue_AIR_IDOReplicationLogs`):
 
-- The **operation** is what the run does with its records at the target: `Insert`, `Update`, `Delete` or `Upsert`. The triggers pass the first three. Anything else the caller passes, blank included, becomes `Upsert` (`NormalizeOperation`), which means insert or update, whichever applies. The operation is also what the target is told (see the target types below), so the log and the target use the same four words.
+- The **operation** is what the run does with its records at the target: `Insert`, `Update`, `Delete` or `Upsert`. The triggers pass the first three. Anything else the caller passes, blank included, becomes `Upsert` (`NormalizeOperation`), which means insert or update, whichever applies. The operation is also what the target is told (see the target types below), so the log and the target use the same four words. For a `SalesforceRESTAPI` rule, `OperationAtTarget` turns `Insert` and `Update` into `Upsert` before the rule is sent and logged, because Salesforce upserts by external ID either way. The Source still says which event it was. `Delete` is unchanged, and so is every operation of an `AzureEventHub` rule. Rows logged before this keep the operation they had, and the retry task sends them the same way.
 - The **source** is what started the run. It is only logged, and a retry leaves it as it was.
 
 | Run | Source | Operation |
 | --- | --- | --- |
-| The `IdoPostItemInsert` trigger | `Event: After-Insert` | `Insert` |
-| The `IdoPostItemUpdate` trigger | `Event: After-Update` | `Update` |
+| The `IdoPostItemInsert` trigger | `Event: After-Insert` | `Insert` (`Upsert` for a Salesforce rule) |
+| The `IdoPostItemUpdate` trigger | `Event: After-Update` | `Update` (`Upsert` for a Salesforce rule) |
 | The `IdoOnItemDelete` trigger | `Event: Before-Delete` | `Delete` |
 | A trigger run that passes none of the three | `Event: Unknown` | `Upsert` |
-| A background task run (a bulk load) | `BG Task: Bulk` | `Upsert`, or the operation it passes |
+| A background task run (a bulk load) | `BG Task: Bulk` | `Upsert`, or the operation it passes (`Insert` and `Update` become `Upsert` for a Salesforce rule) |
 | The Rules form's Test tab, which passes `Test` as the operation | `BG Task: Test` | `Upsert` |
 | A manual resend (`ue_ResendReplications`) | `BG Task: Resend` | `Upsert` |
 

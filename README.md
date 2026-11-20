@@ -110,7 +110,7 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 ## Replication log and retries
 
 `ue_AIR_IDOReplicationLogs` holds one row per record per rule. Each row stores:
-- the source (which trigger event, a bulk load or a test), the operation (`Insert`, `Update`, `Upsert` or `Delete`) and the record's ID
+- the source (which trigger event, a bulk load or a test), the operation (`Insert`, `Update`, `Upsert` or `Delete`; a Salesforce rule logs an insert or an update as `Upsert`, which is what Salesforce does with it) and the record's ID
 - the payload as sent (up to 4,000 characters)
 - the status (`Succeeded`, `Failed` or `Skipped`) and the error
 - the number of retries left (3 to start)

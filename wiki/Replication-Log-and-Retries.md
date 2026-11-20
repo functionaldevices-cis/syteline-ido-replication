@@ -28,8 +28,8 @@ One row per record per rule.
 
 | Run | Source | Operation |
 | --- | --- | --- |
-| The insert trigger | `Event: After-Insert` | `Insert` |
-| The update trigger | `Event: After-Update` | `Update` |
+| The insert trigger | `Event: After-Insert` | `Insert`, or `Upsert` for a Salesforce rule |
+| The update trigger | `Event: After-Update` | `Update`, or `Upsert` for a Salesforce rule |
 | The delete trigger, which runs before the row is removed | `Event: Before-Delete` | `Delete` |
 | A [manual resend](Resending-Records) | `BG Task: Resend` | `Upsert` |
 | A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
@@ -37,8 +37,10 @@ One row per record per rule.
 
 `Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
 
+**A Salesforce rule logs `Upsert` for an insert and for an update.** Salesforce matches on the external ID and creates or updates the record either way, so `Upsert` is what happens there. The Source still says which event it was: `Event: After-Insert` or `Event: After-Update`. A delete is logged as `Delete`. An Azure Event Hubs rule logs `Insert` and `Update` as they are, because the event it sends carries that operation. Salesforce rows logged before this was introduced keep the `Insert` or `Update` they had, so a Salesforce rule's log can show both. To find a Salesforce rule's inserts or updates, filter on Source.
+
 Two less common cases:
-- A bulk load that passes `Insert`, `Update` or `Delete` as its operation keeps the Source `BG Task: Bulk` and logs the operation it passed.
+- A bulk load that passes `Insert`, `Update` or `Delete` as its operation keeps the Source `BG Task: Bulk` and logs the operation it passed. A Salesforce rule still logs `Insert` and `Update` as `Upsert`, and with the Source `BG Task: Bulk` the row then doesn't say which of the two was passed.
 - `Event: Unknown` with `Upsert` means a trigger called replication without one of the three operations. Open the IDO Replication Configs form and click **Fix Triggers** for that IDO.
 
 ## What gets logged
