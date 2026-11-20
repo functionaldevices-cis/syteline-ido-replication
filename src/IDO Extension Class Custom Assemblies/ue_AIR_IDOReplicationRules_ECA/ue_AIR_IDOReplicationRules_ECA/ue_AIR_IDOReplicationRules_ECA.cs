@@ -248,7 +248,22 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 }
 
-                if (replicationRules.Keys.Count > 0)
+                // A TRIGGER RUN WHOSE FILTER HAS A BLANK RowPointer CAN'T IDENTIFY ITS RECORD, AND LOADING WITH IT WOULD MOST LIKELY BE AN
+                // ERROR, NOT AN EMPTY RESULT: RowPointer IS A uniqueidentifier COLUMN, AND SQL SERVER CAN'T CONVERT '' TO ONE. SUCH A RUN ISN'T
+                // LOADED. EACH RULE GETS THE SAME Skipped ROW AS A FILTER THAT MATCHED NO RECORD, SO THE LOG SHOWS WHAT THE TRIGGER PASSED.
+
+                if (replicationRules.Keys.Count > 0 && BGTaskNum <= 0 && IsBlankRowPointerFilter(queryFilter))
+                {
+
+                    nothingToSend = true;
+
+                    foreach (ReplicationRule replicationRule in replicationRules.Values)
+                    {
+                        ruleResults.Add(BuildNoRecordRuleResult(replicationRule, IDOName, queryFilter, operation));
+                    }
+
+                }
+                else if (replicationRules.Keys.Count > 0)
                 {
 
                     // LOAD THE REPLICATION RECORD(S). A RULE WHOSE RECORDS COULDN'T BE LOADED ISN'T IN recordsByRule: IT ALREADY HAS A FAILED
@@ -293,8 +308,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         if (recordCountLoaded == 0)
                         {
+
                             nothingToSend = true;
                             utils.WriteLogMessage("Nothing was sent: no '" + IDOName + "' record matches the filter \"" + queryFilter + "\".");
+
+                            // A TRIGGER RUN HAS NO BACKGROUND TASK TO TAKE THAT MESSAGE, SO WITHOUT A LOG ROW IT WOULD DO NOTHING WITHOUT A TRACE. A
+                            // TRIGGER ALWAYS NAMES ONE RECORD THAT WAS JUST SAVED, SO FINDING NONE MEANS THE FILTER IT PASSED DIDN'T IDENTIFY IT,
+                            // FOR EXAMPLE A BLANK RowPointer. EACH RULE THAT WOULD HAVE SENT IT GETS A Skipped ROW THAT SHOWS THE FILTER. THE ROW
+                            // HAS NO PAYLOAD, SO IT IS NEVER RETRIED.
+
+                            if (BGTaskNum <= 0)
+                            {
+                                foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                                {
+                                    if (recordsByRule.ContainsKey(replicationRuleKeyValPair.Key))
+                                    {
+                                        ruleResults.Add(BuildNoRecordRuleResult(replicationRuleKeyValPair.Value, IDOName, queryFilter, operation));
+                                    }
+                                }
+                            }
+
                         }
 
                     }
@@ -461,6 +494,45 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
+        // TRUE FOR A FILTER THAT ONLY COMPARES RowPointer WITH A BLANK VALUE, WHICH IS WHAT A TRIGGER PASSES WHEN P("RowPointer") IS EMPTY
+
+        private static bool IsBlankRowPointerFilter(string queryFilter)
+        {
+
+            return System.Text.RegularExpressions.Regex.IsMatch(queryFilter ?? "", @"^\s*\(?\s*RowPointer\s*=\s*N?''\s*\)?\s*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        }
+
+
+
+        // THE RESULT FOR A RULE WHEN A TRIGGER'S FILTER MATCHED NO RECORD. IT BECOMES ONE Skipped LOG ROW, WITHOUT A PAYLOAD OR A RECORD ID,
+        // WHOSE MESSAGE SHOWS THE FILTER THE TRIGGER PASSED.
+
+        private static ReplicationRuleResult BuildNoRecordRuleResult(ReplicationRule replicationRule, string IDOName, string queryFilter, string operation)
+        {
+
+            string message = "Nothing was sent: the filter matched no '" + IDOName + "' record. The filter was: " + (string.IsNullOrWhiteSpace(queryFilter) ? "(blank)" : queryFilter) + (IsBlankRowPointerFilter(queryFilter) ? ". The RowPointer in it is blank, so the trigger wasn't given the saved record's RowPointer." : ".");
+
+            ReplicationRuleResult ruleResult = new ReplicationRuleResult(
+                ruleNum: replicationRule.RuleNum ?? "",
+                targetType: replicationRule.TargetType ?? "",
+                recordCount: 0,
+                success: true,
+                errorMessage: message,
+                operation: OperationAtTarget(replicationRule.TargetType, operation)
+            )
+            {
+                CredentialName = replicationRule.CredentialName ?? ""
+            };
+
+            ruleResult.RecordOutcomes.Add(new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusSkipped, message));
+
+            return ruleResult;
+
+        }
+
+
+
         // A FAILED RESULT FOR A RULE THAT NEVER GOT AS FAR AS REMAPPING ITS RECORDS. IT BECOMES ONE FAILED LOG ROW WITHOUT A PAYLOAD.
 
         private static ReplicationRuleResult BuildFailedRuleResult(ReplicationRule replicationRule, string errorMessage, string operation)
@@ -606,7 +678,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 }
 
-                string loadErrorMessage = "Rule '" + replicationRule.RuleNum + "' couldn't load its records from IDO '" + IDOName + "': " + this.DescribeException(ruleLoadException);
+                string loadErrorMessage = "Rule '" + replicationRule.RuleNum + "' couldn't load its records from IDO '" + IDOName + "' with the filter " + (string.IsNullOrWhiteSpace(queryFilter) ? "(blank)" : queryFilter) + ": " + this.DescribeException(ruleLoadException);
 
                 if (idoPropertyNames == null)
                 {

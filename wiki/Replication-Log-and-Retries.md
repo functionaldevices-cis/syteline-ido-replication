@@ -55,6 +55,7 @@ Special cases:
 - If a rule fails before its records are built, it gets one `Failed` row with no payload.
 - If a rule's source records can't be loaded, most often because its field map names a property the IDO doesn't have, that rule gets one such row. The IDO's other rules still replicate. The record's change isn't replicated for the failed rule and can't be retried from the log, so after fixing the field map, run a [bulk load](Bulk-Loads) for the records that changed in the meantime.
 - A payload over 4,000 characters isn't stored. The row says so, and it can't be retried.
+- If a trigger can't find the record it was for, each rule gets one `Skipped` row with no record ID and no payload, whose message shows the filter the trigger was given.
 
 ## Statuses
 
@@ -62,7 +63,7 @@ Special cases:
 | --- | --- |
 | Succeeded | The target accepted the record |
 | Failed | The target rejected the record, or it couldn't be sent |
-| Skipped | Nothing was sent on purpose: a Salesforce delete with Delete Behavior `Skip`, or a failed row that a newer replication replaced |
+| Skipped | Nothing was sent: a Salesforce delete with Delete Behavior `Skip`, a failed row that a newer replication replaced, or a trigger whose filter matched no record. The last kind has no record ID, and its message shows the filter the trigger passed. |
 
 ## The retry task
 
