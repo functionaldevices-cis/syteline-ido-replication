@@ -1384,8 +1384,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           its retries back, so the retry task resends it from its stored payload: a failed delete, or a
         /*           row with no record row pointer. queryFilter and recordCap aren't used.
         /*
-        /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by
-        /*           RecordDate) that match queryFilter, up to recordCap records. A failed row whose record it resent
+        /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by the
+        /*           rule's IncrementalWatermarkProperty, RecordDate unless the rule names another) that match
+        /*           queryFilter, up to recordCap records. A failed row whose record it resent
         /*           is marked Skipped. It doesn't go looking for other failed records.
         /*
         /*           Both dates are optional, in both scopes. A blank date puts no limit on that side. recordCap is
@@ -1397,6 +1398,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const string ResendScopeFailures = "Failures";
 
         private const string ResendScopeEverything = "Everything";
+
+        // THE PROPERTY A BULK RESYNC'S PERIOD IS COMPARED WITH WHEN THE RULE DOESN'T NAME ONE
+
+        private const string DefaultWatermarkProperty = "RecordDate";
 
         // THE MOST FAILED LOG ROWS ONE RESEND LOOKS AT
 
@@ -1565,9 +1570,95 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             string failedRowsFilter = "Status = 'Failed' AND RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName);
 
-            return resendEverything
-                ? this.ResendBulk(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, queryFilter, bulkRecordCap, failedRowsFilter)
-                : this.ResendFailures(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, failedRowsFilter);
+            if (!resendEverything)
+            {
+                return this.ResendFailures(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, failedRowsFilter);
+            }
+
+            // A BULK RESYNC WITH A PERIOD COMPARES THE DATES WITH THE RULE'S WATERMARK PROPERTY. WITHOUT A PERIOD THE PROPERTY ISN'T USED,
+            // SO IT ISN'T LOADED OR CHECKED.
+
+            string watermarkProperty = DefaultWatermarkProperty;
+
+            if ((rangeStart.HasValue || rangeEnd.HasValue) && !this.TryLoadWatermarkProperty(sytelineAPI, utils, ruleNum, IDOName, out watermarkProperty))
+            {
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            return this.ResendBulk(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, watermarkProperty, rangeStart, rangeEnd, queryFilter, bulkRecordCap, failedRowsFilter);
+
+        }
+
+
+
+        // LOADS THE PROPERTY OF THE RULE'S IDO THAT SAYS WHEN A RECORD LAST CHANGED: THE RULE'S IncrementalWatermarkProperty, OR RecordDate
+        // WHEN THE RULE HAS NONE. SOME IDOS HAVE MORE THAN ONE RECORD DATE (SLCustomers HAS RecordDate AND AdrRecordDate, FOR ITS TWO BASE
+        // TABLES), SO A RULE CAN NAME A PROPERTY THAT COVERS THEM ALL, SUCH AS A DERIVED PROPERTY THAT RETURNS THE LATEST OF THEM.
+        //
+        // THE NAME GOES INTO A FILTER, SO IT HAS TO BE A PLAIN PROPERTY NAME. RETURNS FALSE, WITH THE REASON IN THE TASK'S MESSAGES, WHEN THE
+        // RULE'S VALUE CAN'T BE USED. NEVER THROWS.
+
+        private bool TryLoadWatermarkProperty(SytelineInternalAPI sytelineAPI, Utilities utils, string ruleNum, string IDOName, out string watermarkProperty)
+        {
+
+            watermarkProperty = DefaultWatermarkProperty;
+
+            try
+            {
+
+                LoadRecordsResponseData ruleResponse = sytelineAPI.LoadRecords(
+                    IDOName: "ue_AIR_IDOReplicationRules",
+                    properties: new List<string>() { "RuleNum", "IncrementalWatermarkProperty" },
+                    filter: "RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum),
+                    orderBy: "",
+                    recordCap: 1
+                );
+
+                string ruleValue = ruleResponse.Items.Count > 0 ? (ruleResponse.Items[0].PropertyValues[ruleResponse.PropertyKeys["IncrementalWatermarkProperty"]].Value ?? "").Trim() : "";
+
+                if (ruleValue != "")
+                {
+                    watermarkProperty = ruleValue;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property couldn't be loaded. If the IncrementalWatermarkProperty property is missing from the ue_AIR_IDOReplicationRules IDO, import the current IDO export. " + this.DescribeException(ex));
+                return false;
+            }
+
+            if (!IsPlainPropertyName(watermarkProperty))
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a property name. It can only hold letters, digits and underscores.");
+                return false;
+            }
+
+            // THE LIST IS ONLY USED FOR A CLEARER MESSAGE. WHEN IT CAN'T BE LOADED (NULL), THE RESYNC GOES AHEAD, AND A WRONG NAME FAILS THE LOAD.
+
+            HashSet<string> idoPropertyNames = this.LoadIDOPropertyNames(IDOName);
+
+            if (idoPropertyNames != null && !idoPropertyNames.Contains(watermarkProperty))
+            {
+                utils.WriteLogMessage("Nothing was resent: IDO '" + IDOName + "' has no property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. A period needs a date property to compare with. Set the rule's Incremental Watermark Property to one, or leave both dates blank.");
+                return false;
+            }
+
+            return true;
+
+        }
+
+
+
+        private static bool IsPlainPropertyName(string name)
+        {
+
+            if (string.IsNullOrEmpty(name) || !(char.IsLetter(name[0]) || name[0] == '_'))
+            {
+                return false;
+            }
+
+            return name.All(character => char.IsLetterOrDigit(character) || character == '_');
 
         }
 
@@ -1788,13 +1879,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         // BULK RESYNC: RESENDS THE RECORDS CHANGED IN THE PERIOD THAT MATCH THE FILTER, UP TO THE LIMIT, IN ONE RUN
 
-        private int ResendBulk(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, DateTime? rangeStart, DateTime? rangeEnd, string queryFilter, int recordCap, string failedRowsFilter)
+        private int ResendBulk(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, string watermarkProperty, DateTime? rangeStart, DateTime? rangeEnd, string queryFilter, int recordCap, string failedRowsFilter)
         {
 
             // THE PERIOD AND THE FILTER ARE BOTH OPTIONAL. WITH NEITHER, EVERY RECORD OF THE IDO IS RESENT.
 
             List<string> filters = new List<string>();
-            string dateFilter = ResendDateFilter("RecordDate", rangeStart, rangeEnd);
+            string dateFilter = ResendDateFilter(watermarkProperty, rangeStart, rangeEnd);
 
             if (dateFilter != "")
             {
@@ -1808,7 +1899,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             string filter = string.Join(" AND ", filters);
 
-            utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
+            utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (dateFilter != "" ? " (by " + watermarkProperty + ")" : "") + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
 
             // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED (NOT A DELETE, AND WITH A RECORD ROW POINTER), NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
             // SEND SOME OF THEM, AND THEN THEIR FAILED ROWS ARE OUT OF DATE.
