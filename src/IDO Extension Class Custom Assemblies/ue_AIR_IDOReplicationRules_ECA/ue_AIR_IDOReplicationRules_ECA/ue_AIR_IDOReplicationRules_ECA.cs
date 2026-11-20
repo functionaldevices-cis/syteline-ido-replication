@@ -293,8 +293,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         if (recordCountLoaded == 0)
                         {
+
                             nothingToSend = true;
                             utils.WriteLogMessage("Nothing was sent: no '" + IDOName + "' record matches the filter \"" + queryFilter + "\".");
+
+                            // A TRIGGER RUN HAS NO BACKGROUND TASK TO TAKE THAT MESSAGE, SO WITHOUT A LOG ROW IT WOULD DO NOTHING WITHOUT A TRACE. A
+                            // TRIGGER ALWAYS NAMES ONE RECORD THAT WAS JUST SAVED, SO FINDING NONE MEANS THE FILTER IT PASSED DIDN'T IDENTIFY IT,
+                            // FOR EXAMPLE A BLANK RowPointer. EACH RULE THAT WOULD HAVE SENT IT GETS A Skipped ROW THAT SHOWS THE FILTER. THE ROW
+                            // HAS NO PAYLOAD, SO IT IS NEVER RETRIED.
+
+                            if (BGTaskNum <= 0)
+                            {
+                                foreach (KeyValuePair<string, ReplicationRule> replicationRuleKeyValPair in replicationRules)
+                                {
+                                    if (recordsByRule.ContainsKey(replicationRuleKeyValPair.Key))
+                                    {
+                                        ruleResults.Add(BuildNoRecordRuleResult(replicationRuleKeyValPair.Value, IDOName, queryFilter, operation));
+                                    }
+                                }
+                            }
+
                         }
 
                     }
@@ -455,6 +473,34 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             ruleResult.Operation = operation;
             ruleResult.CredentialName = replicationRule.CredentialName ?? "";
+            return ruleResult;
+
+        }
+
+
+
+        // THE RESULT FOR A RULE WHEN A TRIGGER'S FILTER MATCHED NO RECORD. IT BECOMES ONE Skipped LOG ROW, WITHOUT A PAYLOAD OR A RECORD ID,
+        // WHOSE MESSAGE SHOWS THE FILTER THE TRIGGER PASSED.
+
+        private static ReplicationRuleResult BuildNoRecordRuleResult(ReplicationRule replicationRule, string IDOName, string queryFilter, string operation)
+        {
+
+            string message = "Nothing was sent: the trigger's filter matched no '" + IDOName + "' record. The filter was: " + (string.IsNullOrWhiteSpace(queryFilter) ? "(blank)" : queryFilter) + ". A blank RowPointer in it means the save didn't pass the record's RowPointer to the trigger.";
+
+            ReplicationRuleResult ruleResult = new ReplicationRuleResult(
+                ruleNum: replicationRule.RuleNum ?? "",
+                targetType: replicationRule.TargetType ?? "",
+                recordCount: 0,
+                success: true,
+                errorMessage: message,
+                operation: OperationAtTarget(replicationRule.TargetType, operation)
+            )
+            {
+                CredentialName = replicationRule.CredentialName ?? ""
+            };
+
+            ruleResult.RecordOutcomes.Add(new ReplicationRecordOutcome("", null, ReplicationRecordOutcome.StatusSkipped, message));
+
             return ruleResult;
 
         }

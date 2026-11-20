@@ -8,7 +8,7 @@ Check these in order:
 2. **Triggers are active.** The status is **Active**. If it's **Inactive** or **Partly Active**, click **Activate All**. Triggers are inactive after **Setup Triggers**. **Fix Triggers** keeps each trigger active or inactive as it was.
 3. **A rule is active.** The IDO has at least one rule with **Is Active** checked, and the rule's IDO Name matches the IDO collection name exactly.
 4. **The change went through the IDO.** Changes made by stored procedures or direct SQL don't fire triggers.
-5. **The log.** Look in `ue_AIR_IDOReplicationLogs` for `Failed` rows for the IDO.
+5. **The log.** Look in `ue_AIR_IDOReplicationLogs` for `Failed` rows for the IDO, and for `Skipped` rows that say the trigger's filter matched no record. Such a row shows the filter the trigger passed. `RowPointer = ''` means the save didn't pass the record's RowPointer to the trigger.
 
 ## Messages in the replication log
 

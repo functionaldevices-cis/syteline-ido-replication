@@ -62,7 +62,7 @@ Special cases:
 | --- | --- |
 | Succeeded | The target accepted the record |
 | Failed | The target rejected the record, or it couldn't be sent |
-| Skipped | Nothing was sent on purpose: a Salesforce delete with Delete Behavior `Skip`, or a failed row that a newer replication replaced |
+| Skipped | Nothing was sent: a Salesforce delete with Delete Behavior `Skip`, a failed row that a newer replication replaced, or a trigger whose filter matched no record. The last kind has no record ID, and its message shows the filter the trigger passed. |
 
 ## The retry task
 
