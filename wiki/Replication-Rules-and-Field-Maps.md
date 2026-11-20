@@ -26,6 +26,16 @@ Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](
 
 **Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later. Without it, a retry can resend older data after newer data.
 
+## Incremental Watermark Property
+
+This names the property of the rule's IDO that says when a record last changed. A [Bulk Resync](Resending-Records#bulk-resync) compares its Changed From and Changed To dates with it. The default is `RecordDate`.
+
+Change it when `RecordDate` doesn't see every change. An IDO built on two tables can have a record date for each. `SLCustomers`, for example, has `RecordDate` and `AdrRecordDate`: some fields move one, and some move the other. A resync by `RecordDate` alone would miss a customer whose address changed.
+
+To cover both, extend the IDO with a derived property that returns the latest of its record dates, and name that property here. For `SLCustomers` the expression could be `GREATEST(RecordDate, AdrRecordDate)` on SQL Server 2022 or later, or a `CASE` that picks the later one on earlier versions.
+
+The value has to be a single property name, and the property has to hold a date. If the IDO lists the property as another type, such as text, a Bulk Resync with a date stops before sending anything, and the task's messages say so. A derived property needs a date property class or data type on the IDO for that reason. It isn't used by triggers, bulk loads, retries or **Resend All Errors**.
+
 ## Field maps
 
 Each map field is one field in the output record.

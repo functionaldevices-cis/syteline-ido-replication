@@ -1,4 +1,4 @@
-﻿using Infor.DocumentManagement.ICP;
+using Infor.DocumentManagement.ICP;
 using Mongoose.Core.Extensions;
 using Mongoose.IDO;
 using Mongoose.IDO.DataAccess;
@@ -677,6 +677,61 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 }
 
                 return propertyNames.Count > 0 ? propertyNames : null;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
+
+
+        // THE MONGOOSE DATA TYPE NAMES. Date IS THE ONLY ONE FOR A DATE OR A DATE AND TIME. THE OTHERS ARE THE REST OF THE FRAMEWORK'S LIST
+        // (MongooseTypeToClrTypeMap IN MGShared.dll).
+
+        private const string DateDataType = "Date";
+
+        private static readonly HashSet<string> NonDateDataTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Binary", "Byte", "Decimal", "Float", "GUID", "Long Integer", "Short Integer", "String", "NumSortedString"
+        };
+
+        // THE IDO'S PROPERTIES AND THE MONGOOSE DATA TYPE THE IDO GIVES EACH ONE, KEYED BY NAME WITHOUT REGARD TO CASE. THE DATA TYPE IS ""
+        // WHEN THE PROPERTY HAS NONE, AS A SUBCOLLECTION DOESN'T. RETURNS NULL WHEN THE LIST COULDN'T BE LOADED. NEVER THROWS.
+
+        private Dictionary<string, string> LoadIDOPropertyDataTypes(string IDOName)
+        {
+
+            try
+            {
+
+                Dictionary<string, string> propertyDataTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (Mongoose.IDO.Protocol.PropertyInfo propertyInfo in this.Context.Commands.GetPropertyInfo(IDOName).Properties)
+                {
+
+                    if (string.IsNullOrEmpty(propertyInfo.Name))
+                    {
+                        continue;
+                    }
+
+                    string dataType = "";
+
+                    try
+                    {
+                        dataType = (propertyInfo.DataType ?? "").Trim();
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                    propertyDataTypes[propertyInfo.Name] = dataType;
+
+                }
+
+                return propertyDataTypes.Count > 0 ? propertyDataTypes : null;
 
             }
             catch (Exception)
@@ -1384,8 +1439,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           its retries back, so the retry task resends it from its stored payload: a failed delete, or a
         /*           row with no record row pointer. queryFilter and recordCap aren't used.
         /*
-        /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by
-        /*           RecordDate) that match queryFilter, up to recordCap records. A failed row whose record it resent
+        /*           scope "Everything" (the form's Bulk Resync) resends the records changed in the period (by the
+        /*           rule's IncrementalWatermarkProperty, RecordDate unless the rule names another) that match
+        /*           queryFilter, up to recordCap records. A failed row whose record it resent
         /*           is marked Skipped. It doesn't go looking for other failed records.
         /*
         /*           Both dates are optional, in both scopes. A blank date puts no limit on that side. recordCap is
@@ -1397,6 +1453,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const string ResendScopeFailures = "Failures";
 
         private const string ResendScopeEverything = "Everything";
+
+        // THE PROPERTY A BULK RESYNC'S PERIOD IS COMPARED WITH WHEN THE RULE DOESN'T NAME ONE
+
+        private const string DefaultWatermarkProperty = "RecordDate";
 
         // THE MOST FAILED LOG ROWS ONE RESEND LOOKS AT
 
@@ -1565,9 +1625,134 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             string failedRowsFilter = "Status = 'Failed' AND RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " AND IDOName = " + sytelineAPI.QuoteFilterValue(IDOName);
 
-            return resendEverything
-                ? this.ResendBulk(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, queryFilter, bulkRecordCap, failedRowsFilter)
-                : this.ResendFailures(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, failedRowsFilter);
+            if (!resendEverything)
+            {
+                return this.ResendFailures(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, rangeStart, rangeEnd, failedRowsFilter);
+            }
+
+            // A BULK RESYNC WITH A PERIOD COMPARES THE DATES WITH THE RULE'S WATERMARK PROPERTY. WITHOUT A PERIOD THE PROPERTY ISN'T USED,
+            // SO IT ISN'T LOADED OR CHECKED.
+
+            string watermarkProperty = DefaultWatermarkProperty;
+
+            if ((rangeStart.HasValue || rangeEnd.HasValue) && !this.TryLoadWatermarkProperty(sytelineAPI, utils, ruleNum, IDOName, out watermarkProperty))
+            {
+                return BackgroundTaskFailedReturnCode;
+            }
+
+            return this.ResendBulk(sytelineAPI, utils, BGTaskNum, ruleNum, IDOName, watermarkProperty, rangeStart, rangeEnd, queryFilter, bulkRecordCap, failedRowsFilter);
+
+        }
+
+
+
+        // LOADS THE PROPERTY OF THE RULE'S IDO THAT SAYS WHEN A RECORD LAST CHANGED: THE RULE'S IncrementalWatermarkProperty, OR RecordDate
+        // WHEN THE RULE HAS NONE. SOME IDOS HAVE MORE THAN ONE RECORD DATE (SLCustomers HAS RecordDate AND AdrRecordDate, FOR ITS TWO BASE
+        // TABLES), SO A RULE CAN NAME A PROPERTY THAT COVERS THEM ALL, SUCH AS A DERIVED PROPERTY THAT RETURNS THE LATEST OF THEM.
+        //
+        // THE NAME GOES INTO A FILTER, SO IT HAS TO BE A PLAIN PROPERTY NAME. RETURNS FALSE, WITH THE REASON IN THE TASK'S MESSAGES, WHEN THE
+        // RULE'S VALUE CAN'T BE LOADED, ISN'T A PROPERTY NAME, OR NAMES A PROPERTY THE IDO LISTS AS SOMETHING OTHER THAN A DATE. WHETHER THE
+        // IDO REALLY HAS THE PROPERTY IS LEFT TO THE LOAD OF THE RECORDS, AS IT IS FOR A RULE'S FIELD MAP. NEVER THROWS.
+
+        private bool TryLoadWatermarkProperty(SytelineInternalAPI sytelineAPI, Utilities utils, string ruleNum, string IDOName, out string watermarkProperty)
+        {
+
+            watermarkProperty = DefaultWatermarkProperty;
+
+            try
+            {
+
+                LoadRecordsResponseData ruleResponse = sytelineAPI.LoadRecords(
+                    IDOName: "ue_AIR_IDOReplicationRules",
+                    properties: new List<string>() { "RuleNum", "IncrementalWatermarkProperty" },
+                    filter: "RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum),
+                    orderBy: "",
+                    recordCap: 1
+                );
+
+                string ruleValue = ruleResponse.Items.Count > 0 ? (ruleResponse.Items[0].PropertyValues[ruleResponse.PropertyKeys["IncrementalWatermarkProperty"]].Value ?? "").Trim() : "";
+
+                if (ruleValue != "")
+                {
+                    watermarkProperty = ruleValue;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property couldn't be loaded. If the IncrementalWatermarkProperty property is missing from the ue_AIR_IDOReplicationRules IDO, import the current IDO export. " + this.DescribeException(ex));
+                return false;
+            }
+
+            if (!IsPlainPropertyName(watermarkProperty))
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a property name. It has to start with a letter or an underscore, and can only hold the letters A to Z, digits and underscores.");
+                return false;
+            }
+
+            // THE IDO'S PROPERTY LIST SPELLS THE NAME THE WAY THE IDO DOES AND SAYS WHAT DATA TYPE THE PROPERTY HAS.
+            //
+            // A PROPERTY THAT ISN'T LISTED NEVER STOPS THE RESYNC: THE LIST MAY NOT BE COMPLETE, AND A NAME THE IDO REALLY DOESN'T HAVE FAILS
+            // THE LOAD OF THE RECORDS ANYWAY.
+            //
+            // A PROPERTY THAT IS LISTED AS SOMETHING OTHER THAN A DATE DOES STOP IT. THE PERIOD GOES INTO THE FILTER AS QUOTED TEXT, SO A TEXT
+            // PROPERTY WOULD BE COMPARED AS TEXT WITHOUT ANY ERROR, AND THE RESYNC WOULD SEND THE WRONG RECORDS AND REPORT SUCCESS.
+
+            Dictionary<string, string> idoPropertyDataTypes = this.LoadIDOPropertyDataTypes(IDOName);
+
+            if (idoPropertyDataTypes == null)
+            {
+                utils.WriteLogMessage("The properties of IDO '" + IDOName + "' couldn't be listed, so it wasn't checked that '" + watermarkProperty + "', the rule's Incremental Watermark Property, is a date. The resync goes ahead.");
+                return true;
+            }
+
+            string requestedName = watermarkProperty;
+            string nameOnIDO = idoPropertyDataTypes.Keys.FirstOrDefault(propertyName => string.Equals(propertyName, requestedName, StringComparison.OrdinalIgnoreCase));
+
+            if (nameOnIDO == null)
+            {
+                utils.WriteLogMessage("IDO '" + IDOName + "' doesn't list a property '" + watermarkProperty + "', which is the rule's Incremental Watermark Property. The resync goes ahead. If its load fails, set the rule's Incremental Watermark Property to a date property of the IDO, or leave both dates blank.");
+                return true;
+            }
+
+            watermarkProperty = nameOnIDO;
+
+            string dataType = idoPropertyDataTypes[nameOnIDO];
+
+            if (string.Equals(dataType, DateDataType, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (NonDateDataTypes.Contains(dataType))
+            {
+                utils.WriteLogMessage("Nothing was resent: the rule's Incremental Watermark Property '" + watermarkProperty + "' isn't a date on IDO '" + IDOName + "' (its data type there is " + dataType + "), so the period can't be compared with it. Set the rule's Incremental Watermark Property to a date property, or leave both dates blank. If it is a derived property that returns a date, give it a date property class or the Date data type on the IDO.");
+                return false;
+            }
+
+            // NO DATA TYPE, OR ONE THIS CODE DOESN'T KNOW: THE RESYNC GOES AHEAD, AND SAYS THAT THE TYPE WASN'T CHECKED
+
+            utils.WriteLogMessage("IDO '" + IDOName + "' gives no data type for '" + watermarkProperty + "', the rule's Incremental Watermark Property, so it wasn't checked that it is a date. The resync goes ahead.");
+
+            return true;
+
+        }
+
+
+
+        private static bool IsPlainPropertyName(string name)
+        {
+
+            // THE SAME SHAPE MONGOOSE READS AS A PROPERTY NAME IN A FILTER: A LETTER (A TO Z) OR AN UNDERSCORE, THEN LETTERS, DIGITS AND UNDERSCORES
+
+            bool IsNameLetter(char character) => (character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z') || character == '_';
+
+            if (string.IsNullOrEmpty(name) || !IsNameLetter(name[0]))
+            {
+                return false;
+            }
+
+            return name.All(character => IsNameLetter(character) || (character >= '0' && character <= '9'));
 
         }
 
@@ -1788,13 +1973,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         // BULK RESYNC: RESENDS THE RECORDS CHANGED IN THE PERIOD THAT MATCH THE FILTER, UP TO THE LIMIT, IN ONE RUN
 
-        private int ResendBulk(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, DateTime? rangeStart, DateTime? rangeEnd, string queryFilter, int recordCap, string failedRowsFilter)
+        private int ResendBulk(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string ruleNum, string IDOName, string watermarkProperty, DateTime? rangeStart, DateTime? rangeEnd, string queryFilter, int recordCap, string failedRowsFilter)
         {
 
             // THE PERIOD AND THE FILTER ARE BOTH OPTIONAL. WITH NEITHER, EVERY RECORD OF THE IDO IS RESENT.
 
             List<string> filters = new List<string>();
-            string dateFilter = ResendDateFilter("RecordDate", rangeStart, rangeEnd);
+            string dateFilter = ResendDateFilter(watermarkProperty, rangeStart, rangeEnd);
 
             if (dateFilter != "")
             {
@@ -1808,7 +1993,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             string filter = string.Join(" AND ", filters);
 
-            utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
+            utils.WriteLogMessage("Bulk resync for rule '" + ruleNum + "' (" + IDOName + "), " + DescribeResendPeriod("changed", rangeStart, rangeEnd) + (dateFilter != "" ? " (by " + watermarkProperty + ")" : "") + (queryFilter != "" ? ", with the filter " + queryFilter : ", with no filter") + (recordCap > 0 ? ", limited to " + recordCap + " record(s)." : ", with no limit."));
 
             // THE RULE'S FAILED ROWS WHOSE RECORD CAN BE RELOADED (NOT A DELETE, AND WITH A RECORD ROW POINTER), NEWEST FIRST. THE RESYNC DOESN'T GO LOOKING FOR THESE RECORDS, BUT IT MAY
             // SEND SOME OF THEM, AND THEN THEIR FAILED ROWS ARE OUT OF DATE.
