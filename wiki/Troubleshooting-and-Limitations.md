@@ -8,7 +8,7 @@ Check these in order:
 2. **Triggers are active.** The status is **Active**. If it's **Inactive** or **Partly Active**, click **Activate All**. Triggers are inactive after **Setup Triggers**. **Fix Triggers** keeps each trigger active or inactive as it was.
 3. **A rule is active.** The IDO has at least one rule with **Is Active** checked, and the rule's IDO Name matches the IDO collection name exactly.
 4. **The change went through the IDO.** Changes made by stored procedures or direct SQL don't fire triggers.
-5. **The log.** Look in `ue_AIR_IDOReplicationLogs` for `Failed` rows for the IDO, and for `Skipped` rows that say the trigger's filter matched no record. Such a row shows the filter the trigger passed. `RowPointer = ''` means the save didn't pass the record's RowPointer to the trigger.
+5. **The log.** Look in `ue_AIR_IDOReplicationLogs` for `Failed` rows for the IDO, and for `Skipped` rows that say the filter matched no record. Such a row shows the filter the trigger passed. `RowPointer = ''` means the trigger wasn't given the saved record's RowPointer.
 
 ## Messages in the replication log
 
@@ -22,6 +22,7 @@ Check these in order:
 | `Superseded by a newer replication of this record, so it wasn't resent.` | Expected. The retry task skipped an old failed row because newer data was sent. |
 | `The stored payload couldn't be read, so it can't be retried.` | The log row's payload isn't valid JSON. Resend the record with a bulk load. |
 | `Delete skipped, because the rule's DeleteBehavior isn't Delete.` | Expected for Salesforce rules with the default Delete Behavior |
+| `Nothing was sent: the filter matched no '...' record. The filter was: ...` | A trigger ran but couldn't find the record it was for. The message shows the filter it was given. A blank RowPointer in it means the trigger wasn't given the saved record's RowPointer. Nothing was sent, and the row isn't retried. |
 
 Target-specific messages are on the [Azure Event Hubs](Target-Azure-Event-Hubs#common-errors) and [Salesforce](Target-Salesforce#common-errors) pages.
 
