@@ -199,7 +199,7 @@
                <TabOrder>0</TabOrder>
                <TopPos>1</TopPos>
                <LeftPos>2</LeftPos>
-               <Height>4</Height>
+               <Height>5</Height>
                <ListHeight>0</ListHeight>
                <Width>70</Width>
                <Caption>sIDOName</Caption>
@@ -240,7 +240,7 @@
                <Type>27</Type>
                <TabOrder>12</TabOrder>
                <TopPos>2.5</TopPos>
-               <LeftPos>15</LeftPos>
+               <LeftPos>26.5</LeftPos>
                <Height>1.3</Height>
                <ListHeight>0</ListHeight>
                <Width>40</Width>
@@ -291,10 +291,10 @@
                <Type>0</Type>
                <TabOrder>11</TabOrder>
                <TopPos>2.8</TopPos>
-               <LeftPos>4.25</LeftPos>
+               <LeftPos>3</LeftPos>
                <Height>0.7</Height>
                <ListHeight>0</ListHeight>
-               <Width>10</Width>
+               <Width>23</Width>
                <Caption>sIDOName</Caption>
                <MaxCharacters>0</MaxCharacters>
                <ContainerName />
@@ -306,6 +306,53 @@
                <HelpContextID>0</HelpContextID>
                <Post301Format>JUSTIFY(R)</Post301Format>
                <EffectiveCaption>sIDOName</EffectiveCaption>
+            </Component>
+            <Component Name="IncrementalWatermarkPropertyComboBox">
+               <DeviceID>-1</DeviceID>
+               <Type>27</Type>
+               <TabOrder>12</TabOrder>
+               <TopPos>4</TopPos>
+               <LeftPos>26.5</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>40</Width>
+               <Caption>C(IncrementalWatermarkPropertyStatic)</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>1</ContainerSequence>
+               <DataSource>object.IncrementalWatermarkProperty</DataSource>
+               <Binding>1</Binding>
+               <SelectionEvent>RuleIDONameChanged</SelectionEvent>
+               <ComboListSource>INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ComboListSource>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>CollectionPropertyName</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>C(IncrementalWatermarkPropertyStatic)</EffectiveCaption>
+            </Component>
+            <Component Name="IncrementalWatermarkPropertyStatic">
+               <DeviceID>-1</DeviceID>
+               <Type>0</Type>
+               <TabOrder>11</TabOrder>
+               <TopPos>4.2</TopPos>
+               <LeftPos>3</LeftPos>
+               <Height>0.7</Height>
+               <ListHeight>0</ListHeight>
+               <Width>23</Width>
+               <Caption>ue_AIR_sIncrementalWatermarkProperty</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <Binding>0</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <Post301Format>JUSTIFY(R)</Post301Format>
+               <EffectiveCaption>ue_AIR_sIncrementalWatermarkProperty</EffectiveCaption>
             </Component>
             <Component Name="IsActiveEdit">
                <DeviceID>-1</DeviceID>
@@ -1614,6 +1661,10 @@
                <ResponseType>35</ResponseType>
                <Response>UpdateSourceValueChoices() COLID(object2)</Response>
             </EventHandler>
+            <EventHandler Name="StdObjectSelectCurrentCompleted" Sequence="3">
+               <ResponseType>35</ResponseType>
+               <Response>UpdateIncrementalWatermarkPropertyChoices() COLID(object)</Response>
+            </EventHandler>
             <EventHandler Name="Test" Sequence="0">
                <ResponseType>19</ResponseType>
                <Response>TASKNAME(V(BGTaskName))TASKPARMS(V(BGTaskParms))TASKSTATUS(V(BGTaskStatus))TASKNUMBER(BGTaskNumber) ERRORMESSAGE(mBackEndMessage) SUCCESSMESSAGE(mBackEndMessage)</Response>
@@ -1694,6 +1745,63 @@
                <ScriptLine>      public void Test()</ScriptLine>
                <ScriptLine>      {</ScriptLine>
                <ScriptLine>         Application.ShowMessage("Test");</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      // THE Incremental WatermarkProperty PROPERTY OF THE FIELD MAP IS A DROP-DOWN. ITS LIST SOURCE IS  INLINE ENTRIES(V(IncrementalWatermarkPropertyChoices)) DISPLAY(1) VALUE(1)</ScriptLine>
+               <ScriptLine>      // SO ITS LIST COMES FROM THE IDO, BUT IT MUST BE LOADED DYNAMICALLY TO GRAB EXTENDED PROPERTIES, WHICH THIS METHOD SETS FOR THE CURRENT FIELD MAP ROW:</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public void UpdateIncrementalWatermarkPropertyChoices()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         string entries = "";</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         try</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            Application.ShowMessage("Debug1a");</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            GetPropertyInfoResponseData propInfo = this.IDOClient.GetPropertyInfo("BaseIdoName");</ScriptLine>
+               <ScriptLine>            </ScriptLine>
+               <ScriptLine>            Application.ShowMessage("Debug2a");</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            List&lt;string&gt; propNames = new List&lt;string&gt;();</ScriptLine>
+               <ScriptLine>            foreach (PropertyInfo prop in propInfo.Properties)</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               propNames.Add(prop.Name);</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine>            propNames.Sort();</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>             Application.ShowMessage("Debug3");</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            entries = string.Join(",", propNames);</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            Application.ShowMessage(entries);</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine>         catch (Exception)</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine>            // WITH NO LIST, THE COLUMN IS STILL A FIELD THE VALUE CAN BE TYPED INTO</ScriptLine>
+               <ScriptLine>            entries = "";</ScriptLine>
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         var choicesVariable = this.ThisForm.Variables("IncrementalWatermarkPropertyChoices");</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         if (choicesVariable.Value != entries)</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            choicesVariable.Value = entries;</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            try</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               this.ThisForm.Components["IncrementalWatermarkPropertyComboBox"].InvalidateList();</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine>            catch (Exception)</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               // THE LIST IS STILL LOADED FROM THE VARIABLE THE NEXT TIME THE COLUMN READS ITS LIST SOURCE</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />
                <ScriptLine>      public void UpdateVariableUI()</ScriptLine>
