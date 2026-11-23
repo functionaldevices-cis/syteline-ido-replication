@@ -27,7 +27,7 @@ flowchart LR
 3. **Sending.** Each rule sends its output record to its target with its credential.
 4. **Logging and retries.** Each record's outcome goes to the replication log. A scheduled background task resends failed records.
 
-Errors never fail the user's save. Every error is caught and written to the replication log.
+Replication errors don't fail the user's save. Every error is caught and written to the replication log. The one exception seen in testing: for a few minutes after an assembly is uploaded, a save can fail because Syteline can't load the extension class (see [Upgrading](Installation#upgrading)).
 
 ## Targets
 
