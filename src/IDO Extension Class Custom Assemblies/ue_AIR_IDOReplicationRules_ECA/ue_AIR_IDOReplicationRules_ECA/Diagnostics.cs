@@ -399,8 +399,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           had committed, or that the load read data that wasn't committed yet: compare the task's start
         /*           with the end of the save to tell.
         /*
-        /*           A background run (BGTaskNum above 0) is open to the user whose save submitted it. A direct call
-        /*           holds a server thread for up to a minute, so it needs a super user. Then it writes one row, "DoorbellTask=<token>", with when it started, how long
+        /*           The waits hold a server thread for up to a minute, and Execute is granted on the IDO as a whole, so
+        /*           anyone could call this directly with a made-up BGTaskNum. So it waits only when it runs as a
+        /*           doorbell task (its BGTaskNum is an ue_AIR_DiagDoorbellTask in ActiveBGTasks) or for a super user.
+        /*           Otherwise it looks once and says so. A direct call with no BGTaskNum needs a super user. Then it writes one row, "DoorbellTask=<token>", with when it started, how long
         /*           after the submission that was (by the application servers' clocks), and what each look found.
         /*           Always returns 0.
         /*
@@ -434,12 +436,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     IDOCommands: this.Context.Commands
                 );
 
+                bool runningAsDoorbellTask = IsRunningDoorbellTask(sytelineAPI, BGTaskNum);
+                bool mayWait = runningAsDoorbellTask || IsSuperUser();
+
                 // THE TOKEN IS HEX, SO IT CAN'T BREAK THE FILTER, BUT A TOKEN THAT ISN'T ONE IS REFUSED ANYWAY
 
                 bool tokenIsValid = token.Length > 0 && token.All(Uri.IsHexDigit);
 
                 List<Dictionary<string, object>> looks = new List<Dictionary<string, object>>();
-                int[] lookAfterSeconds = { 0, 1, 2, 5, 10, 20, 30, 45, 60 };
+                int[] lookAfterSeconds = mayWait ? new[] { 0, 1, 2, 5, 10, 20, 30, 45, 60 } : new[] { 0 };
                 bool seen = false;
 
                 foreach (int seconds in lookAfterSeconds)
@@ -504,6 +509,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "submittedUtc", delayMs.HasValue ? new DateTime(ticks, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) : "" },
                     { "startedUtc", startedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
                     { "msFromSubmitToStart", delayMs },
+                    { "runningAsDoorbellTask", runningAsDoorbellTask },
+                    { "waited", mayWait },
                     { "looks", looks },
                     { "machine", SafeRead(() => Environment.MachineName) },
                     { "appDomain", SafeRead(() => AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture)) }
@@ -521,7 +528,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             ? $"The first look saw the doorbell row, but only answered after about {firstLook["afterMs"]} ms: it most likely waited for the save to commit, so the task started before the save committed."
                             : seen
                                 ? $"The doorbell row wasn't visible at first and appeared after about {lastLook["afterMs"]} ms: the task started before the save committed."
-                                : "The doorbell row never became visible in 60 seconds: the save may have rolled back, or is still running.");
+                                : mayWait
+                                    ? "The doorbell row never became visible in 60 seconds: the save may have rolled back, or is still running."
+                                    : "The doorbell row wasn't visible. The task couldn't be confirmed as a running doorbell task in ActiveBGTasks, so it looked only once.");
 
                 WriteDiagnosticRow(
                     IDOName: IDOName != "" ? IDOName : "(unknown)",
@@ -537,6 +546,38 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
 
             return 0;
+
+        }
+
+        // WHETHER BGTaskNum IS A DOORBELL TASK THAT ActiveBGTasks LISTS. FALSE WHEN IT ISN'T, OR WHEN THE LOAD FAILS. THAT A RUNNING TASK
+        // IS LISTED THERE ISN'T CONFIRMED, SO A FALSE ONLY CUTS THE TASK TO ONE LOOK; IT NEVER STOPS IT.
+
+        private static bool IsRunningDoorbellTask(SytelineInternalAPI sytelineAPI, int BGTaskNum)
+        {
+
+            if (BGTaskNum <= 0)
+            {
+                return false;
+            }
+
+            try
+            {
+
+                LoadRecordsResponseData tasks = sytelineAPI.LoadRecords(
+                    IDOName: "ActiveBGTasks",
+                    filter: "TaskNumber = " + BGTaskNum.ToString(CultureInfo.InvariantCulture) + " AND TaskName = '" + DoorbellTaskName + "'",
+                    orderBy: "",
+                    properties: new List<string>() { "TaskNumber" },
+                    recordCap: 1
+                );
+
+                return tasks.Items.Count > 0;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
 
         }
 
