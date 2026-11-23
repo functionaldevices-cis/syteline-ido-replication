@@ -50,7 +50,7 @@ After **Resend Errors**:
 | Couldn't be sent, because the rule failed before it got to its records | The row gets its 3 retries back, so the retry task still resends its stored payload. Fix the rule, then resend again. |
 | No longer exists in Syteline | The row becomes `Skipped`. There is nothing left to send. |
 | Was a delete | If the row is out of retries, it gets its 3 retries back. A deleted record can't be reloaded, so the [retry task](Replication-Log-and-Retries#the-retry-task) resends the delete from its stored payload. |
-| Has no record row pointer | The same. This applies to rows logged before the record row pointer was stored. |
+| Has no record row pointer | The same. This applies to rows logged before the record row pointer was stored, and to every row logged before the version that made the property writable, because until then Syteline dropped the value without an error. |
 | Has no stored payload, and is a delete or has no record row pointer | Nothing can resend the row. The task's messages count these. Use **Bulk Resync** to send those records' current data. |
 
 After **Bulk Resync**:

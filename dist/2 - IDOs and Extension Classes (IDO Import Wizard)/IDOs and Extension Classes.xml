@@ -598,8 +598,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationLogs</LabelStringID>
-         <RevisionNo>11</RevisionNo>
-         <RevisionDate>2026-11-19T15:50:07</RevisionDate>
+         <RevisionNo>12</RevisionNo>
+         <RevisionDate>2026-11-23T08:39:27</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -743,7 +743,9 @@ END</Expression>
                <PseudoKeyFlag>0</PseudoKeyFlag>
                <BoundToColumn>record_row_pointer</BoundToColumn>
                <ColumnTableAlias>log</ColumnTableAlias>
-               <PropertyAttributes />
+               <PropertyAttributes>
+                  <IsReadOnly>0</IsReadOnly>
+               </PropertyAttributes>
             </Property>
             <Property Name="RetriesRemaining" Key="0" Binding="BOUND" Sequence="15">
                <PropertyClass>GenericInt</PropertyClass>
