@@ -1,6 +1,6 @@
 # Replication Redesign: AES Plan
 
-**Status: proposal.** Nothing on this page is built yet. It describes one way replication could change, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). This plan is built on the application event system (AES): event handlers on the replicated IDOs. It doesn't extend the replicated IDOs: everything it adds is event handlers, background tasks, and this project's own tables and IDOs. Another option, extension class code on IDOs that extend the replicated ones, is still to be explored and tested before either is built. The rest of the wiki describes replication as it works today.
+**Status: proposal.** Nothing on this page is built yet. It describes one way replication could change, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). This plan is built on the application event system (AES): event handlers on the replicated IDOs. It doesn't extend the replicated IDOs: everything it adds is event handlers, background tasks, and this project's own tables and IDOs. Another option, extension class code on IDOs that extend the replicated ones, is still to be explored and tested before either is built. The first test for it, of what an event handler can see when an IDO is created, checked in or imported, is [The IDO definition test](Trigger-Diagnostics#the-ido-definition-test). The rest of the wiki describes replication as it works today.
 
 ## Goals
 
