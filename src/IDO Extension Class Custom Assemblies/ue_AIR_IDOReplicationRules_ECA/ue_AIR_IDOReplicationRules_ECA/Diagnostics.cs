@@ -239,6 +239,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           Record IDs: "Doorbell=<token>", "DoorbellSubmit=<token>" and the task's "DoorbellTask=<token>",
         /*           where the token is new for each save. Never throws. Always returns 0.
         /*
+        /*           Before it submits, it looks in ActiveBGTasks for a doorbell task that is queued and hasn't started
+        /*           (status QueuedTaskStatus). If there is one, it doesn't submit another: that task starts later and
+        /*           can pick up this save too. This is what the burst test (B3) measures. Its DoorbellSubmit row says
+        /*           which task it relied on and lists every doorbell task it saw with its status. A failed look
+        /*           never skips the submission.
+        /*
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
@@ -249,6 +255,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const string DoorbellSubmitRecordIDPrefix = "DoorbellSubmit=";
 
         private const string DoorbellTaskRecordIDPrefix = "DoorbellTask=";
+
+        // THE STATUS A SUBMITTED TASK IS GIVEN (SEE THE SUBMISSION BELOW). THAT ActiveBGTasks STILL SHOWS IT THIS WAY UNTIL THE TASK
+        // STARTS ISN'T CONFIRMED: THE DoorbellSubmit ROW LISTS THE STATUSES IT SAW, TO FIND OUT.
+
+        private const string QueuedTaskStatus = "READY";
 
         [IDOMethod(MethodFlags.None, "Infobar")]
         public int ue_DiagRingDoorbell(string eventName = "", string IDOName = "")
@@ -291,57 +302,112 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 submittedUtc = DateTime.UtcNow;
                 taskParms = "BG~TASKID~," + IDOName + "," + token + "," + submittedUtc.Ticks.ToString(CultureInfo.InvariantCulture);
 
+                // IS A DOORBELL TASK ALREADY QUEUED? IF SO, DON'T SUBMIT ANOTHER.
+
+                string queuedTaskNumber = "";
+                List<string> activeTasks = new List<string>();
+                string checkError = "";
+                Stopwatch checkTimer = Stopwatch.StartNew();
+
+                try
+                {
+
+                    SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
+                        IDOCommands: this.Context.Commands
+                    );
+
+                    LoadRecordsResponseData tasks = sytelineAPI.LoadRecords(
+                        IDOName: "ActiveBGTasks",
+                        filter: "TaskName = '" + DoorbellTaskName + "'",
+                        orderBy: "TaskNumber",
+                        properties: new List<string>() { "TaskNumber", "TaskStatusCode" },
+                        recordCap: SytelineInternalAPI.NoRecordCap
+                    );
+
+                    foreach (var task in tasks.Items)
+                    {
+
+                        string number = (task.PropertyValues[tasks.PropertyKeys["TaskNumber"]].Value ?? "").Trim();
+                        string status = (task.PropertyValues[tasks.PropertyKeys["TaskStatusCode"]].Value ?? "").Trim();
+
+                        activeTasks.Add(number + ":" + status);
+
+                        if (queuedTaskNumber == "" && status.Equals(QueuedTaskStatus, StringComparison.OrdinalIgnoreCase))
+                        {
+                            queuedTaskNumber = number;
+                        }
+
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    checkError = ex.Message;
+                    queuedTaskNumber = "";
+                }
+
+                checkTimer.Stop();
+
+                bool skipped = queuedTaskNumber != "";
+
                 string taskID = "";
                 string infobar = "";
                 string returnValue = "";
                 string submitError = "";
                 Stopwatch submitTimer = Stopwatch.StartNew();
 
-                try
+                // A FAILED LOOK LEFT skipped FALSE, SO IT NEVER STOPS A SUBMISSION
+
+                if (!skipped)
                 {
 
-                    // BGTaskSubmit2's PARAMETERS, IN ORDER: TaskName, TaskParms1, TaskParms2, Infobar (out), TaskID (out), TaskStatusCode,
-                    // TaskProfileParms, RequestingUser, Initiator, PrintPreview, TaskHistoryRowPointer (out), PreviewInterval (out), then the
-                    // schedule (SchedStartDateTime through SchedIsEnabled) and BaseTaskNumber, all left blank for a task that runs once, now
-
-                    // A BLANK VALUE IS ADDED AS Add(null, false), NEVER Add(null): A null LITERAL PICKS THE Add(InvokeParameter) OVERLOAD AND
-                    // ADDS A null ELEMENT, NOT A PARAMETER WITH NO VALUE, AND THE RUNTIME THROWS ON IT. THE REQUESTING USER IS THE USER WHOSE
-                    // SAVE RANG THE DOORBELL, AND "READY" IS THE STATUS INFOR'S OWN STORED PROCEDURES SUBMIT TASKS WITH.
-
-                    InvokeParameterList parameters = new InvokeParameterList();
-                    parameters.Add(DoorbellTaskName, false);
-                    parameters.Add(taskParms, false);
-                    parameters.Add(null, false);
-                    parameters.Add("", true);
-                    parameters.Add(null, true);
-                    parameters.Add("READY", false);
-                    parameters.Add(null, false);
-                    parameters.Add(SafeRead(() => IDORuntime.Context.UserName), false);
-                    parameters.Add("ue_AIR_DiagDoorbell", false);
-                    parameters.Add(0, false);
-                    parameters.Add(null, true);
-                    parameters.Add(null, true);
-
-                    for (int i = 0; i < 10; i++)
+                    try
                     {
+
+                        // BGTaskSubmit2's PARAMETERS, IN ORDER: TaskName, TaskParms1, TaskParms2, Infobar (out), TaskID (out), TaskStatusCode,
+                        // TaskProfileParms, RequestingUser, Initiator, PrintPreview, TaskHistoryRowPointer (out), PreviewInterval (out), then the
+                        // schedule (SchedStartDateTime through SchedIsEnabled) and BaseTaskNumber, all left blank for a task that runs once, now
+
+                        // A BLANK VALUE IS ADDED AS Add(null, false), NEVER Add(null): A null LITERAL PICKS THE Add(InvokeParameter) OVERLOAD AND
+                        // ADDS A null ELEMENT, NOT A PARAMETER WITH NO VALUE, AND THE RUNTIME THROWS ON IT. THE REQUESTING USER IS THE USER WHOSE
+                        // SAVE RANG THE DOORBELL, AND "READY" IS THE STATUS INFOR'S OWN STORED PROCEDURES SUBMIT TASKS WITH.
+
+                        InvokeParameterList parameters = new InvokeParameterList();
+                        parameters.Add(DoorbellTaskName, false);
+                        parameters.Add(taskParms, false);
                         parameters.Add(null, false);
+                        parameters.Add("", true);
+                        parameters.Add(null, true);
+                        parameters.Add("READY", false);
+                        parameters.Add(null, false);
+                        parameters.Add(SafeRead(() => IDORuntime.Context.UserName), false);
+                        parameters.Add("ue_AIR_DiagDoorbell", false);
+                        parameters.Add(0, false);
+                        parameters.Add(null, true);
+                        parameters.Add(null, true);
+
+                        for (int i = 0; i < 10; i++)
+                        {
+                            parameters.Add(null, false);
+                        }
+
+                        InvokeResponseData response = this.Context.Commands.Invoke(new InvokeRequestData
+                        {
+                            IDOName = "BGTaskDefinitions",
+                            MethodName = "BGTaskSubmit2",
+                            Parameters = parameters
+                        });
+
+                        returnValue = response.ReturnValue ?? "";
+                        infobar = response.Parameters.Count > 3 ? (response.Parameters[3].Value ?? "") : "";
+                        taskID = response.Parameters.Count > 4 ? (response.Parameters[4].Value ?? "") : "";
+
+                    }
+                    catch (Exception ex)
+                    {
+                        submitError = ex.Message;
                     }
 
-                    InvokeResponseData response = this.Context.Commands.Invoke(new InvokeRequestData
-                    {
-                        IDOName = "BGTaskDefinitions",
-                        MethodName = "BGTaskSubmit2",
-                        Parameters = parameters
-                    });
-
-                    returnValue = response.ReturnValue ?? "";
-                    infobar = response.Parameters.Count > 3 ? (response.Parameters[3].Value ?? "") : "";
-                    taskID = response.Parameters.Count > 4 ? (response.Parameters[4].Value ?? "") : "";
-
-                }
-                catch (Exception ex)
-                {
-                    submitError = ex.Message;
                 }
 
                 submitTimer.Stop();
@@ -354,6 +420,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "token", token },
                     { "submittedUtc", submittedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
                     { "submitMs", Math.Round(submitTimer.Elapsed.TotalMilliseconds, 3) },
+                    { "skipped", skipped },
+                    { "queuedTaskNumber", queuedTaskNumber },
+                    { "activeTasks", activeTasks },
+                    { "checkMs", Math.Round(checkTimer.Elapsed.TotalMilliseconds, 3) },
+                    { "checkError", checkError },
                     { "returnValue", returnValue },
                     { "taskId", taskID },
                     { "infobar", infobar },
@@ -363,9 +434,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "sessionId", SafeRead(() => Convert.ToString(IDORuntime.Context.SessionID, CultureInfo.InvariantCulture)) }
                 };
 
-                string summary = submitError != ""
+                string seen = activeTasks.Count > 0 ? string.Join(", ", activeTasks) : "none";
+
+                string summary = skipped
+                    ? $"Doorbell on {eventName}: not submitted, because doorbell task {queuedTaskNumber} is queued. Doorbell tasks seen (number:status): {seen}. Look took {Math.Round(checkTimer.Elapsed.TotalMilliseconds)} ms."
+                    : submitError != ""
                     ? $"Doorbell on {eventName}: the task couldn't be submitted: {submitError}"
-                    : $"Doorbell on {eventName}: task {(taskID != "" ? taskID : "(no number)")} submitted in {Math.Round(submitTimer.Elapsed.TotalMilliseconds)} ms, return value {returnValue}" + (infobar != "" ? $", message: {infobar}" : "") + ".";
+                    : $"Doorbell on {eventName}: task {(taskID != "" ? taskID : "(no number)")} submitted in {Math.Round(submitTimer.Elapsed.TotalMilliseconds)} ms, return value {returnValue}" + (infobar != "" ? $", message: {infobar}" : "") + $". Doorbell tasks seen first (number:status): {seen}" + (checkError != "" ? $"; the look failed: {checkError}" : "") + ".";
 
                 WriteDiagnosticRow(
                     IDOName: IDOName,
