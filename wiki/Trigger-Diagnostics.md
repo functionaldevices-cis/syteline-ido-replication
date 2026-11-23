@@ -61,39 +61,40 @@ First run: November 23, 2026, in an Infor CloudSuite Industrial sandbox (multi-t
 
 | # | Test | What happened |
 | --- | --- | --- |
-| 1 | Form, insert 1 | As predicted. RowPointer blank on `IdoOnItemInsert` and present on `IdoPostItemInsert`, so the replication trigger replicated it. The first save after the assemblies were uploaded took about 30 seconds, most of it a 28-second gap before the item event. It didn't happen again. |
+| 1 | Form, insert 1 | As predicted for RowPointer: blank on `IdoOnItemInsert`, present on `IdoPostItemInsert`, so the replication trigger replicated it. This was the first save after the assemblies were uploaded, and it took about 33 seconds, 28 of them between `IdoOnUpdateCollection` and `IdoOnItemInsert`. Later saves took 1 to 2 seconds. |
 | 1b | Form, insert 2 in one save | One `UpdateCollection` for the save, each record finished (events, save, replication) before the next began. Replicated. |
 | 2 | Form, update 3 in one save | RowPointer and key present before and after the save. Replicated. |
-| 3 | Form, delete 2 in one save | RowPointer and key present before and after the delete. Replicated. |
-| 4 | REST insert of 3 (`refresh=true`) | Keys present, RowPointer blank before **and after** the save. Not replicated: the replication trigger logged `Skipped` ("the trigger wasn't given the saved record's RowPointer"). |
+| 3 | Form, delete in one save | Run with 2 records, not 3. RowPointer and key present before and after the delete. Replicated. |
+| 4 | REST insert of 3 (`refresh=true`) | Same order as a form save: the collection event, each record's events in turn, the collection event. Keys present, RowPointer blank before **and after** the save. Not replicated: the replication trigger logged `Skipped` ("the trigger wasn't given the saved record's RowPointer"). |
 | 5 | REST update by ItemId | Nothing present: RowPointer, key and `_ItemId` all blank. Not replicated. |
 | 6 | REST update by key | Keys present, RowPointer blank. Not replicated. |
 | 7 | REST update with key and RowPointer | Both present. Replicated. |
 | 8 | REST delete by ItemId | Nothing present. Not replicated: with a real target, the delete would not have been sent. |
 | 9 | REST delete by key | Keys present, RowPointer blank. Not replicated. |
-| 10 | REST insert that fails on its last record | The save rolled back. The replication trigger's log rows rolled back with it. The diagnostic rows didn't. |
+| 10 | REST insert that fails on its last record | The whole save rolled back. The replication trigger's log rows rolled back with it. The diagnostic rows didn't. |
 | 10b | Test 10 again, with **Ignore Failure** cleared on the diagnostic `IdoPostItemInsert` handler | That handler's rows rolled back too, while the other diagnostic handlers' rows stayed. |
 
 What the results establish:
 
-- **In an item event, `P()` sees only the properties the caller put in that record.** A form includes `RowPointer` (for a new record, only after the save, when the runtime has refreshed it). A REST caller usually sends only the keys, or only the ItemId, and then the trigger gets no RowPointer. `P("_ItemId")` was always blank, even when the caller named the record by ItemId. A REST insert didn't get its RowPointer back even with `refresh=true`, likely because the runtime refreshes only the properties the request included (not checked).
+- **In an item event, `P()` sees only the properties the caller put in that record.** A form includes `RowPointer` on updates and deletes, and on an insert the runtime fills it in by `IdoPostItemInsert`. A REST caller that names records by key sends only the keys, and one that names them by ItemId sends nothing the event can read. `P("_ItemId")` was blank in every test, even when the caller named the record by ItemId. A REST insert didn't get its RowPointer back on `IdoPostItemInsert` even with `refresh=true`, likely because the runtime refreshes only the properties the request included (not checked). So a REST insert isn't replicated, whatever the caller does. Callers other than the test script's REST calls (ION, extension classes) haven't been tested.
 - **The collection events never saw a record**: RowPointer and keys were blank in every `IdoOnUpdateCollection` and `IdoPostUpdateCollection`.
-- **An event handler with Ignore Failure on runs in its own transaction** and its writes stay when the save fails. **With Ignore Failure off, it runs in the save's transaction** and its writes roll back with the save. The replication triggers have Ignore Failure off, so their log rows roll back with a failed save, but anything they already sent to a target stays sent.
-- **The asynchronous `IdoPostUpdateCollection` handler never wrote a row**, and nothing for it appeared in the event queue (`EventQueues`). In this tenant, an asynchronous handler can't be counted on to run.
-- **The replication trigger costs about 0.2 to 0.4 seconds per record** with a `LogOnly` rule, so with no network call at all: loading the rules, loading the record, reading the site's time and writing the log row. At that rate a save of 5,000 records would spend roughly 20 to 30 minutes in replication before any target is reached.
-- **Saves were spread across at least five application servers.** Static values in the extension class lasted as long as the server's app domain (one kept counting across saves 8 minutes apart), but a save can land on any server, so an in-memory cache can't be relied on between saves.
-- **`System.Transactions.Transaction.Current` was empty inside every handler**, so the payload's `transactionId` can't show which transaction an event ran in. Tests 10 and 10b answer that question instead.
-- **`processId` is blocked** in the cloud (`SecurityException`). `processStartedUtc` and `appDomain` identify the process instead.
+- **A handler with Ignore Failure on wrote outside the save's transaction**: its rows stayed when the save failed. **With Ignore Failure off, it wrote inside the save's transaction**, and its rows rolled back with the save. Seen on synchronous `IdoPostItemInsert` handlers in a REST insert; other events and Transactional handlers weren't tested. The replication triggers have Ignore Failure off, so their log rows roll back with a failed save. Anything they had already sent to a target would stay sent (not observed: the test's rule was `LogOnly`, and a REST insert isn't sent anyway).
+- **The asynchronous `IdoPostUpdateCollection` handler never wrote a row**, and the event queue (`EventQueues`) had no entry for it. The cause wasn't found. Until it is, an asynchronous handler can't be counted on to run in this tenant.
+- **The replication trigger cost about 0.2 to 0.4 seconds per record** in the form saves, with a `LogOnly` rule, so with no network call at all: loading the rules, loading the record, reading the site's time and writing the log row. If that stays linear, a save of 5,000 records would spend roughly 15 to 35 minutes in replication before any target is reached. Test 15 will check.
+- **Saves ran on at least five application servers.** Static values in the extension class lasted as long as the server's app domain (one kept counting across saves 8 minutes apart), but a save can land on any server, so an in-memory cache can't be relied on between saves.
+- **`System.Transactions.Transaction.Current` was empty inside every handler**, so the payload's `transactionId` can't show which database transaction an event ran in. Tests 10 and 10b answer that question instead.
+- **`processId` is blocked** in the cloud (`SecurityException`). `processStartedUtc` (when the assembly's static values were set up in that app domain) and `appDomain` identify the app domain instead.
 
 | # | Assumption | Result |
 | --- | --- | --- |
-| A1, A2 | One `UpdateCollection` per save, item events in sequence, collection events once | Confirmed, for forms and REST |
-| A3 | `P("RowPointer")` in item events | Only when the caller sends it. Forms do. REST callers by key or ItemId don't |
+| A1 | A REST save of several records is one transaction, item events in sequence, collection events once | Confirmed for a REST insert of 3 (tests 4, 10). A failing REST update (test 11) wasn't run |
+| A2 | A form's multi-row save is one `UpdateCollection` | Confirmed (tests 1b, 2, 3). A failing form save wasn't tested, so its transaction wasn't shown |
+| A3 | `P("RowPointer")` in item events | Only when the caller sends it. Forms do (inserts after the save). REST callers by key or ItemId don't, and a REST insert never gets it |
 | A4 | `P()` returns keys the caller sends | Confirmed |
-| A5 | A handler's writes roll back with a failed save | Only with Ignore Failure off. With it on, they commit on their own |
+| A5 | A handler's writes roll back with a failed save | Only with Ignore Failure off. With it on, they stay |
 | A6 | `P()` is empty in the collection events | Confirmed |
-| A7 | An asynchronous handler runs after the save | Not seen: it never ran, and nothing was queued |
-| A8 | Cost per record | About 0.2 to 0.4 seconds per record for the replication trigger alone |
+| A7 | An asynchronous handler runs after the save | Not seen: it never ran, and nothing was found in the queue. Cause unknown |
+| A8 | Cost per record | About 0.2 to 0.4 seconds per record for the replication trigger alone, in form saves |
 | A10 | Static values last between calls | Per app domain only, and saves are spread across servers |
 
 ## Reading the results
@@ -116,10 +117,10 @@ The payload holds:
 | --- | --- |
 | `event`, `mode` | The event, and `Sync` or `Async` |
 | `rowPointer`, `keyValues`, `itemId` | The raw values of `P("RowPointer")`, the key properties and `P("_ItemId")` |
-| `utc`, `sequence`, `msSincePreviousEvent` | The time, a counter that keeps counting as long as the server process runs, and the milliseconds since the previous diagnostic event in that process |
-| `machine`, `processId`, `processStartedUtc`, `appDomain`, `threadId` | Where it ran. Two machine names mean more than one application server |
+| `utc`, `sequence`, `msSincePreviousEvent` | The time, a counter that keeps counting as long as the server's app domain lasts, and the milliseconds since the previous diagnostic event in that app domain |
+| `machine`, `processId`, `processStartedUtc`, `appDomain`, `threadId` | Where it ran. Two machine names mean more than one application server. `processStartedUtc` is when the assembly's static values were set up in that app domain. `processId` is blocked in the cloud |
 | `sessionId`, `initiatorType`, `initiator` | The Mongoose session and what started the request |
-| `transactionId`, `transactionIsolation` | The database transaction the handler ran in, and its isolation level. Events with the same ID were in one transaction. `(none)` means no transaction |
+| `transactionId`, `transactionIsolation` | The ambient `System.Transactions` transaction and its isolation level. In the cloud run it was always `(none)`, so it says nothing about the database transaction; a failing save (tests 10 and 10b) shows that instead |
 
 To list a test's rows, load the log with `IDOName = '<IDO>' AND Source LIKE 'Diag:%'`, newest first by Create Date.
 
