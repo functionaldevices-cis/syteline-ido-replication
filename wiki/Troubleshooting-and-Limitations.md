@@ -22,13 +22,13 @@ Check these in order:
 | `Superseded by a newer replication of this record, so it wasn't resent.` | Expected. The retry task skipped an old failed row because newer data was sent. |
 | `The stored payload couldn't be read, so it can't be retried.` | The log row's payload isn't valid JSON. Resend the record with a bulk load. |
 | `Delete skipped, because the rule's DeleteBehavior isn't Delete.` | Expected for Salesforce rules with the default Delete Behavior |
-| `Nothing was sent: the filter matched no '...' record. The filter was: ...` | A trigger ran but couldn't find the record it was for. The message shows the filter it was given. A blank RowPointer in it means the trigger wasn't given the saved record's RowPointer. Nothing was sent, and the row isn't retried. |
+| `Nothing was sent: the filter matched no '...' record. The filter was: ...` | A trigger ran but couldn't find the record it was for. The message shows the filter it was given. A blank RowPointer in it means the trigger wasn't given the saved record's RowPointer, which is what happens when a REST or integration caller saves without sending `RowPointer` (see [Known limitations](#known-limitations)). Nothing was sent, and the row isn't retried. Send those records with a [bulk load](Bulk-Loads) or [Bulk Resync](Resending-Records); a delete can't be resent that way. |
 
 Target-specific messages are on the [Azure Event Hubs](Target-Azure-Event-Hubs#common-errors) and [Salesforce](Target-Salesforce#common-errors) pages.
 
 ## Saves are slow on a replicated IDO
 
-Replication runs during the save, so the save waits for the target to answer. If a target is slow or unreachable:
+Replication runs during the save, so the save waits for the target to answer. Even with no target at all (a `LogOnly` rule), each record adds about 0.2 to 0.4 seconds to the save, so a save of thousands of records, such as a large import through the REST API, takes many minutes. If a target is slow or unreachable:
 
 1. Click **Deactivate All** for the IDO to stop replicating during saves.
 2. When the target is back, click **Activate All**.
@@ -45,7 +45,8 @@ Replication runs during the save, so the save waits for the target to answer. If
 
 - **Pre-beta.** Test in a non-production environment first.
 - **IDO-layer changes only.** Stored procedures and direct SQL don't fire triggers.
-- **Sends happen during the save.** A slow target slows the save. A record may also be sent even if the save is later rolled back by something else in the same transaction.
+- **Only saves that send the record's `RowPointer` replicate.** A trigger can only see the properties the caller sent for that record. Syteline's forms send `RowPointer`, so form saves replicate. A REST API or integration caller that names records by their key or their ItemId, which is usual, doesn't, so its inserts, updates and deletes are logged as `Skipped` with a blank RowPointer in the filter and aren't sent. A caller that includes `RowPointer` in each update or delete is replicated. Found with the [Trigger Diagnostics](Trigger-Diagnostics#results) tests. Until replication is changed to handle these callers, catch their inserts and updates with a [bulk load](Bulk-Loads) or [Bulk Resync](Resending-Records). Their deletes can't be caught that way.
+- **Sends happen during the save.** A slow target slows the save. A record is also sent even if the save is later rolled back, for example when a later record in the same save fails. The replication log row for that send rolls back with the save, so nothing in the log shows it.
 - **Credentials are stored as plain text.** See [Credentials](Credentials#keeping-credentials-safe).
 - **Log payloads are capped at 4,000 characters.** Larger records are sent but can't be retried from the log.
 - **Three retries, no backoff.** A long outage uses them up.

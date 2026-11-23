@@ -2,7 +2,7 @@
 
 Tools for finding out how Syteline fires IDO events for each kind of save: a form, the REST API, and an extension class calling `UpdateCollection`. They are for a test system. Nothing here replicates data.
 
-The results decide how replication is redesigned to stay reliable under bulk saves. The predictions below come from reading Infor's runtime (`IDOCore.dll` in `Lib/`). None of them has been checked in Syteline yet.
+The results decide how replication is redesigned to stay reliable under bulk saves. The predictions below come from reading Infor's runtime (`IDOCore.dll` in `Lib/`). The [results](#results) of the first run, in a cloud sandbox, follow the tests.
 
 ## What's included
 
@@ -54,6 +54,47 @@ Run them in order. After each one, read the `Diag:` rows it wrote (next section)
 | 15 | Bulk | Only if test 14 looks reasonable: `-Count 2000` | A1, A8 | One transaction for the whole save. The time grows with the count |
 
 Clean up with `-Action Cleanup` (every `ZQ` record, by key) and remove the triggers with `-Action RemoveDiagnostics`. Put the IDO's real rules back the way they were.
+
+## Results
+
+First run: November 23, 2026, in an Infor CloudSuite Industrial sandbox (multi-tenant cloud), on `SLEndtypes`, with a `LogOnly` rule and the replication triggers active. Tests 1 to 10 were run, in a different order, plus the two variants below. Test 11 (a failing REST update), the extension-class tests (12, 13) and the cost and bulk tests (14, 15) haven't been run yet.
+
+| # | Test | What happened |
+| --- | --- | --- |
+| 1 | Form, insert 1 | As predicted. RowPointer blank on `IdoOnItemInsert` and present on `IdoPostItemInsert`, so the replication trigger replicated it. The first save after the assemblies were uploaded took about 30 seconds, most of it a 28-second gap before the item event. It didn't happen again. |
+| 1b | Form, insert 2 in one save | One `UpdateCollection` for the save, each record finished (events, save, replication) before the next began. Replicated. |
+| 2 | Form, update 3 in one save | RowPointer and key present before and after the save. Replicated. |
+| 3 | Form, delete 2 in one save | RowPointer and key present before and after the delete. Replicated. |
+| 4 | REST insert of 3 (`refresh=true`) | Keys present, RowPointer blank before **and after** the save. Not replicated: the replication trigger logged `Skipped` ("the trigger wasn't given the saved record's RowPointer"). |
+| 5 | REST update by ItemId | Nothing present: RowPointer, key and `_ItemId` all blank. Not replicated. |
+| 6 | REST update by key | Keys present, RowPointer blank. Not replicated. |
+| 7 | REST update with key and RowPointer | Both present. Replicated. |
+| 8 | REST delete by ItemId | Nothing present. Not replicated: with a real target, the delete would not have been sent. |
+| 9 | REST delete by key | Keys present, RowPointer blank. Not replicated. |
+| 10 | REST insert that fails on its last record | The save rolled back. The replication trigger's log rows rolled back with it. The diagnostic rows didn't. |
+| 10b | Test 10 again, with **Ignore Failure** cleared on the diagnostic `IdoPostItemInsert` handler | That handler's rows rolled back too, while the other diagnostic handlers' rows stayed. |
+
+What the results establish:
+
+- **In an item event, `P()` sees only the properties the caller put in that record.** A form includes `RowPointer` (for a new record, only after the save, when the runtime has refreshed it). A REST caller usually sends only the keys, or only the ItemId, and then the trigger gets no RowPointer. `P("_ItemId")` was always blank, even when the caller named the record by ItemId. A REST insert didn't get its RowPointer back even with `refresh=true`, likely because the runtime refreshes only the properties the request included (not checked).
+- **The collection events never saw a record**: RowPointer and keys were blank in every `IdoOnUpdateCollection` and `IdoPostUpdateCollection`.
+- **An event handler with Ignore Failure on runs in its own transaction** and its writes stay when the save fails. **With Ignore Failure off, it runs in the save's transaction** and its writes roll back with the save. The replication triggers have Ignore Failure off, so their log rows roll back with a failed save, but anything they already sent to a target stays sent.
+- **The asynchronous `IdoPostUpdateCollection` handler never wrote a row**, and nothing for it appeared in the event queue (`EventQueues`). In this tenant, an asynchronous handler can't be counted on to run.
+- **The replication trigger costs about 0.2 to 0.4 seconds per record** with a `LogOnly` rule, so with no network call at all: loading the rules, loading the record, reading the site's time and writing the log row. At that rate a save of 5,000 records would spend roughly 20 to 30 minutes in replication before any target is reached.
+- **Saves were spread across at least five application servers.** Static values in the extension class lasted as long as the server's app domain (one kept counting across saves 8 minutes apart), but a save can land on any server, so an in-memory cache can't be relied on between saves.
+- **`System.Transactions.Transaction.Current` was empty inside every handler**, so the payload's `transactionId` can't show which transaction an event ran in. Tests 10 and 10b answer that question instead.
+- **`processId` is blocked** in the cloud (`SecurityException`). `processStartedUtc` and `appDomain` identify the process instead.
+
+| # | Assumption | Result |
+| --- | --- | --- |
+| A1, A2 | One `UpdateCollection` per save, item events in sequence, collection events once | Confirmed, for forms and REST |
+| A3 | `P("RowPointer")` in item events | Only when the caller sends it. Forms do. REST callers by key or ItemId don't |
+| A4 | `P()` returns keys the caller sends | Confirmed |
+| A5 | A handler's writes roll back with a failed save | Only with Ignore Failure off. With it on, they commit on their own |
+| A6 | `P()` is empty in the collection events | Confirmed |
+| A7 | An asynchronous handler runs after the save | Not seen: it never ran, and nothing was queued |
+| A8 | Cost per record | About 0.2 to 0.4 seconds per record for the replication trigger alone |
+| A10 | Static values last between calls | Per app domain only, and saves are spread across servers |
 
 ## Reading the results
 

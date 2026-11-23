@@ -29,6 +29,8 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 
 Replication never blocks the user's save. Every error is caught and logged, and the triggering transaction always commits.
 
+A save replicates only when it sends each record's `RowPointer`. Syteline's forms do, but REST API and integration callers usually name records by key or ItemId, and their changes are logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
+
 You can also run replication as a background task over many records, for example for an initial load.
 
 ## Components
