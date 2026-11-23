@@ -17,7 +17,8 @@
 
     -Via Rest sends one ido/update request with every record in it. -Via ExtensionClass asks the Rules IDO's
     ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection. Setting up
-    the diagnostic triggers and -Via ExtensionClass need a Syteline super user.
+    the diagnostic triggers and -Via ExtensionClass need a Syteline super user: the Syteline user the calls run as,
+    which through -IonApiFile is the user behind the file's service account.
 
     -KeyPrefix must be at least 2 characters with no SQL wildcard (% _ [ ]), because Update, Delete and Cleanup act on
     every record whose key starts with it.
@@ -42,12 +43,14 @@
 
 .PARAMETER IonApiFile
     The path of a .ionapi file (ION API credentials for a backend service account, downloaded from ION API Gateway).
+    Every call then runs as the Syteline user behind that service account.
     The script signs in through the ION API with it, and takes the base URL from it. Needs -MongooseConfig. The usual
     way to reach a cloud tenant. The file holds secrets: keep it out of the repository, and nothing from it is printed.
 
 .PARAMETER BaseUrl
     Not needed with -IonApiFile. The server, for example https://<server>, or the REST API base up to
-    /IDORequestService or /ido. The rest of "/IDORequestService/ido" is added when it's missing.
+    /IDORequestService or /ido. The rest of "/IDORequestService/ido" is added when it's missing. With an ION API token
+    passed in -Authorization, give the .ionapi file's iu/ti/CSI.
 
 .PARAMETER Authorization
     The value for the Authorization header: a Mongoose security token, or "Bearer <token>" through the ION API.
@@ -119,7 +122,13 @@ if ($IonApiFile -ne '') {
     if ($MongooseConfig -eq '') {
         throw '-IonApiFile needs -MongooseConfig, the configuration name, for example <tenant>_<site>.'
     }
-    $IonApi = Get-Content -Raw -LiteralPath $IonApiFile | ConvertFrom-Json
+    # A PARSE ERROR CAN QUOTE THE FILE'S TEXT, WHICH HOLDS SECRETS, SO IT IS REPLACED WITH A MESSAGE THAT DOESN'T
+    try {
+        $IonApi = Get-Content -Raw -LiteralPath $IonApiFile -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        throw ("Couldn't read {0} as a .ionapi file. Download it again from ION API Gateway." -f $IonApiFile)
+    }
     foreach ($field in @('ti', 'iu', 'pu', 'ot', 'ci', 'cs', 'saak', 'sask')) {
         if ([string]::IsNullOrEmpty([string]$IonApi.$field)) {
             throw ("The .ionapi file has no '{0}'. Use the file ION API Gateway gives for a backend service account." -f $field)
@@ -307,7 +316,8 @@ function Confirm-AIRDelete {
     }
 }
 
-# A DIRECT TOKEN, AS IN THE syteline-api-examples REPOSITORY: ido/token/{config} WITH THE USER NAME AND PASSWORD AS HEADERS
+# AN ION API TOKEN, AS IN THE syteline-api-examples REPOSITORY: A PASSWORD GRANT FROM THE .ionapi FILE'S pu + ot. EVERY CALL THEN
+# RUNS AS THE SYTELINE USER BEHIND THE FILE'S SERVICE ACCOUNT, SO THAT USER IS THE ONE THE SUPER-USER CHECKS SEE.
 
 if ($Authorization -eq '' -and $null -ne $IonApi) {
     $ionTokenUri = [Uri](([string]$IonApi.pu).TrimEnd('/') + '/' + ([string]$IonApi.ot).TrimStart('/'))
@@ -327,6 +337,8 @@ if ($Authorization -eq '' -and $null -ne $IonApi) {
     }
     $Authorization = 'Bearer ' + [string](Get-AIRField $ionTokenResponse 'access_token')
 }
+
+# A DIRECT TOKEN, AS IN THE syteline-api-examples REPOSITORY: ido/token/{config} WITH THE USER NAME AND PASSWORD AS HEADERS
 
 if ($Authorization -eq '') {
     if ($null -eq $Credential -or $MongooseConfig -eq '') {
