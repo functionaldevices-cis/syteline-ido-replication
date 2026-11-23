@@ -81,11 +81,11 @@ Create three Background Task Definitions.
 
 ## Upgrading
 
-Do steps 2 to 4 together, at a quiet time. Between them the IDOs, the assemblies and the forms are out of step with each other. Saves aren't blocked, but a replication that runs in that window can fail to write its log row, and a failure that isn't logged is never retried.
+Do steps 2 to 4 together, at a quiet time. Between them the IDOs, the assemblies and the forms are out of step with each other. A save to an IDO with active replication triggers can fail for a few minutes after the assemblies are uploaded (step 3), and a replication that runs in that window can fail to write its log row, and a failure that isn't logged is never retried.
 
 1. Add any new columns first. Compare `SQL Columns.csv` with your tables, append the rows you don't have on the SQL Columns form, and refresh or recreate the view of each table you changed. An IDO property bound to a column that doesn't exist makes every save to that IDO fail. For the replication log that means no log rows are written, and so nothing is retried.
 2. Import the new IDO export, then run **Refresh Form Metadata**.
-3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed. For a few minutes after an upload, a save to an IDO with active triggers can fail with `Extension class for ue_AIR_IDOReplicationRules IDO not found`. If it does, wait a few minutes and save again. This was seen once in testing, and its cause wasn't confirmed.
+3. Upload the new extension class assemblies if you build them yourself. Use **Resync Parameters** on any IDO method whose parameters changed. For a few minutes after an upload, a save to an IDO with active replication triggers can fail with `Extension class for ue_AIR_IDOReplicationRules IDO not found`. If it does, run **Refresh Form Metadata**, wait a few minutes and save again. This was seen once in testing, and its cause wasn't confirmed.
 4. Import the new forms and strings, then unload global form objects.
 5. Create any new Background Task Definitions listed in [step 4](#4-background-tasks).
 6. Carry over and remove columns that were renamed or dropped. A column of yours that is no longer in `SQL Columns.csv` isn't used any more. Do these in order, once the new assemblies are in place (step 3 above) and before anyone uses the Resend form:

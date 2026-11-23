@@ -28,7 +28,7 @@ Target-specific messages are on the [Azure Event Hubs](Target-Azure-Event-Hubs#c
 
 ## Saves are slow on a replicated IDO
 
-Replication runs during the save, so the save waits for the target to answer. Even with no target at all (a `LogOnly` rule), each record added about 0.2 to 0.4 seconds to a form save in testing, and the time per record stayed about the same through a REST save of 500 records, so a save of 5,000 records would take about half an hour. If a target is slow or unreachable:
+Replication runs during the save, so the save waits for the target to answer. Even with no target at all (a `LogOnly` rule), each record added about 0.2 to 0.4 seconds to a form save in testing. If that holds for every record, a save of 5,000 records would spend roughly 17 to 33 minutes in replication (an estimate: the time per record stayed about the same through REST saves of 500 records, but those records weren't replicated). If a target is slow or unreachable:
 
 1. Click **Deactivate All** for the IDO to stop replicating during saves.
 2. When the target is back, click **Activate All**.
