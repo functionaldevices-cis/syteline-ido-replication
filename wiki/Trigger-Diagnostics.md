@@ -92,6 +92,19 @@ B1 and B2 were run with the doorbell from #82. **B1:** 20 saves in 5 waves made 
 
 Run the doorbell test on one IDO at a time. Clean up the test records with `-Action Cleanup` between tests. If the submission raises a database error that ends the save's transaction, catching it doesn't save the transaction, and the save fails with the error; that is a result too. The tasks' history is under Background Task History, task name `ue_AIR_DiagDoorbellTask`.
 
+## The polling cost test
+
+A sender that finds changes by polling runs a query like `RecordDate >= <its last run>` on each IDO it covers. On a large table without an index on that column, every poll reads the whole table. The script's read-only `TimeLoad` action measures it: it runs one `ido/load` per repeat and prints how long each took. Run each test against the sandbox, with the same `$conn` as the other tests.
+
+| # | What | Command |
+| --- | --- | --- |
+| P1 | The cost of the call alone (a filter that reads nothing) | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "1=0"` |
+| P2 | A poll that finds nothing: how long reading by `RecordDate` takes when no row matches | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate > '2099-01-01'"` |
+| P3 | A poll on a key column, for comparison | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "TransNum > 999999999"` |
+| P4 | A poll of the last 5 minutes | `$since = (Get-Date).AddMinutes(-5).ToString('yyyy-MM-dd HH:mm:ss')`, then `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate >= '$since'"` |
+
+P2 much slower than P1 and P3 means `RecordDate` has no index, so every poll scans the table. Repeat P2 on `SLCoitems` and `SLCos` for smaller tables. `$since` uses the computer's clock, so run P4 on a computer set to the site's time zone.
+
 ### Doorbell results
 
 Run on November 23, 2026, in the same cloud sandbox, on `SLEndtypes`, with the diagnostic and replication triggers active. Each save rang the doorbell once. The save's last event is the Create Date of its `Diag: IdoPostUpdateCollection` row, which is written before the save commits; the commit itself isn't timed. That and Task Manager's start are site times. The task's code start is by the task server's clock, so its gaps are rough.

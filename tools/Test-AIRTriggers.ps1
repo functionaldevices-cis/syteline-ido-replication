@@ -14,6 +14,8 @@
       Update             Updates the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
       Delete             Deletes the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
       Cleanup            Deletes every record whose key starts with -KeyPrefix, by key, always through REST.
+      TimeLoad           Read only. Loads -IDOName with -LoadFilter through REST -Repeat times and prints how long each load
+                         took and how many rows came back, to measure what a poll for changed records costs.
 
     -Via Rest sends one ido/update request with every record in it. -Via ExtensionClass asks the Rules IDO's
     ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection. Setting up
@@ -62,6 +64,19 @@
 .PARAMETER MongooseConfig
     The configuration name, sent as the X-Infor-MongooseConfig header and used to get a token.
 
+.PARAMETER LoadFilter
+    TimeLoad only: the filter, for example "RecordDate > '2099-01-01'". The default, 1=0, matches nothing without
+    reading the table, so it measures only the cost of the call itself.
+
+.PARAMETER LoadProperties
+    TimeLoad only: the properties to load, comma-separated. Blank loads RecordDate only.
+
+.PARAMETER LoadCap
+    TimeLoad only: the record cap. 0 means every matching record, so keep the filter narrow.
+
+.PARAMETER Repeat
+    TimeLoad only: how many times to run the load.
+
 .EXAMPLE
     $conn = @{ IonApiFile = 'C:\path\to\credentials.ionapi'; MongooseConfig = '<config>' }
     .\Test-AIRTriggers.ps1 @conn -Action SetupDiagnostics
@@ -74,7 +89,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('SetupDiagnostics', 'RemoveDiagnostics', 'Insert', 'Update', 'Delete', 'Cleanup')]
+    [ValidateSet('SetupDiagnostics', 'RemoveDiagnostics', 'Insert', 'Update', 'Delete', 'Cleanup', 'TimeLoad')]
     [string] $Action,
 
     [string] $BaseUrl = '',
@@ -108,7 +123,17 @@ param(
 
     [hashtable] $UpdateProperties = $null,
 
-    [switch] $Force
+    [switch] $Force,
+
+    [string] $LoadFilter = '1=0',
+
+    [string] $LoadProperties = '',
+
+    [ValidateRange(0, 100000)]
+    [int] $LoadCap = 200,
+
+    [ValidateRange(1, 50)]
+    [int] $Repeat = 5
 )
 
 $ErrorActionPreference = 'Stop'
@@ -364,6 +389,28 @@ if ($Authorization -eq '') {
 $startedAt = Get-Date
 
 switch ($Action) {
+
+    'TimeLoad' {
+        # READ ONLY: ONE ido/load PER REPEAT, NO PAGING, SO EACH TIME IS ONE QUERY. THE FIRST RUN CAN BE SLOWER (A COLD CACHE).
+        $properties = if ($LoadProperties -ne '') { $LoadProperties } else { 'RecordDate' }
+        $url = "{0}/load/{1}?properties={2}&filter={3}&recordCap={4}" -f $BaseUrl, $IDOName,
+            [Uri]::EscapeDataString($properties), [Uri]::EscapeDataString($LoadFilter), $LoadCap
+        $times = @()
+        for ($i = 1; $i -le $Repeat; $i++) {
+            $stopwatch = [Diagnostics.Stopwatch]::StartNew()
+            $response = Invoke-AIRRequest -Method 'GET' -Url $url
+            $stopwatch.Stop()
+            if ((Get-AIRField $response 'Success') -eq $false) {
+                throw ('The load failed: {0}' -f (Get-AIRField $response 'Message'))
+            }
+            $rows = @(Get-AIRField $response 'Items' | Where-Object { $null -ne $_ }).Count
+            $times += $stopwatch.Elapsed.TotalMilliseconds
+            Write-Host ("Run {0}: {1:N0} ms, {2} row(s), more rows: {3}" -f $i, $stopwatch.Elapsed.TotalMilliseconds, $rows, (Get-AIRField $response 'MoreRowsExist'))
+        }
+        $sorted = $times | Sort-Object
+        Write-Host ("{0} with filter {1}: fastest {2:N0} ms, median {3:N0} ms, slowest {4:N0} ms over {5} run(s)." -f $IDOName, $LoadFilter,
+            $sorted[0], $sorted[[int][Math]::Floor(($sorted.Count - 1) / 2)], $sorted[-1], $sorted.Count) -ForegroundColor Green
+    }
 
     'SetupDiagnostics' {
         Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, 'SetupDiagnosticTriggers', '') | Out-Null
