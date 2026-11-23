@@ -239,9 +239,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           Record IDs: "Doorbell=<token>", "DoorbellSubmit=<token>" and the task's "DoorbellTask=<token>",
         /*           where the token is new for each save. Never throws. Always returns 0.
         /*
-        /*           Before it submits, it looks in ActiveBGTasks for a doorbell task that is queued and hasn't started
-        /*           (status QueuedTaskStatus). If there is one, it doesn't submit another: that task starts later and
-        /*           can pick up this save too. This is what the burst test (B3) measures. Its DoorbellSubmit row says
+        /*           Before it submits, it looks in ActiveBGTasks for a doorbell task for the same IDO that is queued and
+        /*           hasn't started (status QueuedTaskStatus and no StartDate). If there is one, it doesn't submit
+        /*           another: that task starts later and may pick up this save too. Whether it does is what the task's
+        /*           own row shows (the doorbell rows it could see). This is what the burst test (B3) measures. Its DoorbellSubmit row says
         /*           which task it relied on and lists every doorbell task it saw with its status. A failed look
         /*           never skips the submission.
         /*
@@ -316,11 +317,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         IDOCommands: this.Context.Commands
                     );
 
+                    // ONLY THE TASKS FOR THIS IDO: THE IDO NAME IS THE SECOND OF THE TASK'S PARAMETERS. IT CAN'T HOLD A QUOTE OR A
+                    // WILDCARD THAT MATTERS HERE, BECAUSE IT COMES FROM THE TRIGGER'S OWN PARMS.
+
                     LoadRecordsResponseData tasks = sytelineAPI.LoadRecords(
                         IDOName: "ActiveBGTasks",
-                        filter: "TaskName = '" + DoorbellTaskName + "'",
+                        filter: "TaskName = '" + DoorbellTaskName + "' AND TaskParms1 LIKE '%," + IDOName.Replace("'", "''") + ",%'",
                         orderBy: "TaskNumber",
-                        properties: new List<string>() { "TaskNumber", "TaskStatusCode" },
+                        properties: new List<string>() { "TaskNumber", "TaskStatusCode", "StartDate" },
                         recordCap: SytelineInternalAPI.NoRecordCap
                     );
 
@@ -329,10 +333,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         string number = (task.PropertyValues[tasks.PropertyKeys["TaskNumber"]].Value ?? "").Trim();
                         string status = (task.PropertyValues[tasks.PropertyKeys["TaskStatusCode"]].Value ?? "").Trim();
+                        string startDate = (task.PropertyValues[tasks.PropertyKeys["StartDate"]].Value ?? "").Trim();
 
-                        activeTasks.Add(number + ":" + status);
+                        activeTasks.Add(number + ":" + status + (startDate != "" ? ":started " + startDate : ":not started"));
 
-                        if (queuedTaskNumber == "" && status.Equals(QueuedTaskStatus, StringComparison.OrdinalIgnoreCase))
+                        // A READY ROW WITH A START DATE WOULD MEAN READY ISN'T ONLY "QUEUED": IT IS LISTED, BUT NOT RELIED ON
+
+                        if (queuedTaskNumber == "" && status.Equals(QueuedTaskStatus, StringComparison.OrdinalIgnoreCase) && startDate == "")
                         {
                             queuedTaskNumber = number;
                         }
@@ -418,8 +425,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "event", eventName },
                     { "ido", IDOName },
                     { "token", token },
-                    { "submittedUtc", submittedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
-                    { "submitMs", Math.Round(submitTimer.Elapsed.TotalMilliseconds, 3) },
+                    { "submittedUtc", skipped ? null : submittedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
+                    { "submitMs", skipped ? (object)null : Math.Round(submitTimer.Elapsed.TotalMilliseconds, 3) },
                     { "skipped", skipped },
                     { "queuedTaskNumber", queuedTaskNumber },
                     { "activeTasks", activeTasks },
@@ -575,6 +582,35 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 }
 
+                // THE DOORBELL ROWS THIS TASK CAN SEE NOW, NEWEST FIRST: THE FIRST 12 CHARACTERS OF EACH TOKEN. A SAVE THAT SKIPPED ITS OWN
+                // SUBMISSION RELIED ON A QUEUED TASK, AND THIS SHOWS WHETHER THAT TASK, OR A LATER ONE, COULD SEE THE SAVE'S ROW.
+
+                List<string> visibleDoorbells = new List<string>();
+                string visibleError = "";
+
+                try
+                {
+
+                    LoadRecordsResponseData doorbellRows = sytelineAPI.LoadRecords(
+                        IDOName: "ue_AIR_IDOReplicationLogs",
+                        filter: "RecordID LIKE '" + DoorbellRecordIDPrefix + "%'",
+                        orderBy: "CreateDate DESC",
+                        properties: new List<string>() { "RecordID" },
+                        recordCap: 60
+                    );
+
+                    foreach (var row in doorbellRows.Items)
+                    {
+                        string rowToken = (row.PropertyValues[doorbellRows.PropertyKeys["RecordID"]].Value ?? "").Substring(DoorbellRecordIDPrefix.Length);
+                        visibleDoorbells.Add(rowToken.Length > 12 ? rowToken.Substring(0, 12) : rowToken);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    visibleError = ex.Message;
+                }
+
                 Dictionary<string, object> details = new Dictionary<string, object>()
                 {
                     { "kind", "DoorbellTask" },
@@ -587,6 +623,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "runningAsDoorbellTask", runningAsDoorbellTask },
                     { "waited", mayWait },
                     { "looks", looks },
+                    { "visibleDoorbells", visibleDoorbells },
+                    { "visibleDoorbellsError", visibleError },
                     { "machine", SafeRead(() => Environment.MachineName) },
                     { "appDomain", SafeRead(() => AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture)) }
                 };
