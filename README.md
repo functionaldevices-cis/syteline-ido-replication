@@ -27,7 +27,9 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
    - **Salesforce:** records are upserted by external ID. A delete is skipped unless the rule's Delete Behavior is `Delete`.
 4. **Logging and retries.** Every record's outcome goes to the replication log, with the payload exactly as sent. A scheduled background task resends failed records from their stored payloads, so deleted records can be retried too, and skips any that were replicated again since. It purges old successful rows.
 
-Replication never blocks the user's save. Every error is caught and logged, and the triggering transaction always commits.
+Replication never causes the user's save to fail. Every error is caught and logged.
+
+Saves made in Syteline's forms replicate. A REST API update replicates only when it includes the record's `RowPointer`, and a REST insert isn't replicated; those changes are logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
 
 You can also run replication as a background task over many records, for example for an initial load.
 
