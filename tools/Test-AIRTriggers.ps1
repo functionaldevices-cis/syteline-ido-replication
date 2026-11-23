@@ -24,25 +24,32 @@
     -FailLast makes the last record fail (a duplicate key on Insert, a key that doesn't exist on Update and Delete),
     so the whole save should roll back. Check whether its Diag rows rolled back too.
 
-    What is and isn't confirmed about the REST API:
+    What is and isn't confirmed about the REST API (version 2):
       - ido/update/{ido}?refresh=true with a body of { Changes: [ { Action, ItemId, Properties, UpdateLocking } ] },
-        Action 1 = insert, 2 = update, 4 = delete, is documented by Infor (REST API version 2, UpdateCollection).
-      - ido/load/{ido} and ido/invoke/{ido}?method= are not in the pages that were read. They are used here in the
-        shape Mongoose's REST API version 2 commonly takes. If a call fails or its result reads oddly, compare it with
-        your instance's Swagger document (ido/dynamic/api-docs-collection) and adjust Get-AIRRecords or Invoke-AIRMethod.
+        Action 1 = insert, 2 = update, 4 = delete: documented by Infor (UpdateCollection), and used the same way in
+        the syteline-api-examples repository, including an update matched on key properties sent with Modified false.
+      - ido/token/{config} with username and password headers, returning Token, and ido/load/{ido} with properties,
+        filter, orderBy and recordCap, returning Items as objects: as in the syteline-api-examples repository.
+      - ido/invoke/{ido}?method= with the parameters as a JSON array: not confirmed by Infor's pages or the examples.
+        SetupDiagnostics, RemoveDiagnostics and -Via ExtensionClass use it. If it fails, compare it with your
+        instance's Swagger document (ido/dynamic/api-docs-collection) and adjust Invoke-AIRMethod.
 
 .PARAMETER BaseUrl
-    The REST API base, up to and including /ido. For example https://<server>/IDORequestService/ido, or the ION API
-    gateway's equivalent.
+    The server, for example https://<server>, or the REST API base up to /ido. "/IDORequestService/ido" is added
+    when the URL doesn't already end in /ido. Through the ION API, give the gateway's URL up to /ido.
 
 .PARAMETER Authorization
     The value for the Authorization header: a Mongoose security token, or "Bearer <token>" through the ION API.
+    Leave it out and pass -Credential to get a token directly from the server instead.
+
+.PARAMETER Credential
+    A Syteline user name and password, for getting a token directly (ido/token/{config}). Needs -MongooseConfig.
 
 .PARAMETER MongooseConfig
-    The configuration name for the X-Infor-MongooseConfig header. Needed through the ION API.
+    The configuration name, sent as the X-Infor-MongooseConfig header and used to get a token.
 
 .EXAMPLE
-    $conn = @{ BaseUrl = 'https://<server>/IDORequestService/ido'; Authorization = $token; MongooseConfig = '<config>' }
+    $conn = @{ BaseUrl = 'https://<server>'; Credential = (Get-Credential); MongooseConfig = '<config>' }
     .\Test-AIRTriggers.ps1 @conn -Action SetupDiagnostics
     .\Test-AIRTriggers.ps1 @conn -Action Insert -Count 3
     .\Test-AIRTriggers.ps1 @conn -Action Update -Identify ItemId
@@ -59,8 +66,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $BaseUrl,
 
-    [Parameter(Mandatory = $true)]
-    [string] $Authorization,
+    [string] $Authorization = '',
+
+    [pscredential] $Credential = $null,
 
     [string] $MongooseConfig = '',
 
@@ -93,6 +101,9 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 $BaseUrl = $BaseUrl.TrimEnd('/')
+if ($BaseUrl -notmatch '/ido$') {
+    $BaseUrl = $BaseUrl + '/IDORequestService/ido'
+}
 $RulesIDO = 'ue_AIR_IDOReplicationRules'
 $ConfigsIDO = 'ue_AIR_IDOReplicationConfigs'
 
@@ -105,7 +116,7 @@ if ($null -eq $UpdateProperties) {
 }
 
 function Get-AIRHeaders {
-    $headers = @{ Authorization = $Authorization }
+    $headers = @{ Authorization = $Authorization; Accept = 'application/json' }
     if ($MongooseConfig -ne '') {
         $headers['X-Infor-MongooseConfig'] = $MongooseConfig
     }
@@ -210,6 +221,25 @@ function Confirm-AIRDelete {
     if ($answer -ne 'YES') {
         throw 'Nothing was deleted.'
     }
+}
+
+# A DIRECT TOKEN, AS IN THE syteline-api-examples REPOSITORY: ido/token/{config} WITH THE USER NAME AND PASSWORD AS HEADERS
+
+if ($Authorization -eq '') {
+    if ($null -eq $Credential -or $MongooseConfig -eq '') {
+        throw 'Pass -Authorization, or -Credential with -MongooseConfig to get a token.'
+    }
+    $tokenHeaders = @{
+        username = $Credential.UserName
+        password = $Credential.GetNetworkCredential().Password
+        'X-Infor-MongooseConfig' = $MongooseConfig
+        Accept = 'application/json'
+    }
+    $tokenResponse = Invoke-RestMethod -Method 'GET' -Uri ("{0}/token/{1}" -f $BaseUrl, [Uri]::EscapeDataString($MongooseConfig)) -Headers $tokenHeaders
+    if (-not $tokenResponse.Success -or [string]::IsNullOrEmpty([string]$tokenResponse.Token)) {
+        throw ('Could not get a token: {0}' -f $tokenResponse.Message)
+    }
+    $Authorization = [string]$tokenResponse.Token
 }
 
 $startedAt = Get-Date
