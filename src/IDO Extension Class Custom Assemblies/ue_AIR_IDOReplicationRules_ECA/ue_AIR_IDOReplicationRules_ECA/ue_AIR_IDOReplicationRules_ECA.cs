@@ -1458,17 +1458,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 errorMessage = errorMessage.Substring(0, MaxErrorMessageLength);
             }
 
-            // THE RECORD ROW POINTER IS ONLY WRITTEN WHEN IT IS A GUID, WHICH IS WHAT THE COLUMN HOLDS
-
-            Guid recordRowPointerGuid;
-            bool hasRecordRowPointer = Guid.TryParse(outcome.RecordRowPointer ?? "", out recordRowPointerGuid);
-
             // ONLY A FAILED RECORD WITH A STORED PAYLOAD CAN BE RETRIED
 
             bool canRetry = outcome.Status == ReplicationRecordOutcome.StatusFailed && payload != null;
             int ruleNumber;
 
-            return sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
+            IDOUpdateItem logRow = sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
             {
                 { "RuleNum", int.TryParse(ruleResult.RuleNum, NumberStyles.Integer, CultureInfo.InvariantCulture, out ruleNumber) ? (object)ruleNumber : null },
                 { "IDOName", IDOName },
@@ -1477,7 +1472,6 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "Source", source },
                 { "Operation", OperationAtTarget(ruleResult.TargetType, operation) },
                 { "RecordID", recordID != "" ? recordID : null },
-                { "RecordRowPointer", hasRecordRowPointer ? recordRowPointerGuid.ToString() : null },
                 { "Payload", payload },
                 { "Status", outcome.Status },
                 { "ErrorMessage", errorMessage != "" ? errorMessage : null },
@@ -1485,6 +1479,30 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 { "AttemptCount", 1 },
                 { "LastAttemptDate", attemptDate }
             });
+
+            SetRecordRowPointer(logRow, outcome.RecordRowPointer);
+
+            return logRow;
+
+        }
+
+
+
+        // WRITES RecordRowPointer ON A NEW LOG ROW: THE RECORD'S RowPointer WHEN IT IS A GUID, WHICH IS WHAT THE COLUMN HOLDS, AND AN
+        // EXPLICIT NULL OTHERWISE. BuildInsertItem LEAVES OUT A NULL VALUE, AND A COLUMN LEFT OUT OF THE INSERT GETS ITS DEFAULT. THE
+        // COLUMN'S TYPE, RowPointerType, DEFAULTS TO A NEW RANDOM GUID, SO A ROW WITH NO RECORD WOULD POINT AT A RECORD THAT DOESN'T EXIST,
+        // AND RESEND ERRORS WOULD TREAT THAT RECORD AS DELETED.
+
+        private static void SetRecordRowPointer(IDOUpdateItem logRow, string recordRowPointer)
+        {
+
+            Guid recordRowPointerGuid;
+
+            logRow.Properties.Add(
+                "RecordRowPointer",
+                Guid.TryParse(recordRowPointer ?? "", out recordRowPointerGuid) ? (object)recordRowPointerGuid.ToString() : null,
+                true
+            );
 
         }
 

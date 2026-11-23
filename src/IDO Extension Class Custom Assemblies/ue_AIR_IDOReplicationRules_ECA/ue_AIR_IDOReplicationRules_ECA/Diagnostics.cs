@@ -134,27 +134,27 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     recordID = recordID.Substring(0, MaxRecordIDLength);
                 }
 
-                Guid rowPointerGuid;
-                bool hasRowPointer = Guid.TryParse((rowPointer ?? "").Trim(), out rowPointerGuid);
-
                 SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
                     IDOCommands: this.Context.Commands
                 );
 
-                sytelineAPI.CreateRecord("ue_AIR_IDOReplicationLogs", sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
+                IDOUpdateItem diagnosticRow = sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
                 {
                     { "IDOName", IDOName != "" ? IDOName : "(unknown)" },
                     { "CredentialName", NoCredentialName },
                     { "Source", source },
                     { "Operation", DiagnosticOperation(eventName) },
                     { "RecordID", recordID != "" ? recordID : null },
-                    { "RecordRowPointer", hasRowPointer ? rowPointerGuid.ToString() : null },
                     { "Payload", payload },
                     { "Status", ReplicationRecordOutcomeStatusSkipped },
                     { "ErrorMessage", summary },
                     { "RetriesRemaining", 0 },
                     { "AttemptCount", 1 }
-                }));
+                });
+
+                SetRecordRowPointer(diagnosticRow, (rowPointer ?? "").Trim());
+
+                sytelineAPI.CreateRecord("ue_AIR_IDOReplicationLogs", diagnosticRow);
 
             }
             catch (Exception)
