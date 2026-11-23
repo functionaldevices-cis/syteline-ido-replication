@@ -25,7 +25,7 @@ A rule does nothing until the IDO also has active triggers. See [Setting Up Trig
 
 Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](Target-Salesforce) pages. `LogOnly` sends nothing and only writes the replication log, for testing triggers and field maps without a target. It needs no credential. See [Trigger Diagnostics](Trigger-Diagnostics).
 
-A rule of another target type that has no credential, for example because it was saved some other way than the form or its credential was deleted, sends nothing. Each of its records is logged as `Failed`, with a message that says the rule has no credential, and is retried like any other failure. Pick a credential and save the rule, and the retry task or [Resend Errors](Resending-Records) sends them.
+A rule of another target type that has no credential, for example because it was saved some other way than the form or its credential was deleted, sends nothing. Each of its records is logged as `Failed`, with a message that says the rule has no credential, and is retried like any other failure. Pick a credential and save the rule, then use [Resend Errors](Resending-Records) to send them. The retry task only sends them if it still has retries left, and it runs out within a few minutes.
 
 **Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later. Without it, a retry can resend older data after newer data.
 
