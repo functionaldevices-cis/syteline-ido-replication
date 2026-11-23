@@ -455,6 +455,27 @@ namespace ue_AIR_IDOReplicationConfig_ECA
         private int SetupDiagnosticTriggers(SytelineInternalAPI sytelineAPI, string idoName)
         {
 
+            // THE HANDLERS ARE ACTIVE AT ONCE AND RUN ON EVERY SAVE TO THE IDO, AND EXECUTE IS GRANTED ON THE CONFIGS IDO AS A WHOLE, NOT PER
+            // METHOD, SO ONLY A SUPER USER MAY CREATE THEM. THIS PROJECT'S OWN IDOs ARE REFUSED: A DIAGNOSTIC TRIGGER ON THE LOG WOULD FIRE ON
+            // ITS OWN LOG ROW, AND AGAIN ON THAT ONE, WITHOUT END.
+
+            if (!IsSuperUser())
+            {
+                this.Message = "Only a super user can set up diagnostic triggers.";
+                return 1;
+            }
+
+            string trimmedIdoName = (idoName ?? "").Trim();
+
+            if (trimmedIdoName == ""
+                || trimmedIdoName.StartsWith("ue_AIR_", StringComparison.OrdinalIgnoreCase)
+                || trimmedIdoName.Equals("EventHandlers", StringComparison.OrdinalIgnoreCase)
+                || trimmedIdoName.Equals("EventActions", StringComparison.OrdinalIgnoreCase))
+            {
+                this.Message = $"Diagnostic triggers can't be set up on '{idoName}'. Pick the IDO you want to test, not one of this project's IDOs or the event system's.";
+                return 1;
+            }
+
             try
             {
 
@@ -489,6 +510,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                         {"Active", i == 0 ? 0 : 1},
                         {"Synchronous", handlers[i].Value ? 1 : 0},
                         {"Transactional", 0},
+                        {"IgnoreFailure", 1}, // IF THE HANDLER ITSELF FAILS, FOR EXAMPLE EVALUATING ITS PARMS, THE SAVE STILL GOES THROUGH
                         {"Sequence", sequence},
                         {"NewSequence", sequence},
                         {"RowPointer", ""}
@@ -551,6 +573,22 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             {
                 this.Message = $"The diagnostic triggers for {idoName} couldn't be set up: {ex.Message}";
                 return 1;
+            }
+
+        }
+
+        // WHETHER THE SIGNED-IN USER IS A SUPER USER. FALSE WHEN THE RUNTIME CAN'T SAY.
+
+        private static bool IsSuperUser()
+        {
+
+            try
+            {
+                return IDORuntime.Context != null && IDORuntime.Context.SuperUser;
+            }
+            catch (Exception)
+            {
+                return false;
             }
 
         }

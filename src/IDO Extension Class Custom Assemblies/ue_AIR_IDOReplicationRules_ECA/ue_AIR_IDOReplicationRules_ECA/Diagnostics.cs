@@ -236,7 +236,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /*           action           Insert, Update or Delete
         /*           keyProperty      the IDO's key property, for example EndUserType
         /*           keyPrefix        Insert creates keyPrefix001, keyPrefix002 and so on. Update and Delete act on the
-        /*                            records whose key starts with keyPrefix. Use a prefix no real record has.
+        /*                            records whose key starts with keyPrefix. Use a prefix no real record has. At
+        /*                            least 2 characters, with no LIKE wildcard. Only a super user can run the
+        /*                            method, and it refuses this project's own (ue_AIR_) IDOs.
         /*           count            how many records to insert, or the most to update or delete (0 = all that match)
         /*           extraProperties  other properties to set, as Name=Value;Name=Value, sent as text. An insert sets
         /*                            the IDO's required properties this way.
@@ -266,9 +268,30 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 identify = (identify ?? "").Trim();
                 string normalizedAction = NormalizeOperation(action);
 
+                // THIS METHOD CAN DELETE RECORDS, AND EXECUTE IS GRANTED ON THE RULES IDO AS A WHOLE, NOT PER METHOD, SO ONLY A SUPER USER MAY
+                // RUN IT. THE PREFIX GOES INTO A LIKE FILTER, SO IT CAN'T HOLD A WILDCARD THAT WOULD WIDEN THE MATCH, AND IT CAN'T BE SHORT.
+
+                if (!IsSuperUser())
+                {
+                    results = "Only a super user can run ue_DiagUpdateCollection.";
+                    return 1;
+                }
+
                 if (IDOName == "" || keyProperty == "" || keyPrefix == "")
                 {
                     results = "IDOName, keyProperty and keyPrefix are all required.";
+                    return 1;
+                }
+
+                if (keyPrefix.Length < 2 || keyPrefix.IndexOfAny(new[] { '%', '_', '[', ']', '\'' }) >= 0)
+                {
+                    results = "keyPrefix must be at least 2 characters, without %, _, [, ] or a quote. Use a prefix no real record starts with.";
+                    return 1;
+                }
+
+                if (IDOName.StartsWith("ue_AIR_", StringComparison.OrdinalIgnoreCase))
+                {
+                    results = "ue_DiagUpdateCollection doesn't save to this project's own IDOs.";
                     return 1;
                 }
 
@@ -428,6 +451,22 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 results = "The save failed after " + stopwatch.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture) + " ms: " + this.DescribeException(ex);
                 return 1;
 
+            }
+
+        }
+
+        // WHETHER THE SIGNED-IN USER IS A SUPER USER. FALSE WHEN THE RUNTIME CAN'T SAY.
+
+        private static bool IsSuperUser()
+        {
+
+            try
+            {
+                return IDORuntime.Context != null && IDORuntime.Context.SuperUser;
+            }
+            catch (Exception)
+            {
+                return false;
             }
 
         }

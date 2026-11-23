@@ -13,10 +13,14 @@
       Insert             Inserts -Count records with keys -KeyPrefix001, -KeyPrefix002 and so on.
       Update             Updates the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
       Delete             Deletes the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
-      Cleanup            Deletes every record whose key starts with -KeyPrefix, by key.
+      Cleanup            Deletes every record whose key starts with -KeyPrefix, by key, always through REST.
 
     -Via Rest sends one ido/update request with every record in it. -Via ExtensionClass asks the Rules IDO's
-    ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection.
+    ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection. Setting up
+    the diagnostic triggers and -Via ExtensionClass need a Syteline super user.
+
+    -KeyPrefix must be at least 2 characters with no SQL wildcard (% _ [ ]), because Update, Delete and Cleanup act on
+    every record whose key starts with it.
 
     -Identify says how Update and Delete name each record: ItemId (the ItemId only, no properties), Keys (the key
     property only, with an empty ItemId) or KeysAndRowPointer (the key and the RowPointer).
@@ -35,8 +39,8 @@
         instance's Swagger document (ido/dynamic/api-docs-collection) and adjust Invoke-AIRMethod.
 
 .PARAMETER BaseUrl
-    The server, for example https://<server>, or the REST API base up to /ido. "/IDORequestService/ido" is added
-    when the URL doesn't already end in /ido. Through the ION API, give the gateway's URL up to /ido.
+    The server, for example https://<server>, or the REST API base up to /IDORequestService or /ido. The rest of
+    "/IDORequestService/ido" is added when it's missing. Through the ION API, give the gateway's URL up to /ido.
 
 .PARAMETER Authorization
     The value for the Authorization header: a Mongoose security token, or "Bearer <token>" through the ION API.
@@ -96,19 +100,37 @@ param(
     [switch] $Force
 )
 
-Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 $BaseUrl = $BaseUrl.TrimEnd('/')
-if ($BaseUrl -notmatch '/ido$') {
+if ($BaseUrl -match '/IDORequestService$') {
+    $BaseUrl = $BaseUrl + '/ido'
+}
+elseif ($BaseUrl -notmatch '/ido$') {
     $BaseUrl = $BaseUrl + '/IDORequestService/ido'
+}
+
+# POWERSHELL 7 VALIDATES THE AUTHORIZATION HEADER AND REJECTS A RAW MONGOOSE TOKEN, SO SKIP THAT CHECK THERE, AS THE
+# syteline-api-examples REPOSITORY DOES WITH TryAddWithoutValidation. WINDOWS POWERSHELL 5.1 DOESN'T CHECK IT.
+
+$SkipHeaderValidation = @{}
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    $SkipHeaderValidation['SkipHeaderValidation'] = $true
+}
+
+function Get-AIRField {
+    param($Object, [string] $Name)
+    if ($null -ne $Object -and $Object.PSObject.Properties[$Name]) {
+        return $Object.$Name
+    }
+    return $null
 }
 $RulesIDO = 'ue_AIR_IDOReplicationRules'
 $ConfigsIDO = 'ue_AIR_IDOReplicationConfigs'
 
-if ($KeyPrefix.Trim().Length -lt 2) {
-    throw 'Use a -KeyPrefix of at least 2 characters that no real record starts with. Update, Delete and Cleanup act on every record whose key starts with it.'
+if ($KeyPrefix.Trim().Length -lt 2 -or $KeyPrefix -match "[%_\[\]']") {
+    throw 'Use a -KeyPrefix of at least 2 characters, with no % _ [ ] or quote, that no real record starts with. Update, Delete and Cleanup act on every record whose key starts with it.'
 }
 
 if ($null -eq $UpdateProperties) {
@@ -127,7 +149,7 @@ function Invoke-AIRRequest {
     param([string] $Method, [string] $Url, $Body = $null)
 
     $stopwatch = [Diagnostics.Stopwatch]::StartNew()
-    $parameters = @{ Method = $Method; Uri = $Url; Headers = (Get-AIRHeaders); ContentType = 'application/json' }
+    $parameters = @{ Method = $Method; Uri = $Url; Headers = (Get-AIRHeaders); ContentType = 'application/json' } + $SkipHeaderValidation
     if ($null -ne $Body) {
         $parameters['Body'] = [Text.Encoding]::UTF8.GetBytes($Body)
     }
@@ -151,8 +173,8 @@ function Send-AIRUpdate {
     $body = ConvertTo-Json -InputObject @{ Changes = @($Changes) } -Depth 8
     $response = Invoke-AIRRequest -Method 'POST' -Url ("{0}/update/{1}?refresh=true" -f $BaseUrl, $IDOName) -Body $body
 
-    if ($response.PSObject.Properties['Success'] -and -not $response.Success) {
-        Write-Host ("The save failed: {0}" -f $response.Message) -ForegroundColor Yellow
+    if ((Get-AIRField $response 'Success') -eq $false) {
+        Write-Host ("The save failed: {0}" -f (Get-AIRField $response 'Message')) -ForegroundColor Yellow
     }
     else {
         Write-Host ("The save of {0} record(s) went through." -f @($Changes).Count) -ForegroundColor Green
@@ -166,35 +188,58 @@ function New-AIRProperty {
     return @{ Name = $Name; Value = $Value; Modified = $Modified; IsNull = ($null -eq $Value) }
 }
 
-# ido/load: NOT CONFIRMED in the docs that were read. Accepts rows either as objects or as lists of Name/Value pairs.
+# ido/load, PAGED BY BOOKMARK AS IN THE syteline-api-examples REPOSITORY: EACH RESPONSE HAS Items (OBJECTS), Bookmark AND
+# MoreRowsExist. ROWS GIVEN AS LISTS OF Name/Value PAIRS ARE READ TOO. $Cap 0 MEANS EVERY MATCHING RECORD.
 
 function Get-AIRRecords {
     param([int] $Cap)
 
-    $filter = "{0} LIKE '{1}%'" -f $KeyProperty, $KeyPrefix.Replace("'", "''")
-    $url = "{0}/load/{1}?properties={2}&filter={3}&recordCap={4}&orderBy={5}" -f $BaseUrl, $IDOName,
-        [Uri]::EscapeDataString("$KeyProperty,RowPointer,_ItemId"), [Uri]::EscapeDataString($filter), $Cap, [Uri]::EscapeDataString($KeyProperty)
-    $response = Invoke-AIRRequest -Method 'GET' -Url $url
-
+    $pageSize = if ($Cap -gt 0 -and $Cap -lt 200) { $Cap } else { 200 }
+    $filter = "{0} LIKE '{1}%'" -f $KeyProperty, $KeyPrefix
+    $bookmark = ''
     $records = @()
-    foreach ($item in @($response.Items)) {
-        $values = @{}
-        if ($item -is [Array]) {
-            foreach ($pair in $item) { $values[[string]$pair.Name] = $pair.Value }
+
+    do {
+        $url = "{0}/load/{1}?properties={2}&filter={3}&recordCap={4}&orderBy={5}" -f $BaseUrl, $IDOName,
+            [Uri]::EscapeDataString("$KeyProperty,RowPointer,_ItemId"), [Uri]::EscapeDataString($filter), $pageSize, [Uri]::EscapeDataString($KeyProperty)
+        if ($bookmark -ne '') {
+            $url += '&bookmark=' + [Uri]::EscapeDataString($bookmark)
         }
-        else {
-            foreach ($property in $item.PSObject.Properties) { $values[$property.Name] = $property.Value }
+        $response = Invoke-AIRRequest -Method 'GET' -Url $url
+
+        if ((Get-AIRField $response 'Success') -eq $false) {
+            throw ('The load failed: {0}' -f (Get-AIRField $response 'Message'))
         }
-        $records += [pscustomobject]@{
-            Key        = [string]$values[$KeyProperty]
-            RowPointer = [string]$values['RowPointer']
-            ItemId     = [string]$values['_ItemId']
+
+        foreach ($item in @(Get-AIRField $response 'Items')) {
+            if ($null -eq $item) { continue }
+            $values = @{}
+            if ($item -is [Array]) {
+                foreach ($pair in $item) { $values[[string](Get-AIRField $pair 'Name')] = Get-AIRField $pair 'Value' }
+            }
+            else {
+                foreach ($property in $item.PSObject.Properties) { $values[$property.Name] = $property.Value }
+            }
+            $records += [pscustomobject]@{
+                Key        = [string]$values[$KeyProperty]
+                RowPointer = [string]$values['RowPointer']
+                ItemId     = [string]$values['_ItemId']
+            }
         }
+
+        $bookmark = [string](Get-AIRField $response 'Bookmark')
+        $more = (Get-AIRField $response 'MoreRowsExist') -eq $true -and $bookmark -ne ''
+    } while ($more -and ($Cap -eq 0 -or $records.Count -lt $Cap))
+
+    if ($Cap -gt 0 -and $records.Count -gt $Cap) {
+        $records = $records[0..($Cap - 1)]
     }
 
-    if ($records.Count -gt 0 -and @($records | Where-Object { $_.Key -eq '' }).Count -gt 0) {
-        Write-Host 'The load returned rows without keys. Its response shape may differ from what this script expects:' -ForegroundColor Yellow
+    # A ROW WITHOUT A KEY MEANS THE RESPONSE ISN'T SHAPED AS EXPECTED. STOP, RATHER THAN SAVE CHANGES WITH A BLANK KEY.
+
+    if (@($records | Where-Object { $_.Key -eq '' -or -not $_.Key.StartsWith($KeyPrefix) }).Count -gt 0) {
         Write-Host (ConvertTo-Json -InputObject $response -Depth 5)
+        throw 'The load returned rows without the expected keys, so nothing was saved. Compare the response above with Get-AIRRecords.'
     }
 
     return ,$records
@@ -235,11 +280,15 @@ if ($Authorization -eq '') {
         'X-Infor-MongooseConfig' = $MongooseConfig
         Accept = 'application/json'
     }
-    $tokenResponse = Invoke-RestMethod -Method 'GET' -Uri ("{0}/token/{1}" -f $BaseUrl, [Uri]::EscapeDataString($MongooseConfig)) -Headers $tokenHeaders
-    if (-not $tokenResponse.Success -or [string]::IsNullOrEmpty([string]$tokenResponse.Token)) {
-        throw ('Could not get a token: {0}' -f $tokenResponse.Message)
+    $tokenUri = [Uri]("{0}/token/{1}" -f $BaseUrl, [Uri]::EscapeDataString($MongooseConfig))
+    if ($tokenUri.Scheme -ne 'https' -and -not $tokenUri.IsLoopback) {
+        throw 'The password would be sent without encryption. Use an https:// server address.'
     }
-    $Authorization = [string]$tokenResponse.Token
+    $tokenResponse = Invoke-RestMethod -Method 'GET' -Uri $tokenUri -Headers $tokenHeaders
+    if ((Get-AIRField $tokenResponse 'Success') -ne $true -or [string]::IsNullOrEmpty([string](Get-AIRField $tokenResponse 'Token'))) {
+        throw ('Could not get a token: {0}' -f (Get-AIRField $tokenResponse 'Message'))
+    }
+    $Authorization = [string](Get-AIRField $tokenResponse 'Token')
 }
 
 $startedAt = Get-Date
