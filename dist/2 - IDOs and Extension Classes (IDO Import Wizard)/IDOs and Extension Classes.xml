@@ -1175,8 +1175,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>32</RevisionNo>
-         <RevisionDate>2026-11-23T15:36:11</RevisionDate>
+         <RevisionNo>33</RevisionNo>
+         <RevisionDate>2026-11-23T15:36:12</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -1202,6 +1202,48 @@ END</Expression>
             <Table Name="ue_AIR_idorepl_rule" Alias="idorepl_rule" Type="PRIMARY" />
          </Tables>
          <Methods>
+            <Method Name="ue_DiagDoorbellTask" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="BGTaskNum" Sequence="1">
+                     <DBDataType Length="30" Scale="0">LONG</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="IDOName" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="submittedUtcTicks" Sequence="4">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="token" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
+            </Method>
+            <Method Name="ue_DiagRingDoorbell" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="eventName" Sequence="1">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="IDOName" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
+            </Method>
             <Method Name="ue_DiagUpdateCollection" Transactional="NO">
                <MethodType>2</MethodType>
                <Parameters>

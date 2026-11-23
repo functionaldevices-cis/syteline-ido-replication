@@ -433,6 +433,12 @@ namespace ue_AIR_IDOReplicationConfig_ECA
         /* WRITES A "Diag: <event>" ROW TO THE REPLICATION LOG WITH WHAT THE HANDLER PASSED: THE EVENT, THE IDO, P("RowPointer"),
         /* THE IDO'S KEY PROPERTIES AND P("_ItemId").
         /*
+        /* IT ALSO CREATES A DOORBELL HANDLER: A SYNCHRONOUS IdoOnUpdateCollection HANDLER THAT CALLS ue_DiagRingDoorbell, WHICH SUBMITS
+        /* THE ue_AIR_DiagDoorbellTask BACKGROUND TASK ONCE PER SAVE. UNLIKE THE OTHERS IT HAS IGNORE FAILURE OFF, AS A REAL DOORBELL
+        /* WOULD: ON IdoPostItemInsert THAT PUT A HANDLER'S WRITES IN THE SAVE'S TRANSACTION, AND WHETHER IT DOES THE SAME HERE, FOR THE
+        /* TASK SUBMISSION TOO, IS WHAT THE TEST FINDS OUT. ue_DiagRingDoorbell NEVER THROWS, BUT IF THE RULES ASSEMBLY ON THE SERVER
+        /* DOESN'T HAVE IT, OR CAN'T BE LOADED, EVERY SAVE TO THE IDO FAILS UNTIL THE TRIGGERS ARE REMOVED.
+        /*
         /* UNLIKE THE REPLICATION TRIGGERS, THEY ARE CREATED ACTIVE, SO EVERY SAVE TO THE IDO WRITES ROWS UNTIL THEY ARE REMOVED. THEY
         /* HAVE THEIR OWN DESCRIPTION, SO THE CONFIGS FORM'S TRIGGER STATUS, FIX TRIGGERS AND ACTIVATE ALL DON'T SEE THEM. USE THEM ON
         /* A TEST SYSTEM AND REMOVE THEM WITH RemoveDiagnosticTriggers WHEN THE TESTS ARE DONE.
@@ -451,6 +457,28 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             "IdoOnItemDelete",
             "IdoPostItemDelete"
         };
+
+        // THE BACKGROUND TASK THE DOORBELL HANDLER SUBMITS. ITS DEFINITION CALLS ue_DiagDoorbellTask ON THE RULES IDO.
+
+        private const string DoorbellTaskName = "ue_AIR_DiagDoorbellTask";
+
+        private class DiagnosticHandler
+        {
+
+            public readonly string EventName;
+
+            public readonly bool Synchronous;
+
+            public readonly bool IsDoorbell;
+
+            public DiagnosticHandler(string eventName, bool synchronous, bool isDoorbell)
+            {
+                this.EventName = eventName;
+                this.Synchronous = synchronous;
+                this.IsDoorbell = isDoorbell;
+            }
+
+        }
 
         private int SetupDiagnosticTriggers(SytelineInternalAPI sytelineAPI, string idoName)
         {
@@ -486,15 +514,17 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 List<string> keyNames;
                 string keyValuesExpression = this.BuildKeyValuesExpression(idoName, out keyNames);
 
-                // EACH HANDLER: ITS EVENT AND WHETHER IT IS SYNCHRONOUS. THE FIRST IS A TEMPORARY HANDLER, AS IN SetupTriggers, BECAUSE THE
-                // FIRST HANDLER INSERTED IN A BATCH DOESN'T GET ITS SEQUENCE NUMBER ASSIGNED PROPERLY. IT IS DELETED AFTERWARD.
+                // EACH HANDLER: ITS EVENT, WHETHER IT IS SYNCHRONOUS, AND WHETHER IT IS THE DOORBELL. THE FIRST IS A TEMPORARY HANDLER, AS
+                // IN SetupTriggers, BECAUSE THE FIRST HANDLER INSERTED IN A BATCH DOESN'T GET ITS SEQUENCE NUMBER ASSIGNED PROPERLY. IT IS
+                // DELETED AFTERWARD.
 
-                List<KeyValuePair<string, bool>> handlers = new List<KeyValuePair<string, bool>>
+                List<DiagnosticHandler> handlers = new List<DiagnosticHandler>
                 {
-                    new KeyValuePair<string, bool>("CustomAIR", true)
+                    new DiagnosticHandler("CustomAIR", true, false)
                 };
-                handlers.AddRange(DiagnosticEventNames.Select(eventName => new KeyValuePair<string, bool>(eventName, true)));
-                handlers.Add(new KeyValuePair<string, bool>("IdoPostUpdateCollection", false));
+                handlers.AddRange(DiagnosticEventNames.Select(eventName => new DiagnosticHandler(eventName, true, false)));
+                handlers.Add(new DiagnosticHandler("IdoPostUpdateCollection", false, false));
+                handlers.Add(new DiagnosticHandler("IdoOnUpdateCollection", true, true));
 
                 int sequence = -399;
                 List<IDOUpdateItem> eventHandlers = new List<IDOUpdateItem>();
@@ -504,13 +534,15 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                     eventHandlers.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
                         {"AccessAs", "ue_"},
-                        {"EventName", handlers[i].Key},
+                        {"EventName", handlers[i].EventName},
                         {"Description", DiagnosticTriggerDescription},
                         {"IDOCollections", idoName},
                         {"Active", i == 0 ? 0 : 1},
-                        {"Synchronous", handlers[i].Value ? 1 : 0},
+                        {"Synchronous", handlers[i].Synchronous ? 1 : 0},
                         {"Transactional", 0},
-                        {"IgnoreFailure", 1}, // IF THE HANDLER ITSELF FAILS, FOR EXAMPLE EVALUATING ITS PARMS, THE SAVE STILL GOES THROUGH
+                        // IF A LOGGING HANDLER ITSELF FAILS, FOR EXAMPLE EVALUATING ITS PARMS, THE SAVE STILL GOES THROUGH. THE DOORBELL HAS IT
+                        // OFF, AS A REAL ONE WOULD, SO ITS WRITES ARE IN THE SAVE'S TRANSACTION IF THIS EVENT BEHAVES LIKE IdoPostItemInsert.
+                        {"IgnoreFailure", handlers[i].IsDoorbell ? 0 : 1},
                         {"Sequence", sequence},
                         {"NewSequence", sequence},
                         {"RowPointer", ""}
@@ -543,15 +575,19 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 for (int i = 1; i < insertedEventHandlers.Count; i++)
                 {
 
-                    string eventName = handlers[i].Key;
-                    string mode = handlers[i].Value ? "Sync" : "Async";
+                    string eventName = handlers[i].EventName;
+                    string mode = handlers[i].Synchronous ? "Sync" : "Async";
+
+                    string parameters = handlers[i].IsDoorbell
+                        ? "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_DiagRingDoorbell\") PARMS(\"" + eventName + "\", \"" + idoName + "\")"
+                        : "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_LogTriggerEvent\") PARMS(\"" + eventName + "\", \"" + idoName + "\", P(\"RowPointer\"), " + keyValuesExpression + ", P(\"_ItemId\"), \"" + mode + "\")";
 
                     eventActions.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
                         {"EventHandlerRowPointer", insertedEventHandlers[i].Properties["RowPointer"].GetValue<string>()},
                         {"Description", DiagnosticTriggerDescription},
                         {"Sequence", "10"},
                         {"ActionType", "21"},
-                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_LogTriggerEvent\") PARMS(\"" + eventName + "\", \"" + idoName + "\", P(\"RowPointer\"), " + keyValuesExpression + ", P(\"_ItemId\"), \"" + mode + "\")"},
+                        {"Parameters", parameters},
                     }));
 
                 }
@@ -562,7 +598,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                     return 1;
                 }
 
-                this.Message = $"{eventActions.Count} diagnostic triggers for {idoName} were created and are active. Every save to {idoName} now writes Diag rows to the replication log."
+                this.Message = $"{eventActions.Count} diagnostic triggers for {idoName} were created and are active, including the doorbell, which submits the {DoorbellTaskName} background task once per save. Every save to {idoName} now writes Diag rows to the replication log."
                     + (keyNames.Count > 0 ? $" Key properties passed: {string.Join(", ", keyNames)}." : $" {idoName} has no key properties, so only RowPointer and _ItemId are passed.")
                     + " Run RemoveDiagnosticTriggers when the tests are done.";
 

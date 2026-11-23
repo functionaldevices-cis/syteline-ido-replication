@@ -227,6 +227,404 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
         /*
+        /* Name:     ue_DiagRingDoorbell
+        /* Purpose:  Called by the diagnostic doorbell handler (IdoOnUpdateCollection, Ignore Failure off), once per
+        /*           save. Tests whether a save can start a background task that runs right after the save commits.
+        /*           It writes a "doorbell" row to the replication log, then submits the ue_AIR_DiagDoorbellTask
+        /*           background task through BGTaskDefinitions.BGTaskSubmit2, then writes a row with what the
+        /*           submission returned, all inside the save's transaction when the handler's writes are in it. The
+        /*           task (ue_DiagDoorbellTask) looks for the doorbell row, so its own row shows how long after the
+        /*           submission it started, and whether it could see the save's writes by then.
+        /*
+        /*           Record IDs: "Doorbell=<token>", "DoorbellSubmit=<token>" and the task's "DoorbellTask=<token>",
+        /*           where the token is new for each save. Never throws. Always returns 0.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        private const string DoorbellTaskName = "ue_AIR_DiagDoorbellTask";
+
+        private const string DoorbellRecordIDPrefix = "Doorbell=";
+
+        private const string DoorbellSubmitRecordIDPrefix = "DoorbellSubmit=";
+
+        private const string DoorbellTaskRecordIDPrefix = "DoorbellTask=";
+
+        [IDOMethod(MethodFlags.None, "Infobar")]
+        public int ue_DiagRingDoorbell(string eventName = "", string IDOName = "")
+        {
+
+            try
+            {
+
+                eventName = (eventName ?? "").Trim();
+                IDOName = (IDOName ?? "").Trim();
+
+                string token = Guid.NewGuid().ToString("N");
+                DateTime submittedUtc = DateTime.UtcNow;
+
+                // THE TASK'S PARAMETERS, IN THE ORDER OF ue_DiagDoorbellTask. NONE OF THEM CAN HOLD A COMMA: THE IDO NAME, A HEX TOKEN AND A
+                // NUMBER OF TICKS.
+
+                string taskParms = "BG~TASKID~," + IDOName + "," + token + "," + submittedUtc.Ticks.ToString(CultureInfo.InvariantCulture);
+
+                // THE DOORBELL ROW GOES FIRST, SO IT EXISTS BEFORE THE TASK DOES. THE TASK LOOKS FOR IT, AND A ROW WRITTEN AFTER THE
+                // SUBMISSION COULD BE MISSED BY A TASK THAT STARTED AT ONCE, WHICH WOULD LOOK LIKE A TASK THAT STARTED BEFORE THE COMMIT.
+
+                WriteDiagnosticRow(
+                    IDOName: IDOName,
+                    recordID: DoorbellRecordIDPrefix + token,
+                    payload: JsonConvert.SerializeObject(new Dictionary<string, object>()
+                    {
+                        { "kind", "DoorbellRang" },
+                        { "event", eventName },
+                        { "ido", IDOName },
+                        { "token", token },
+                        { "utc", submittedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
+                        { "machine", SafeRead(() => Environment.MachineName) },
+                        { "appDomain", SafeRead(() => AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture)) },
+                        { "sessionId", SafeRead(() => Convert.ToString(IDORuntime.Context.SessionID, CultureInfo.InvariantCulture)) }
+                    }),
+                    summary: $"Doorbell on {eventName}: about to submit the doorbell task."
+                );
+
+                submittedUtc = DateTime.UtcNow;
+                taskParms = "BG~TASKID~," + IDOName + "," + token + "," + submittedUtc.Ticks.ToString(CultureInfo.InvariantCulture);
+
+                string taskID = "";
+                string infobar = "";
+                string returnValue = "";
+                string submitError = "";
+                Stopwatch submitTimer = Stopwatch.StartNew();
+
+                try
+                {
+
+                    // BGTaskSubmit2's PARAMETERS, IN ORDER: TaskName, TaskParms1, TaskParms2, Infobar (out), TaskID (out), TaskStatusCode,
+                    // TaskProfileParms, RequestingUser, Initiator, PrintPreview, TaskHistoryRowPointer (out), PreviewInterval (out), then the
+                    // schedule (SchedStartDateTime through SchedIsEnabled) and BaseTaskNumber, all left blank for a task that runs once, now
+
+                    // A BLANK VALUE IS ADDED AS Add(null, false), NEVER Add(null): A null LITERAL PICKS THE Add(InvokeParameter) OVERLOAD AND
+                    // ADDS A null ELEMENT, NOT A PARAMETER WITH NO VALUE, AND THE RUNTIME THROWS ON IT. THE REQUESTING USER IS THE USER WHOSE
+                    // SAVE RANG THE DOORBELL, AND "READY" IS THE STATUS INFOR'S OWN STORED PROCEDURES SUBMIT TASKS WITH.
+
+                    InvokeParameterList parameters = new InvokeParameterList();
+                    parameters.Add(DoorbellTaskName, false);
+                    parameters.Add(taskParms, false);
+                    parameters.Add(null, false);
+                    parameters.Add("", true);
+                    parameters.Add(null, true);
+                    parameters.Add("READY", false);
+                    parameters.Add(null, false);
+                    parameters.Add(SafeRead(() => IDORuntime.Context.UserName), false);
+                    parameters.Add("ue_AIR_DiagDoorbell", false);
+                    parameters.Add(0, false);
+                    parameters.Add(null, true);
+                    parameters.Add(null, true);
+
+                    for (int i = 0; i < 10; i++)
+                    {
+                        parameters.Add(null, false);
+                    }
+
+                    InvokeResponseData response = this.Context.Commands.Invoke(new InvokeRequestData
+                    {
+                        IDOName = "BGTaskDefinitions",
+                        MethodName = "BGTaskSubmit2",
+                        Parameters = parameters
+                    });
+
+                    returnValue = response.ReturnValue ?? "";
+                    infobar = response.Parameters.Count > 3 ? (response.Parameters[3].Value ?? "") : "";
+                    taskID = response.Parameters.Count > 4 ? (response.Parameters[4].Value ?? "") : "";
+
+                }
+                catch (Exception ex)
+                {
+                    submitError = ex.Message;
+                }
+
+                submitTimer.Stop();
+
+                Dictionary<string, object> details = new Dictionary<string, object>()
+                {
+                    { "kind", "DoorbellSubmit" },
+                    { "event", eventName },
+                    { "ido", IDOName },
+                    { "token", token },
+                    { "submittedUtc", submittedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
+                    { "submitMs", Math.Round(submitTimer.Elapsed.TotalMilliseconds, 3) },
+                    { "returnValue", returnValue },
+                    { "taskId", taskID },
+                    { "infobar", infobar },
+                    { "error", submitError },
+                    { "machine", SafeRead(() => Environment.MachineName) },
+                    { "appDomain", SafeRead(() => AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture)) },
+                    { "sessionId", SafeRead(() => Convert.ToString(IDORuntime.Context.SessionID, CultureInfo.InvariantCulture)) }
+                };
+
+                string summary = submitError != ""
+                    ? $"Doorbell on {eventName}: the task couldn't be submitted: {submitError}"
+                    : $"Doorbell on {eventName}: task {(taskID != "" ? taskID : "(no number)")} submitted in {Math.Round(submitTimer.Elapsed.TotalMilliseconds)} ms, return value {returnValue}" + (infobar != "" ? $", message: {infobar}" : "") + ".";
+
+                WriteDiagnosticRow(
+                    IDOName: IDOName,
+                    recordID: DoorbellSubmitRecordIDPrefix + token,
+                    payload: JsonConvert.SerializeObject(details),
+                    summary: summary
+                );
+
+            }
+            catch (Exception)
+            {
+                // A DIAGNOSTIC MUST NEVER FAIL THE SAVE THAT FIRED IT. A MISSING DOORBELL ROW IS ITSELF A RESULT.
+            }
+
+            return 0;
+
+        }
+
+
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
+        /* Name:     ue_DiagDoorbellTask
+        /* Purpose:  The background task ue_DiagRingDoorbell submits (task name ue_AIR_DiagDoorbellTask). Sends nothing.
+        /*           It looks for the save's doorbell row: right away, then again after 1, 2, 5, 10, 20, 30, 45 and 60
+        /*           seconds, until it sees the row. Each look records when it began and how long it took, because a
+        /*           load can wait on the save's lock and only answer once the save commits. Not seeing the row at
+        /*           first, and then seeing it, means the task started before the save committed. So does a first
+        /*           look that took a long time. A first look that answered quickly and saw the row means the save
+        /*           had committed, or that the load read data that wasn't committed yet: compare the task's start
+        /*           with the end of the save to tell.
+        /*
+        /*           The waits hold a server thread for up to a minute, and Execute is granted on the IDO as a whole, so
+        /*           anyone could call this directly with a made-up BGTaskNum. So it waits only when it runs as a
+        /*           doorbell task (its BGTaskNum is an ue_AIR_DiagDoorbellTask in ActiveBGTasks) or for a super user.
+        /*           Otherwise it looks once and says so. A direct call with no BGTaskNum needs a super user. Then it writes one row, "DoorbellTask=<token>", with when it started, how long
+        /*           after the submission that was (by the application servers' clocks), and what each look found.
+        /*           Always returns 0.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        [IDOMethod(MethodFlags.None, "Infobar")]
+        public int ue_DiagDoorbellTask(int BGTaskNum = -1, string IDOName = "", string token = "", string submittedUtcTicks = "")
+        {
+
+            try
+            {
+
+                if (BGTaskNum <= 0 && !IsSuperUser())
+                {
+                    return 0;
+                }
+
+                DateTime startedUtc = DateTime.UtcNow;
+                Stopwatch timer = Stopwatch.StartNew();
+
+                IDOName = (IDOName ?? "").Trim();
+                token = (token ?? "").Trim();
+
+                long ticks;
+                double? delayMs = long.TryParse((submittedUtcTicks ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out ticks)
+                    ? (double?)Math.Round((startedUtc - new DateTime(ticks, DateTimeKind.Utc)).TotalMilliseconds, 3)
+                    : null;
+
+                SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
+                    IDOCommands: this.Context.Commands
+                );
+
+                bool runningAsDoorbellTask = IsRunningDoorbellTask(sytelineAPI, BGTaskNum);
+                bool mayWait = runningAsDoorbellTask || IsSuperUser();
+
+                // THE TOKEN IS HEX, SO IT CAN'T BREAK THE FILTER, BUT A TOKEN THAT ISN'T ONE IS REFUSED ANYWAY
+
+                bool tokenIsValid = token.Length > 0 && token.All(Uri.IsHexDigit);
+
+                List<Dictionary<string, object>> looks = new List<Dictionary<string, object>>();
+                int[] lookAfterSeconds = mayWait ? new[] { 0, 1, 2, 5, 10, 20, 30, 45, 60 } : new[] { 0 };
+                bool seen = false;
+
+                foreach (int seconds in lookAfterSeconds)
+                {
+
+                    if (!tokenIsValid)
+                    {
+                        break;
+                    }
+
+                    int waitMs = seconds * 1000 - (int)timer.ElapsedMilliseconds;
+
+                    if (waitMs > 0)
+                    {
+                        Thread.Sleep(waitMs);
+                    }
+
+                    string error = "";
+                    double lookStartedMs = timer.Elapsed.TotalMilliseconds;
+
+                    try
+                    {
+
+                        LoadRecordsResponseData doorbellRows = sytelineAPI.LoadRecords(
+                            IDOName: "ue_AIR_IDOReplicationLogs",
+                            filter: "RecordID = '" + DoorbellRecordIDPrefix + token + "'",
+                            orderBy: "",
+                            properties: new List<string>() { "RecordID" },
+                            recordCap: 1
+                        );
+
+                        seen = doorbellRows.Items.Count > 0;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        error = ex.Message;
+                    }
+
+                    looks.Add(new Dictionary<string, object>()
+                    {
+                        { "startedAtMs", Math.Round(lookStartedMs) },
+                        { "tookMs", Math.Round(timer.Elapsed.TotalMilliseconds - lookStartedMs) },
+                        { "afterMs", Math.Round(timer.Elapsed.TotalMilliseconds) },
+                        { "doorbellRowVisible", seen },
+                        { "error", error }
+                    });
+
+                    if (seen)
+                    {
+                        break;
+                    }
+
+                }
+
+                Dictionary<string, object> details = new Dictionary<string, object>()
+                {
+                    { "kind", "DoorbellTask" },
+                    { "taskNumber", BGTaskNum },
+                    { "ido", IDOName },
+                    { "token", token },
+                    { "submittedUtc", delayMs.HasValue ? new DateTime(ticks, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) : "" },
+                    { "startedUtc", startedUtc.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture) },
+                    { "msFromSubmitToStart", delayMs },
+                    { "runningAsDoorbellTask", runningAsDoorbellTask },
+                    { "waited", mayWait },
+                    { "looks", looks },
+                    { "machine", SafeRead(() => Environment.MachineName) },
+                    { "appDomain", SafeRead(() => AppDomain.CurrentDomain.Id.ToString(CultureInfo.InvariantCulture)) }
+                };
+
+                Dictionary<string, object> firstLook = looks.FirstOrDefault();
+                Dictionary<string, object> lastLook = looks.LastOrDefault();
+
+                string summary = !tokenIsValid
+                    ? "Doorbell task: no valid token was passed, so it couldn't look for the doorbell row."
+                    : $"Doorbell task {BGTaskNum} started {(delayMs.HasValue ? Math.Round(delayMs.Value) + " ms" : "an unknown time")} after the doorbell. "
+                        + (firstLook != null && (bool)firstLook["doorbellRowVisible"] && Convert.ToDouble(firstLook["afterMs"], CultureInfo.InvariantCulture) <= 2000
+                            ? "The doorbell row was visible at once."
+                            : firstLook != null && (bool)firstLook["doorbellRowVisible"]
+                            ? $"The first look saw the doorbell row, but only answered after about {firstLook["afterMs"]} ms: it most likely waited for the save to commit, so the task started before the save committed."
+                            : seen
+                                ? $"The doorbell row wasn't visible at first and appeared after about {lastLook["afterMs"]} ms: the task started before the save committed."
+                                : mayWait
+                                    ? "The doorbell row never became visible in 60 seconds: the save may have rolled back, or is still running."
+                                    : "The doorbell row wasn't visible. The task couldn't be confirmed as a running doorbell task in ActiveBGTasks, so it looked only once.");
+
+                WriteDiagnosticRow(
+                    IDOName: IDOName != "" ? IDOName : "(unknown)",
+                    recordID: DoorbellTaskRecordIDPrefix + (tokenIsValid ? token : "(none)"),
+                    payload: JsonConvert.SerializeObject(details),
+                    summary: summary
+                );
+
+            }
+            catch (Exception)
+            {
+                // A MISSING TASK ROW IS ITSELF A RESULT. THE TASK'S OWN HISTORY STILL SHOWS WHEN IT STARTED.
+            }
+
+            return 0;
+
+        }
+
+        // WHETHER BGTaskNum IS A DOORBELL TASK THAT ActiveBGTasks LISTS. FALSE WHEN IT ISN'T, OR WHEN THE LOAD FAILS. THAT A RUNNING TASK
+        // IS LISTED THERE ISN'T CONFIRMED, SO A FALSE ONLY CUTS THE TASK TO ONE LOOK; IT NEVER STOPS IT.
+
+        private static bool IsRunningDoorbellTask(SytelineInternalAPI sytelineAPI, int BGTaskNum)
+        {
+
+            if (BGTaskNum <= 0)
+            {
+                return false;
+            }
+
+            try
+            {
+
+                LoadRecordsResponseData tasks = sytelineAPI.LoadRecords(
+                    IDOName: "ActiveBGTasks",
+                    filter: "TaskNumber = " + BGTaskNum.ToString(CultureInfo.InvariantCulture) + " AND TaskName = '" + DoorbellTaskName + "'",
+                    orderBy: "",
+                    properties: new List<string>() { "TaskNumber" },
+                    recordCap: 1
+                );
+
+                return tasks.Items.Count > 0;
+
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+        }
+
+        // WRITES ONE Skipped "Diag: Other" ROW TO THE REPLICATION LOG, FOR THE DOORBELL TEST
+
+        private void WriteDiagnosticRow(string IDOName, string recordID, string payload, string summary)
+        {
+
+            if (payload.Length > MaxPayloadLength)
+            {
+                payload = payload.Substring(0, MaxPayloadLength);
+            }
+
+            if (recordID.Length > MaxRecordIDLength)
+            {
+                recordID = recordID.Substring(0, MaxRecordIDLength);
+            }
+
+            SytelineInternalAPI sytelineAPI = new SytelineInternalAPI(
+                IDOCommands: this.Context.Commands
+            );
+
+            IDOUpdateItem diagnosticRow = sytelineAPI.BuildInsertItem(new Dictionary<string, object>()
+            {
+                { "IDOName", IDOName != "" ? IDOName : "(unknown)" },
+                { "CredentialName", NoCredentialName },
+                { "Source", SourceDiagOther },
+                { "Operation", OperationUpsert },
+                { "RecordID", recordID },
+                { "Payload", payload },
+                { "Status", ReplicationRecordOutcomeStatusSkipped },
+                { "ErrorMessage", summary },
+                { "RetriesRemaining", 0 },
+                { "AttemptCount", 1 }
+            });
+
+            SetRecordRowPointer(diagnosticRow, "");
+
+            sytelineAPI.CreateRecord("ue_AIR_IDOReplicationLogs", diagnosticRow);
+
+        }
+
+
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
         /* Name:     ue_DiagUpdateCollection
         /* Purpose:  Saves test records through this.Context.Commands.UpdateCollection, the way an extension class
         /*           does, so the diagnostic triggers show how events fire for that kind of caller. All the records
