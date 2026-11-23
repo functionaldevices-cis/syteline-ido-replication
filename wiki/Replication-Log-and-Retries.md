@@ -19,7 +19,7 @@ One row per record per rule.
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
-| RecordRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored, and on every row logged before the version that made the property writable: until then Syteline silently dropped it, because the property was read-only. |
+| RecordRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank when the row has no record, for example when the trigger wasn't given one or the rule failed before loading its records. Also blank on rows logged before it was stored, and on every row logged before the version that made the property writable: until then Syteline silently dropped it, because the property was read-only. |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried. The time is the site's, like CreateDate, which is when the row was first written. Rows written before this was corrected show the last attempt in the server's time, which is UTC in a hosted environment. |
