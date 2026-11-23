@@ -74,6 +74,28 @@ Before you start, create a Background Task Definition named `ue_AIR_DiagDoorbell
 
 Clean up the test records with `-Action Cleanup` between tests. If the submission raises a database error that ends the save's transaction, catching it doesn't save the transaction, and the save fails with the error; that is a result too. The tasks' history is under Background Task History, task name `ue_AIR_DiagDoorbellTask`.
 
+### Doorbell results
+
+Run on November 23, 2026, in the same cloud sandbox, on `SLEndtypes`, with the diagnostic and replication triggers active. Each save rang the doorbell once. Save and task times are site times, from the save's `Diag:` rows and Background Task History. The task's code start is by the task server's clock.
+
+| Save | Records | Save ended | Task Manager started the task | The task's code began | Its first look |
+| --- | --- | --- | --- | --- | --- |
+| Form insert (D1) | 1 | 15:25:14.70 | 15:25:18.57 (3.9 s later) | 5.7 s after the save | Saw the doorbell row (46 ms) |
+| Form insert (D1, again) | 1 | 15:26:52.63 | 15:26:55.23 (2.6 s) | 3.9 s | Saw it (103 ms) |
+| REST delete by key (`Cleanup`) | 2 | 15:27:46.17 | 15:27:46.58 (0.4 s) | 0.9 s | Saw it (9 ms) |
+| REST insert (D2) | 100 | 15:28:33.46, 42 s after the task was submitted | 15:28:34.63 (1.2 s) | 2.2 s | Saw it (43 ms) |
+| REST delete by key (`Cleanup`) | 100 | 15:30:29.68, 45 s after the task was submitted | 15:30:32.97 (3.3 s) | under 4 s | Saw it |
+| REST insert that fails (D3) | 3 | Rolled back | No task: none in Background Task History or `ActiveBGTasks` | | |
+
+What the doorbell results establish:
+
+- **A synchronous event handler can submit a background task** through `BGTaskDefinitions.BGTaskSubmit2`. The task got its own number in place of `BG~TASKID~`. It was listed in `ActiveBGTasks` while it ran. Its Initiator and requesting user (the user who saved) showed in Background Task History.
+- **The submission is part of the save's transaction** when the handler has Ignore Failure off.
+  - The task never started before the save committed, even when it was submitted 42 and 45 seconds before the save ended. Task Manager only saw it after the commit, and the task's first look found the doorbell row at once.
+  - The save that failed (D3) submitted nothing. Its doorbell rows rolled back with it, while the `IdoOnUpdateCollection` diagnostic row, from a handler with Ignore Failure on, stayed. That is the same split test 10b showed on `IdoPostItemInsert`, now seen on `IdoOnUpdateCollection` too.
+- **The task started 0.4 to 3.9 seconds after the commit**, and its code ran 0.9 to 5.7 seconds after, because a task server takes about 1 to 2 seconds to start a task.
+- **The doorbell cost each save 0.12 to 0.66 seconds**, whatever the number of records: the method call, two log rows, and the submission (49 to 322 ms). The two form saves cost the most. Every save ran on a newly started app domain. A real doorbell would write one row, not two.
+
 ## Results
 
 First run: November 23, 2026, in an Infor CloudSuite Industrial sandbox (multi-tenant cloud), on `SLEndtypes`, with a `LogOnly` rule and the replication triggers active. Every REST call went through the ION API. Tests 1 to 10 were run, in a different order, plus the two variants below. Tests 12 and 15 were run later the same day, after the fix that writes a blank Record Row Pointer as blank. Test 15 used 100 and 500 records instead of 2,000, with the diagnostic triggers still active. Its records were REST inserts and deletes by key, which the replication trigger doesn't load or send (it only writes a `Skipped` row), so its timings show how the time grows with the number of records, not what replicating a record costs. Test 11 (a failing REST update), test 13 (a failing extension-class save) and test 14's run with DelayMilliseconds haven't been run.
