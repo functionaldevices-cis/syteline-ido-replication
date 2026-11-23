@@ -104,6 +104,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         private const string OperationUpsert = "Upsert";
 
+        // THE TARGET TYPE OF AN AZURE EVENT HUBS RULE
+
+        private const string TargetTypeAzureEventHub = "AzureEventHub";
+
         // THE TARGET TYPE OF A SALESFORCE RULE
 
         private const string TargetTypeSalesforce = "SalesforceRESTAPI";
@@ -840,13 +844,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
             switch (replicationRule.TargetType)
             {
 
-                case "AzureEventHub":
+                case TargetTypeAzureEventHub:
 
                     // CREDENTIAL VALUES: 01 = ConnectionString, 02 = EventSource, 03 = MaxBatchKBOverride (OPTIONAL)
                     // RULE OPTIONS:      01 = EventSchemaUri,   02 = UpsertFieldName (USED AS THE RECORD ID IN FAILURE MESSAGES),
                     //                    03 = OperationFieldName (OPTIONAL: BODY FIELD THAT RECEIVES THE OPERATION)
                     // THE CREDENTIAL POSITIONS MUST MATCH THE CREDENTIALS FORM SCRIPT (UpdateValueLabels), AND THE OPTION POSITIONS MUST MATCH THE
                     // RULES FORM SCRIPT (UpdateVariableUI).
+
+                    if (!RuleHasCredential(replicationRule))
+                    {
+                        return this.BuildMissingCredentialResult(replicationRule, remappedReplicationRecords, logEveryRecord, transformWarnings);
+                    }
 
                     string eventSchemaUriValue = (replicationRule.Option01 ?? "").Trim();
                     string eventSource = (replicationRule.CredentialValue02 ?? "").Trim();
@@ -922,6 +931,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, true, skippedMessage);
                         ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, ReplicationRecordOutcome.StatusSkipped, skippedMessage, logEveryRecord, transformWarnings);
                         return ruleResult;
+                    }
+
+                    // CHECKED AFTER THE SKIPPED DELETES, WHICH DON'T SIGN IN
+
+                    if (!RuleHasCredential(replicationRule))
+                    {
+                        return this.BuildMissingCredentialResult(replicationRule, remappedReplicationRecords, logEveryRecord, transformWarnings);
                     }
 
                     // SIGN-IN USES THE OAUTH CLIENT CREDENTIALS FLOW ONLY, SO THE CREDENTIAL IS THE CONSUMER KEY AND SECRET OF A SALESFORCE
@@ -1088,6 +1104,34 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     return ruleResult;
 
             }
+
+        }
+
+
+
+        // TRUE WHEN THE RULE IS LINKED TO A CREDENTIAL THAT EXISTS. THE RULES IDO JOINS THE CREDENTIAL WITH A LEFT OUTER JOIN, AND A
+        // CREDENTIAL'S NAME IS REQUIRED, SO A BLANK NAME MEANS THE RULE HAS NO CREDENTIAL (credential_id IS NULL) OR ITS CREDENTIAL WAS
+        // DELETED. EVERY TARGET TYPE BUT LogOnly NEEDS ONE.
+
+        private static bool RuleHasCredential(ReplicationRule replicationRule)
+        {
+            return !string.IsNullOrWhiteSpace(replicationRule.CredentialName);
+        }
+
+
+
+        // THE RESULT FOR A RULE THAT NEEDS A CREDENTIAL AND HAS NONE. NOTHING IS SENT, AND EVERY RECORD IS LOGGED AS FAILED WITH ITS PAYLOAD,
+        // LIKE ANY OTHER FAILED SEND, SO THE RETRY TASK OR RESEND ERRORS SENDS IT ONCE A CREDENTIAL IS PICKED. WITHOUT THIS CHECK THE RULE
+        // STILL FAILED, BUT WITH A MESSAGE ABOUT A MISSING CONNECTION STRING OR CLIENT ID THAT DIDN'T SAY WHY.
+
+        private ReplicationRuleResult BuildMissingCredentialResult(ReplicationRule replicationRule, List<Dictionary<string, object>> records, bool logEveryRecord, Dictionary<Dictionary<string, object>, string> transformWarnings)
+        {
+
+            string missingCredentialMessage = "The rule has no credential, or its credential was deleted. A " + replicationRule.TargetType + " rule needs one: pick a credential on the rule's Target tab and save the rule. Only a " + TargetTypeLogOnly + " rule runs without one. Nothing was sent.";
+
+            ReplicationRuleResult ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, records.Count, false, missingCredentialMessage);
+            ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, records, ReplicationRecordOutcome.StatusFailed, missingCredentialMessage, logEveryRecord, transformWarnings);
+            return ruleResult;
 
         }
 

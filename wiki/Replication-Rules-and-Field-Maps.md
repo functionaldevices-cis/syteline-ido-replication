@@ -8,7 +8,7 @@ Form: **IDO Replication Rules (AIR)** (`ue_AIR_IDOReplicationRules`)
 
 1. Add a record. Set the **IDO Name** to the IDO collection you want to replicate, for example `SLCustomers`.
 2. Choose or type the **Target Type**: `AzureEventHub`, `SalesforceRESTAPI` or `LogOnly`, spelled exactly, including capitals.
-3. On the **Target** tab, pick a [credential](Credentials) of the same target type. The first line shows the credential's ID, name and target type. Its values are only on the Credentials form.
+3. On the **Target** tab, pick a [credential](Credentials) of the same target type. The first line shows the credential's ID, name and target type. Its values are only on the Credentials form. Every target type except `LogOnly` needs a credential: the field is marked required, and the form won't save the rule without one. A `LogOnly` rule can leave it blank.
 4. On the same tab, under the credential line, fill in the options for the target (below).
 5. On the **Field Mapping** tab, add the fields to send (below).
 6. Check **Is Active** when the rule is ready. Only active rules replicate.
@@ -24,6 +24,8 @@ A rule does nothing until the IDO also has active triggers. See [Setting Up Trig
 | `LogOnly` | Delay Milliseconds (optional): wait this long per send, at most 60,000 | Record ID field name | Simulated Result: `Succeeded` (default) or `Failed` |
 
 Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](Target-Salesforce) pages. `LogOnly` sends nothing and only writes the replication log, for testing triggers and field maps without a target. It needs no credential. See [Trigger Diagnostics](Trigger-Diagnostics).
+
+A rule of another target type that has no credential, for example because it was saved some other way than the form or its credential was deleted, sends nothing. Each of its records is logged as `Failed`, with a message that says the rule has no credential, and is retried like any other failure. Pick a credential and save the rule, and the retry task or [Resend Errors](Resending-Records) sends them.
 
 **Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later. Without it, a retry can resend older data after newer data.
 

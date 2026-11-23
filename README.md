@@ -87,6 +87,8 @@ The install package is in `dist/`. Its folders are numbered in install order.
 | `SalesforceRESTAPI` | Client ID: the consumer key of a Salesforce external client app | Client secret: the app's consumer secret | Domain: your My Domain name, `mycompany` for production or `mycompany--sandboxname.sandbox` for a sandbox |
 | `LogOnly` | none | none | none. A `LogOnly` rule doesn't need a credential. |
 
+Every other rule needs a credential. The Rules form won't save one without it, and a rule that has none (for example because its credential was deleted) logs each record as `Failed` with a message that says so.
+
 Salesforce sign-in uses the OAuth client credentials flow only. Turn that flow on for the external client app and choose the user it runs as. No username or password is stored in Syteline.
 
 ### Rules

@@ -1493,6 +1493,7 @@
                <ContainerSequence>0</ContainerSequence>
                <DataSource>object.TargetType</DataSource>
                <Binding>1</Binding>
+               <SelectionEvent>RuleTargetTypeChanged</SelectionEvent>
                <Flags>1</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -1542,6 +1543,7 @@
                <ContainerSequence>2</ContainerSequence>
                <DataSource>object.TargetType</DataSource>
                <Binding>1</Binding>
+               <SelectionEvent>RuleTargetTypeChanged</SelectionEvent>
                <Flags>384</Flags>
                <ReadOnly>False</ReadOnly>
                <Hidden>False</Hidden>
@@ -1640,9 +1642,21 @@
                <ResponseType>35</ResponseType>
                <Response>UpdateIncrementalWatermarkPropertyChoices()</Response>
             </EventHandler>
+            <EventHandler Name="RuleTargetTypeChanged" Sequence="0">
+               <ResponseType>35</ResponseType>
+               <Response>UpdateVariableUI()</Response>
+            </EventHandler>
             <EventHandler Name="StdFormCalledFormReturned" Sequence="0">
                <ResponseType>35</ResponseType>
                <Response>Test2()</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormSave" Sequence="0">
+               <ResponseType>35</ResponseType>
+               <Response>CheckRuleCredentials()</Response>
+            </EventHandler>
+            <EventHandler Name="StdFormSaveCurrent" Sequence="0">
+               <ResponseType>35</ResponseType>
+               <Response>CheckCurrentRuleCredential()</Response>
             </EventHandler>
             <EventHandler Name="StdObjectNewCompleted" Sequence="0">
                <ResponseType>35</ResponseType>
@@ -1899,6 +1913,95 @@
                <ScriptLine>            this.ThisForm.Components[$"Option{(counter+1):00}Combo"].Visible = hasChoices;</ScriptLine>
                <ScriptLine />
                <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         // THE CREDENTIAL IS REQUIRED FOR EVERY TARGET TYPE BUT LogOnly</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         this.UpdateCredentialRequired();</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      // A RULE NEEDS A CREDENTIAL UNLESS ITS TARGET TYPE IS LogOnly, WHICH SENDS NOTHING. THE RULE'S credential_id COLUMN IS NULLABLE SO</ScriptLine>
+               <ScriptLine>      // THAT A LogOnly RULE CAN BE SAVED WITHOUT ONE, SO THIS FORM CHECKS THE OTHER TARGET TYPES:</ScriptLine>
+               <ScriptLine>      //    UpdateCredentialRequired MARKS THE CREDENTIAL FIELD REQUIRED, OR NOT, FOR THE CURRENT RULE'S TARGET TYPE. UpdateVariableUI</ScriptLine>
+               <ScriptLine>      //    CALLS IT, SO IT RUNS WHEN ANOTHER RULE BECOMES CURRENT AND WHEN THE TARGET TYPE IS CHANGED (RuleTargetTypeChanged).</ScriptLine>
+               <ScriptLine>      //    CheckRuleCredentials RUNS ON StdFormSave AND CheckCurrentRuleCredential ON StdFormSaveCurrent. EACH ONE REFUSES THE SAVE,</ScriptLine>
+               <ScriptLine>      //    BY RETURNING 1, WHICH FAILS THE EVENT HANDLER, WHEN A NEW OR CHANGED RULE THAT NEEDS A CREDENTIAL HAS NONE, AND SAYS WHICH.</ScriptLine>
+               <ScriptLine>      // A RULE WITH NO TARGET TYPE ISN'T CHECKED HERE, BECAUSE THE IDO REFUSES IT ANYWAY (TargetType IS REQUIRED).</ScriptLine>
+               <ScriptLine>      // REPLICATION CHECKS AGAIN WHEN IT SENDS (RuleHasCredential IN THE RULES EXTENSION CLASS), FOR A RULE SAVED SOME OTHER WAY.</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      private static bool CredentialIsRequired(string targetType)</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine>         string trimmedTargetType = (targetType ?? "").Trim();</ScriptLine>
+               <ScriptLine>         return trimmedTargetType != "" &amp;&amp; trimmedTargetType != "LogOnly";</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public void UpdateCredentialRequired()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         try</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine>            string targetType = this.ThisForm.PrimaryIDOCollection.GetCurrentObjectProperty("TargetType");</ScriptLine>
+               <ScriptLine>            this.ThisForm.Components["CredentialIDEdit"].Required = CredentialIsRequired(targetType);</ScriptLine>
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine>         catch (Exception)</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine>            // ONLY THE MARK IS LOST. THE CHECK ON SAVE STILL APPLIES.</ScriptLine>
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public int CheckRuleCredentials()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine>         return this.CheckCredentials(false);</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      public int CheckCurrentRuleCredential()</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine>         return this.CheckCredentials(true);</ScriptLine>
+               <ScriptLine>      }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>      private int CheckCredentials(bool currentOnly)</ScriptLine>
+               <ScriptLine>      {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         var rulesCollection = this.ThisForm.PrimaryIDOCollection;</ScriptLine>
+               <ScriptLine>         List&lt;string&gt; rulesWithoutCredential = new List&lt;string&gt;();</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         int firstRow = currentOnly ? rulesCollection.GetCurrentObjectIndex() : 0;</ScriptLine>
+               <ScriptLine>         int lastRow = currentOnly ? firstRow : rulesCollection.GetNumEntries() - 1;</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         for (int row = Math.Max(firstRow, 0); row &lt;= lastRow; row++)</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            // ONLY THE ROWS THE SAVE WRITES: NEW OR CHANGED, NOT DELETED, AND NOT A NEW ROW NOTHING WAS ENTERED IN</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            if (rulesCollection.IsObjectDeleted(row) || rulesCollection.IsObjectNewAndUnmodified(row) || !(rulesCollection.IsObjectNew(row) || rulesCollection.IsObjectModified(row)))</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               continue;</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            string targetType = (rulesCollection.GetObjectProperty("TargetType", row) ?? "").Trim();</ScriptLine>
+               <ScriptLine>            string credentialID = (rulesCollection.GetObjectProperty("CredentialID", row) ?? "").Trim();</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>            if (CredentialIsRequired(targetType) &amp;&amp; credentialID == "")</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               string ruleNum = (rulesCollection.GetObjectProperty("RuleNum", row) ?? "").Trim();</ScriptLine>
+               <ScriptLine>               string idoName = (rulesCollection.GetObjectProperty("IDOName", row) ?? "").Trim();</ScriptLine>
+               <ScriptLine>               rulesWithoutCredential.Add((ruleNum != "" ? "Rule " + ruleNum : "A new rule") + " (" + (idoName != "" ? idoName + ", " : "") + targetType + ")");</ScriptLine>
+               <ScriptLine>            }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         if (rulesWithoutCredential.Count == 0)</ScriptLine>
+               <ScriptLine>         {</ScriptLine>
+               <ScriptLine>            return 0;</ScriptLine>
+               <ScriptLine>         }</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         Application.ShowMessage(</ScriptLine>
+               <ScriptLine>            "A rule needs a credential unless its Target Type is LogOnly. Pick a credential on the Target tab, then save again." + Environment.NewLine + Environment.NewLine +</ScriptLine>
+               <ScriptLine>            "No credential: " + string.Join("; ", rulesWithoutCredential) + "."</ScriptLine>
+               <ScriptLine>         );</ScriptLine>
+               <ScriptLine />
+               <ScriptLine>         return 1;</ScriptLine>
                <ScriptLine />
                <ScriptLine>      }</ScriptLine>
                <ScriptLine />

@@ -1,6 +1,6 @@
 # Credentials
 
-A credential holds the connection details for one external system. A rule links to one credential, and several rules can share it.
+A credential holds the connection details for one external system. A rule links to one credential, and several rules can share it. Every rule needs a credential except a `LogOnly` rule.
 
 Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 
@@ -27,6 +27,8 @@ A value of 12 characters or fewer previews as `...`, so the preview never shows 
 Every value stays editable on a saved credential. To change a sensitive value, for example after rotating a secret, type or paste the new value over the dots and save. The preview then shows the new value's first and last 6 characters. Rules that use the credential pick up the change on their next run.
 
 The Target Type can't be changed. To use a different target type, add a new credential and point the rules at it.
+
+Don't delete a credential that rules still use. Those rules then have no credential, and each send fails with a message that says the rule has no credential, or its credential was deleted. Point the rules at another credential first.
 
 ## Values by target type
 
