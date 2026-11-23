@@ -29,7 +29,7 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 
 Replication never causes the user's save to fail. Every error is caught and logged.
 
-Saves made in Syteline's forms replicate. A REST API update replicates only when it includes the record's `RowPointer`, and a REST insert isn't replicated; those changes are logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
+Saves made in Syteline's forms replicate. A REST API or extension class update replicates only when it includes the record's `RowPointer`, and their inserts aren't replicated; those changes are logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
 
 You can also run replication as a background task over many records, for example for an initial load.
 
