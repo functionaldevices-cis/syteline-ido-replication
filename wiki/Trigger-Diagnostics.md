@@ -13,7 +13,7 @@ The results decide how replication is redesigned to stay reliable under bulk sav
 | Doorbell | One more synchronous `IdoOnUpdateCollection` handler, with **Ignore Failure off**, that calls `ue_DiagRingDoorbell` once per save. It writes a `Doorbell=<token>` row, submits the `ue_AIR_DiagDoorbellTask` background task through `BGTaskDefinitions.BGTaskSubmit2`, and writes a `DoorbellSubmit=<token>` row with what the submission returned. It skips the submission when `ActiveBGTasks` already lists a doorbell task for the same IDO with the status `READY` and no Start Date, taken to mean queued and not started (not confirmed), and its row then names that task. Every `DoorbellSubmit` row lists the doorbell tasks it saw, with their statuses and start dates. Each task's row lists the doorbell rows it could see (the first 12 characters of each token). The task runs `ue_DiagDoorbellTask`, which sends nothing: it looks for the doorbell row at once and again for up to 60 seconds, then writes a `DoorbellTask=<token>` row. It waits like that only when `ActiveBGTasks` lists it as a running `ue_AIR_DiagDoorbellTask`, or for a super user; otherwise it looks once and says so, so a direct call can't hold a server thread. See [The doorbell test](#the-doorbell-test). Because Ignore Failure is off, every save to the IDO fails while the Rules assembly on the server doesn't have `ue_DiagRingDoorbell`, or can't be loaded right after an upload. Remove the diagnostics before uploading an assembly. The doorbell also adds two log rows, a background task and some time to every save, so tests 1 to 15 run again with it give different timings. |
 | `ue_LogTriggerEvent` | What each diagnostic trigger calls. It writes one log row per event (see [Reading the results](#reading-the-results)). It never fails the save. |
 | `ue_DiagUpdateCollection` | Saves test records through `this.Context.Commands.UpdateCollection`, the way an extension class does, in one request. It can delete records, so only a super user can run it, the key prefix must be at least 2 characters with no SQL wildcard, and it refuses this project's own IDOs. |
-| `tools/Test-AIRTriggers.ps1` | A PowerShell script that drives the REST and extension-class tests. Run `Get-Help .\Test-AIRTriggers.ps1 -Full` for its parameters. |
+| `tools/Test-AIRTriggers.ps1` | A PowerShell script that drives the REST and extension-class tests, and times read-only polls (`-Action TimeLoad`). Run `Get-Help .\Test-AIRTriggers.ps1 -Full` for its parameters. |
 
 ## Before you start
 
@@ -92,19 +92,6 @@ B1 and B2 were run with the doorbell from #82. **B1:** 20 saves in 5 waves made 
 
 Run the doorbell test on one IDO at a time. Clean up the test records with `-Action Cleanup` between tests. If the submission raises a database error that ends the save's transaction, catching it doesn't save the transaction, and the save fails with the error; that is a result too. The tasks' history is under Background Task History, task name `ue_AIR_DiagDoorbellTask`.
 
-## The polling cost test
-
-A sender that finds changes by polling runs a query like `RecordDate >= <its last run>` on each IDO it covers. On a large table without an index on that column, every poll reads the whole table. The script's read-only `TimeLoad` action measures it: it runs one `ido/load` per repeat and prints how long each took. Run each test against the sandbox, with the same `$conn` as the other tests.
-
-| # | What | Command |
-| --- | --- | --- |
-| P1 | The cost of the call alone (a filter that reads nothing) | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "1=0"` |
-| P2 | A poll that finds nothing: how long reading by `RecordDate` takes when no row matches | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate > '2099-01-01'"` |
-| P3 | A poll on a key column, for comparison | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "TransNum > 999999999"` |
-| P4 | A poll of the last 5 minutes | `$since = (Get-Date).AddMinutes(-5).ToString('yyyy-MM-dd HH:mm:ss')`, then `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate >= '$since'"` |
-
-P2 much slower than P1 and P3 means `RecordDate` has no index, so every poll scans the table. Repeat P2 on `SLCoitems` and `SLCos` for smaller tables. `$since` uses the computer's clock, so run P4 on a computer set to the site's time zone.
-
 ### Doorbell results
 
 Run on November 23, 2026, in the same cloud sandbox, on `SLEndtypes`, with the diagnostic and replication triggers active. Each save rang the doorbell once. The save's last event is the Create Date of its `Diag: IdoPostUpdateCollection` row, which is written before the save commits; the commit itself isn't timed. That and Task Manager's start are site times. The task's code start is by the task server's clock, so its gaps are rough.
@@ -126,6 +113,28 @@ What the doorbell results establish:
   - D3: the save that failed left no task and no doorbell rows, while the `IdoOnUpdateCollection` diagnostic row, from a handler with Ignore Failure on, stayed. That is the same split test 10b showed on `IdoPostItemInsert`, now seen on `IdoOnUpdateCollection` too. Seen on one failing save.
 - **Task Manager started the task 0.4 to 3.9 seconds after the save's last event**, so at most that long after the commit. The task's code began roughly 0.5 to 1.9 seconds after that, about 1 to 6 seconds after the save's last event in all.
 - **The doorbell cost each save about 0.1 to 0.7 seconds**, whatever the number of records. From the `Diag: IdoOnUpdateCollection` row to the `DoorbellSubmit` row it was 0.12 to 0.66 seconds, which includes calling the method and part of the diagnostic handler's own work. The doorbell's own share, from its first row to its second, was 0.06 to 0.41 seconds, and the submission alone 49 to 322 ms. The two form saves cost the most. Every save ran on a newly started app domain (why isn't known), so a save on a server that's already running may cost less. A real doorbell would write one row, not two.
+
+## The polling cost test
+
+A sender that finds changes by polling runs a query like `RecordDate >= <its last run>` on each IDO it covers. On a large table without an index on that column, every poll reads the whole table. The script's read-only `TimeLoad` action measures what such a poll costs: it runs one `ido/load` per repeat and prints how long each took, through the ION API, including the gateway's round trip. Run each test against the sandbox, with the same `$conn` as the other tests, and in the same PowerShell version throughout (Windows PowerShell 5.1 reuses its connection between calls; PowerShell 7 may not), so the times compare.
+
+First, note how many rows the table has (for example, the record count on the IDO's form, or an aggregate count). A sandbox can hold far fewer rows than production, and a fast scan of a small table says nothing about a large one.
+
+| # | What | Command |
+| --- | --- | --- |
+| P1 | The cost of the call alone (a filter that reads nothing) | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "1=0"` |
+| P2 | A poll that finds nothing: how long reading by `RecordDate` takes when no row matches | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate > '20990101'"` |
+| P3 | The same kind of poll on the key (`TransNum`, a number), which has an index | `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "TransNum > 999999999"` |
+| P4 | A poll of the last 5 minutes | `$since = (Get-Date).AddMinutes(-5).ToString('yyyyMMdd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)`, then `.\Test-AIRTriggers.ps1 @conn -Action TimeLoad -IDOName SLLedgers -LoadFilter "RecordDate >= '$since'"` |
+
+Reading the results:
+
+- Compare the first run as well as the median. After the first run, the table's pages are in SQL Server's memory, so later runs show a warm scan.
+- P2 much slower than P1 and P3 suggests `RecordDate` has no index, so every poll scans the table. P2 close to P1 suggests an index, but only on a table as large as production's.
+- A run that fails or times out is a result: a poll that slow can't run every few seconds.
+- `$since` uses the computer's clock, so run P4 on a computer set to the site's time zone.
+
+Repeat P2 on `SLCoitems` and `SLCos` for smaller tables.
 
 ## Results
 

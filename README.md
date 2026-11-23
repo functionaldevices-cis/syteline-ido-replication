@@ -58,7 +58,7 @@ All objects use the `AIR` prefix (`ue_AIR_...`) on IDO server `ue_AIR`.
 - `ue_AIR_IDOReplicationRules_ECA`: replication, output preview, logging and retries
 - `ue_AIR_IDOReplicationConfig_ECA`: trigger setup, removal and repair
 
-**Test tools:** diagnostic triggers that log how Syteline fires each IDO event, and `tools/Test-AIRTriggers.ps1`, which saves test records through the REST API or an extension class. They are for a test system. See [Trigger Diagnostics](../../wiki/Trigger-Diagnostics).
+**Test tools:** diagnostic triggers that log how Syteline fires each IDO event, and `tools/Test-AIRTriggers.ps1`, which saves test records through the REST API or an extension class and times read-only polls. They are for a test system. See [Trigger Diagnostics](../../wiki/Trigger-Diagnostics).
 
 Screenshots (from an earlier version):
 
