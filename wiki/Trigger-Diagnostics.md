@@ -16,16 +16,18 @@ The results decide how replication is redesigned to stay reliable under bulk sav
 
 ## Before you start
 
-1. Install this version (see [Upgrading](Installation#upgrading)), including uploading the new assemblies and **Resync Parameters** on the Rules IDO's two new methods. Run the tests as a Syteline super user.
+1. Install this version (see [Upgrading](Installation#upgrading)). The IDO export carries the new assemblies and both new methods.
 2. Pick a test IDO. The defaults use `SLEndtypes` (End User Types), whose key `EndUserType` holds 6 characters. The test records use keys that start with `ZQ`, which no real record should use. Check that first.
 3. Point that IDO's replication at a `LogOnly` rule, so no test reaches a real target. Create a `LogOnly` rule for the IDO, map at least the key field, set **RecordIDFieldName** to it, and make the rule active. Make any other rule for the IDO inactive while you test. A Salesforce rule with Delete Behavior `Delete` would otherwise delete the test records in Salesforce.
-4. Decide how the script signs in. Directly: pass the server (`https://<server>`), the configuration name and `-Credential`, and the script gets a token from `ido/token/{config}`. Through the ION API: pass the gateway URL up to `/ido`, `-Authorization 'Bearer <token>'` and the configuration name.
-5. Set up the diagnostic triggers:
+4. Decide how the script signs in. In Infor's cloud, use the ION API: pass `-IonApiFile` with a `.ionapi` file (the credentials ION API Gateway gives a backend service account) and the configuration name. The script gets a token from the file and takes the address from it. Keep the file outside the repository. On a server you reach directly, pass the server (`https://<server>`), the configuration name and `-Credential` instead, and the script gets a token from `ido/token/{config}`.
+5. Set up the diagnostic triggers. Run the script in a normal PowerShell window; it needs no admin rights on your computer. If Windows blocks the downloaded script, run `Unblock-File .\Test-AIRTriggers.ps1` once, or `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, which lasts only until that window closes. Neither needs admin rights.
 
 ```powershell
-$conn = @{ BaseUrl = 'https://<server>'; Credential = (Get-Credential); MongooseConfig = '<config>' }
+$conn = @{ IonApiFile = 'C:\path\to\credentials.ionapi'; MongooseConfig = '<config>' }
 .\Test-AIRTriggers.ps1 @conn -Action SetupDiagnostics
 ```
+
+Setting up and removing the diagnostic triggers, and `-Via ExtensionClass`, need a Syteline super user (the **Super User** flag on the Users form). The check is on the Syteline user the calls run as. Through the ION API that is the user behind the `.ionapi` file's service account, not the person running the script, so that user needs the flag. With `-Credential` it is your own user. The REST tests (insert, update, delete, cleanup) don't need a super user. Every record and log row the tests write shows the same user as its creator.
 
 The token, load and update calls follow Infor's documentation and the [syteline-api-examples](https://github.com/functionaldevices-cis/syteline-api-examples) repository. `ido/invoke`, which the setup, the removal and `-Via ExtensionClass` use, isn't confirmed by either. If it fails, compare it with your instance's Swagger document (`ido/dynamic/api-docs-collection`) and adjust `Invoke-AIRMethod` in the script.
 

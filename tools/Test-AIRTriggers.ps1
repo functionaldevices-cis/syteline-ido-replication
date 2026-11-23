@@ -17,7 +17,8 @@
 
     -Via Rest sends one ido/update request with every record in it. -Via ExtensionClass asks the Rules IDO's
     ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection. Setting up
-    the diagnostic triggers and -Via ExtensionClass need a Syteline super user.
+    the diagnostic triggers and -Via ExtensionClass need a Syteline super user: the Syteline user the calls run as,
+    which through -IonApiFile is the user behind the file's service account.
 
     -KeyPrefix must be at least 2 characters with no SQL wildcard (% _ [ ]), because Update, Delete and Cleanup act on
     every record whose key starts with it.
@@ -32,19 +33,28 @@
       - ido/update/{ido}?refresh=true with a body of { Changes: [ { Action, ItemId, Properties, UpdateLocking } ] },
         Action 1 = insert, 2 = update, 4 = delete: documented by Infor (UpdateCollection), and used the same way in
         the syteline-api-examples repository, including an update matched on key properties sent with Modified false.
+      - Through the ION API, as the syteline-api-examples repository does: a token from the .ionapi file's pu + ot
+        (grant_type password, with its ci, cs, saak and sask), sent as "Bearer <token>", and the base URL iu/ti/CSI.
       - ido/token/{config} with username and password headers, returning Token, and ido/load/{ido} with properties,
         filter, orderBy and recordCap, returning Items as objects: as in the syteline-api-examples repository.
       - ido/invoke/{ido}?method= with the parameters as a JSON array: not confirmed by Infor's pages or the examples.
         SetupDiagnostics, RemoveDiagnostics and -Via ExtensionClass use it. If it fails, compare it with your
         instance's Swagger document (ido/dynamic/api-docs-collection) and adjust Invoke-AIRMethod.
 
+.PARAMETER IonApiFile
+    The path of a .ionapi file (ION API credentials for a backend service account, downloaded from ION API Gateway).
+    Every call then runs as the Syteline user behind that service account.
+    The script signs in through the ION API with it, and takes the base URL from it. Needs -MongooseConfig. The usual
+    way to reach a cloud tenant. The file holds secrets: keep it out of the repository, and nothing from it is printed.
+
 .PARAMETER BaseUrl
-    The server, for example https://<server>, or the REST API base up to /IDORequestService or /ido. The rest of
-    "/IDORequestService/ido" is added when it's missing. Through the ION API, give the gateway's URL up to /ido.
+    Not needed with -IonApiFile. The server, for example https://<server>, or the REST API base up to
+    /IDORequestService or /ido. The rest of "/IDORequestService/ido" is added when it's missing. With an ION API token
+    passed in -Authorization, give the .ionapi file's iu/ti/CSI.
 
 .PARAMETER Authorization
     The value for the Authorization header: a Mongoose security token, or "Bearer <token>" through the ION API.
-    Leave it out and pass -Credential to get a token directly from the server instead.
+    Leave it out and pass -IonApiFile, or -Credential to get a token directly from the server.
 
 .PARAMETER Credential
     A Syteline user name and password, for getting a token directly (ido/token/{config}). Needs -MongooseConfig.
@@ -53,7 +63,7 @@
     The configuration name, sent as the X-Infor-MongooseConfig header and used to get a token.
 
 .EXAMPLE
-    $conn = @{ BaseUrl = 'https://<server>'; Credential = (Get-Credential); MongooseConfig = '<config>' }
+    $conn = @{ IonApiFile = 'C:\path\to\credentials.ionapi'; MongooseConfig = '<config>' }
     .\Test-AIRTriggers.ps1 @conn -Action SetupDiagnostics
     .\Test-AIRTriggers.ps1 @conn -Action Insert -Count 3
     .\Test-AIRTriggers.ps1 @conn -Action Update -Identify ItemId
@@ -67,8 +77,9 @@ param(
     [ValidateSet('SetupDiagnostics', 'RemoveDiagnostics', 'Insert', 'Update', 'Delete', 'Cleanup')]
     [string] $Action,
 
-    [Parameter(Mandatory = $true)]
-    [string] $BaseUrl,
+    [string] $BaseUrl = '',
+
+    [string] $IonApiFile = '',
 
     [string] $Authorization = '',
 
@@ -102,6 +113,35 @@ param(
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+# THROUGH THE ION API, AS IN THE syteline-api-examples REPOSITORY: THE .ionapi FILE GIVES THE TOKEN ENDPOINT (pu + ot), THE CLIENT
+# (ci, cs), THE SERVICE ACCOUNT (saak, sask) AND THE BASE URL (iu/ti/CSI). NOTHING FROM THE FILE IS PRINTED.
+
+$IonApi = $null
+if ($IonApiFile -ne '') {
+    if ($MongooseConfig -eq '') {
+        throw '-IonApiFile needs -MongooseConfig, the configuration name, for example <tenant>_<site>.'
+    }
+    # A PARSE ERROR CAN QUOTE THE FILE'S TEXT, WHICH HOLDS SECRETS, SO IT IS REPLACED WITH A MESSAGE THAT DOESN'T
+    try {
+        $IonApi = Get-Content -Raw -LiteralPath $IonApiFile -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        throw ("Couldn't read {0} as a .ionapi file. Download it again from ION API Gateway." -f $IonApiFile)
+    }
+    foreach ($field in @('ti', 'iu', 'pu', 'ot', 'ci', 'cs', 'saak', 'sask')) {
+        if ([string]::IsNullOrEmpty([string]$IonApi.$field)) {
+            throw ("The .ionapi file has no '{0}'. Use the file ION API Gateway gives for a backend service account." -f $field)
+        }
+    }
+    if ($BaseUrl -eq '') {
+        $BaseUrl = '{0}/{1}/CSI' -f ([string]$IonApi.iu).TrimEnd('/'), $IonApi.ti
+    }
+}
+
+if ($BaseUrl -eq '') {
+    throw 'Pass -IonApiFile, or -BaseUrl with -Authorization or -Credential.'
+}
 
 $BaseUrl = $BaseUrl.TrimEnd('/')
 if ($BaseUrl -match '/IDORequestService$') {
@@ -276,11 +316,33 @@ function Confirm-AIRDelete {
     }
 }
 
+# AN ION API TOKEN, AS IN THE syteline-api-examples REPOSITORY: A PASSWORD GRANT FROM THE .ionapi FILE'S pu + ot. EVERY CALL THEN
+# RUNS AS THE SYTELINE USER BEHIND THE FILE'S SERVICE ACCOUNT, SO THAT USER IS THE ONE THE SUPER-USER CHECKS SEE.
+
+if ($Authorization -eq '' -and $null -ne $IonApi) {
+    $ionTokenUri = [Uri](([string]$IonApi.pu).TrimEnd('/') + '/' + ([string]$IonApi.ot).TrimStart('/'))
+    if ($ionTokenUri.Scheme -ne 'https' -and -not $ionTokenUri.IsLoopback) {
+        throw 'The .ionapi token URL isn''t https, so the secrets would be sent without encryption.'
+    }
+    $ionTokenBody = @{
+        grant_type    = 'password'
+        client_id     = [string]$IonApi.ci
+        client_secret = [string]$IonApi.cs
+        username      = [string]$IonApi.saak
+        password      = [string]$IonApi.sask
+    }
+    $ionTokenResponse = Invoke-RestMethod -Method 'POST' -Uri $ionTokenUri -Body $ionTokenBody -ContentType 'application/x-www-form-urlencoded'
+    if ([string]::IsNullOrEmpty([string](Get-AIRField $ionTokenResponse 'access_token'))) {
+        throw 'The ION API returned no access token. Check that the .ionapi file is for this tenant and its service account is active.'
+    }
+    $Authorization = 'Bearer ' + [string](Get-AIRField $ionTokenResponse 'access_token')
+}
+
 # A DIRECT TOKEN, AS IN THE syteline-api-examples REPOSITORY: ido/token/{config} WITH THE USER NAME AND PASSWORD AS HEADERS
 
 if ($Authorization -eq '') {
     if ($null -eq $Credential -or $MongooseConfig -eq '') {
-        throw 'Pass -Authorization, or -Credential with -MongooseConfig to get a token.'
+        throw 'Pass -IonApiFile, -Authorization, or -Credential with -MongooseConfig to get a token.'
     }
     $tokenHeaders = @{
         username = $Credential.UserName
