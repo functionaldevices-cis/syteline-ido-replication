@@ -1,6 +1,6 @@
-# Replication Redesign
+# Replication Redesign: AES Plan
 
-**Status: proposal.** Nothing on this page is built yet. It describes how replication is meant to change, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). The rest of the wiki describes replication as it works today.
+**Status: proposal.** Nothing on this page is built yet. It describes one way replication could change, built on the application event system (AES): event handlers on the replicated IDOs, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). Another option, extension class code on IDOs that extend the replicated ones, is still to be explored and tested before either is built. The rest of the wiki describes replication as it works today.
 
 ## Goals
 
