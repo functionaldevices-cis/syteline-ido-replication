@@ -55,16 +55,32 @@ One more handler, on `IdoPostUpdateCollection`, runs once per save, whatever its
 
 ### 4. The sender
 
-One background task definition, with **Max Concurrent** 1, so two senders never run at once. The doorbell submits it, and the every-minute safety net (below) schedules the same definition. Retries and the sweep run inside the sender, so nothing else sends at the same time. Each run:
+One background task definition, with **Max Concurrent** 1, so two senders never run at once. The doorbell submits it, and the every-minute safety net (below) schedules the same definition. Max Concurrent only holds back copies of one definition, so everything that sends goes through this one:
 
-1. Reads the queue, and combines rows for the same record: the latest operation wins.
+- **Retries** and **the sweep** run inside the sender.
+- **The Resend form** (Resend Errors and Bulk Resync) and **the Rules form's Test tab** queue their work for the sender, instead of starting their own task that sends.
+- **The retry task, `ue_AIR_RetryFailedReplications`,** is unscheduled once every rule uses the queue. The sender takes over its purge of old `Succeeded` and `Skipped` log rows.
+
+Each run:
+
+1. Reads the queue, and combines rows for the same record, oldest first, so the target is told what happened overall:
+
+   | Earlier | Later | Sent as |
+   | --- | --- | --- |
+   | Insert | Update | Insert |
+   | Insert | Delete | Nothing; logged as inserted and deleted before it was sent |
+   | Update | Update | Update |
+   | Update | Delete | Delete |
+   | Delete | Insert | Delete, then Insert, in that order (the record was deleted and created again) |
+
+   A Salesforce rule upserts either way (today's `OperationAtTarget`), but an Event Hubs consumer is told the operation, so an insert followed by an update must still reach it as an `Insert`.
 2. Loads the current values of the records by their keys, an indexed lookup, in batches. A record that no longer exists is logged as not found, and isn't sent unless its row is a delete.
 3. Sends them to each rule's target, in the order the rules' dependencies need (below), and writes the replication log as today.
 4. Removes each queue row only after its record is sent and logged, so a sender that fails partway sends those records again on the next run instead of losing them. Rows for an IDO with no active rule are logged as skipped and removed.
 5. Resends failed records whose retries aren't used up, as the retry task does today.
 6. Before it ends, checks whether any queue rows are left, and runs again if there are. A save that commits after that check waits for the next doorbell or the every-minute run.
 
-The field maps, transformations, targets, log and Resend form stay as they are. The sender calls the same code that sends today.
+The field maps, transformations, targets and log stay as they are, and so does the Resend form, apart from queueing its work for the sender. The sender calls the same code that sends today.
 
 ### 5. Dependencies between rules
 
@@ -85,6 +101,7 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 - **A delete the triggers can't identify isn't sent:** a delete from a caller that names the record only by ItemId, or one done by a stored procedure such as a purge utility. It's logged as an unidentified delete where the trigger saw it. Finding the rest would take a reconciliation job that compares the keys at the target with those in Syteline: possible later, per target type, nightly or weekly.
 - **Children deleted with a parent that has no rule, or whose child rule doesn't name it in Depends On, aren't deleted at the target.**
 - **Inserts and updates the triggers can't identify reach the target only as often as the sweep runs:** ItemId callers, Syteline's own stored procedures, and follow-on updates such as the order header, unless a "queue the parent" rule covers them.
+- **Until every rule uses the queue, an old value can still overwrite a newer one.** While some rules still send in the save (build phase 1), the retry task and the Resend form keep running as separate tasks, and can send a record at the same time as the sender, as they can today.
 - **The delay depends on Task Manager.** A single task started up to about 7 seconds after its save in the tests, and a burst of 20 saves cleared about 15 seconds after the last one (B1, B3).
 - **For a few minutes after an assembly upload, saves to a replicated IDO can fail,** because the capture triggers and the doorbell have Ignore Failure off and the extension class may not be loaded yet. Deactivate the triggers before uploading.
 
@@ -103,7 +120,7 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 
 In phases, each usable on its own:
 
-1. The queue table and IDO, the capture triggers writing queue rows, and the sender with retries inside it, with the doorbell and Max Concurrent 1. The triggers can switch between today's in-save sending and the queue, rule by rule, while it's proven.
+1. The queue table and IDO, the capture triggers writing queue rows, and the sender with retries inside it, with the doorbell and Max Concurrent 1. The triggers can switch between today's in-save sending and the queue, rule by rule, while it's proven. The Resend form and the Test tab queue their work for the sender, and the retry task is unscheduled once no rule sends in the save.
 2. Dependencies between rules, cascade deletes and parent re-sends.
 3. The sweep and the handling of queue rows with no keys.
 4. Measurements in the sandbox, then removing the in-save sending.
