@@ -7,7 +7,7 @@ Form: **IDO Replication Rules (AIR)** (`ue_AIR_IDOReplicationRules`)
 ## Adding a rule
 
 1. Add a record. Set the **IDO Name** to the IDO collection you want to replicate, for example `SLCustomers`.
-2. Choose or type the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`, spelled exactly, including capitals.
+2. Choose or type the **Target Type**: `AzureEventHub`, `SalesforceRESTAPI` or `LogOnly`, spelled exactly, including capitals.
 3. On the **Target** tab, pick a [credential](Credentials) of the same target type. The first line shows the credential's ID, name and target type. Its values are only on the Credentials form.
 4. On the same tab, under the credential line, fill in the options for the target (below).
 5. On the **Field Mapping** tab, add the fields to send (below).
@@ -21,8 +21,9 @@ A rule does nothing until the IDO also has active triggers. See [Setting Up Trig
 | --- | --- | --- | --- |
 | `AzureEventHub` | Event Schema URI (optional) | ID field name | Operation Field Name (optional) |
 | `SalesforceRESTAPI` | sObject name | External ID field name | Delete Behavior: `Skip` (default) or `Delete` |
+| `LogOnly` | Delay Milliseconds (optional): wait this long per send, at most 60,000 | Record ID field name | Simulated Result: `Succeeded` (default) or `Failed` |
 
-Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](Target-Salesforce) pages.
+Details are on the [Azure Event Hubs](Target-Azure-Event-Hubs) and [Salesforce](Target-Salesforce) pages. `LogOnly` sends nothing and only writes the replication log, for testing triggers and field maps without a target. It needs no credential. See [Trigger Diagnostics](Trigger-Diagnostics).
 
 **Set Option 2 on every rule.** It names the output field that identifies the record. The replication log uses it as the record ID, and the retry task uses it to tell when a failed record was replicated again later. Without it, a retry can resend older data after newer data.
 

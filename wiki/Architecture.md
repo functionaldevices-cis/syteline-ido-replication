@@ -53,6 +53,7 @@ sequenceDiagram
 5. **Sending.** `SendRule` switches on `TargetType`:
    - `AzureEventHub`: `AzureEventHubPusher.Push`
    - `SalesforceRESTAPI`: `SalesforceRestAPI.UpsertRecords`, or `DeleteRecords` for a delete when the rule allows it
+   - `LogOnly`: sends nothing. It waits for the rule's DelayMilliseconds, then logs every record as `Succeeded`, or as `Failed` when the rule's SimulatedResult is `Failed`
 6. **Outcomes.** Each record gets a `ReplicationRecordOutcome` (status, error, warning, payload).
 7. **Logging.** `WriteReplicationLog` inserts the outcomes into `ue_AIR_IDOReplicationLogs` in groups of 200. It never throws.
 
@@ -74,6 +75,7 @@ A rule carries ten credential values (from its linked credential) and ten option
 | --- | --- | --- |
 | `AzureEventHub` | 01 ConnectionString, 02 EventSource, 03 MaxBatchKBOverride | 01 EventSchemaUri, 02 UpsertFieldName (the ID field), 03 OperationFieldName |
 | `SalesforceRESTAPI` | 01 ClientId, 02 ClientSecret, 03 Domain | 01 DestinationName (sObject), 02 ExternalIDFieldName, 03 DeleteBehavior |
+| `LogOnly` | none | 01 DelayMilliseconds, 02 RecordIDFieldName, 03 SimulatedResult |
 
 ## Triggers
 

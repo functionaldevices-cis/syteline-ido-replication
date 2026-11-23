@@ -37,7 +37,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
     /**********************************************************************************************************/
 
     [IDOExtensionClass("ue_AIR_IDOReplicationRules_ECA")]
-    public class ue_AIR_IDOReplicationRules_ECA : ExtensionClassBase
+    public partial class ue_AIR_IDOReplicationRules_ECA : ExtensionClassBase
     {
 
         /**********************************************************************************************************/
@@ -107,6 +107,14 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // THE TARGET TYPE OF A SALESFORCE RULE
 
         private const string TargetTypeSalesforce = "SalesforceRESTAPI";
+
+        // THE TARGET TYPE OF A RULE THAT SENDS NOTHING AND ONLY WRITES THE REPLICATION LOG, FOR TESTING TRIGGERS WITHOUT A REAL TARGET
+
+        private const string TargetTypeLogOnly = "LogOnly";
+
+        // THE LONGEST DELAY A LogOnly RULE WAITS TO STAND IN FOR A SLOW TARGET
+
+        private const int LogOnlyMaxDelayMilliseconds = 60000;
 
         // THE SOURCE: WHAT STARTED A RUN. IT IS ONLY WRITTEN TO THE REPLICATION LOG, AND A RETRY LEAVES IT AS IT WAS.
         // THE VALUES MUST MATCH THE Source INLINE LIST ON ue_AIR_IDOReplicationLogs.
@@ -1046,6 +1054,30 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, salesforceErrors.Count == 0, string.Join(" | ", salesforceErrors));
                     ruleResult.RecordOutcomes = salesforceOutcomes;
+                    return ruleResult;
+
+                case TargetTypeLogOnly:
+
+                    // SENDS NOTHING. EACH RECORD'S OUTCOME, WITH ITS PAYLOAD, GOES TO THE REPLICATION LOG LIKE ANY OTHER RULE'S, SO TRIGGERS AND
+                    // FIELD MAPS CAN BE TESTED WITHOUT A TARGET. NO CREDENTIAL IS NEEDED.
+                    //
+                    // RULE OPTIONS: 01 = DelayMilliseconds (OPTIONAL: WAIT THIS LONG ONCE PER SEND, TO STAND IN FOR A SLOW TARGET, AT MOST 60,000),
+                    //               02 = RecordIDFieldName (USED AS THE RECORD ID IN THE LOG, AS IN THE OTHER TARGETS),
+                    //               03 = SimulatedResult (Succeeded, THE DEFAULT, OR Failed, WHICH LOGS EVERY RECORD AS FAILED)
+                    // THE OPTION POSITIONS MUST MATCH THE RULES FORM SCRIPT (UpdateVariableUI).
+
+                    int delayMilliseconds;
+
+                    if (int.TryParse((replicationRule.Option01 ?? "").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out delayMilliseconds) && delayMilliseconds > 0)
+                    {
+                        System.Threading.Thread.Sleep(Math.Min(delayMilliseconds, LogOnlyMaxDelayMilliseconds));
+                    }
+
+                    bool simulateFailure = string.Equals((replicationRule.Option03 ?? "").Trim(), "Failed", StringComparison.OrdinalIgnoreCase);
+                    string logOnlyMessage = simulateFailure ? "Simulated failure: this is a LogOnly rule set to fail. Nothing was sent." : "";
+
+                    ruleResult = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, recordCount, !simulateFailure, logOnlyMessage);
+                    ruleResult.RecordOutcomes = this.BuildOutcomes(replicationRule, remappedReplicationRecords, simulateFailure ? ReplicationRecordOutcome.StatusFailed : ReplicationRecordOutcome.StatusSucceeded, logOnlyMessage, logEveryRecord, transformWarnings);
                     return ruleResult;
 
                 default:

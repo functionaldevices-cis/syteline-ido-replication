@@ -19,7 +19,7 @@ One row per record per rule.
 | RecordID | The value of the rule's ID field (Option 2), up to 255 characters. Blank when the rule has no ID field. |
 | Payload | The output record exactly as sent, as JSON, up to 4,000 characters |
 | Status | `Succeeded`, `Failed` or `Skipped` |
-| RecordRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored. |
+| RecordRowPointer | The `RowPointer` of the record in Syteline. A [manual resend](Resending-Records) uses it to reload the record. Blank on rows logged before it was stored, and on every row logged before the version that made the property writable: until then Syteline silently dropped it, because the property was read-only. |
 | ErrorMessage | The error, and any transformation warnings |
 | RetriesRemaining | How many more times the retry task will try. Starts at 3 for a failed row with a stored payload. Otherwise 0. |
 | AttemptCount, LastAttemptDate | How many times the record was sent, and when it was last tried. The time is the site's, like CreateDate, which is when the row was first written. Rows written before this was corrected show the last attempt in the server's time, which is UTC in a hosted environment. |
@@ -34,6 +34,7 @@ One row per record per rule.
 | A [manual resend](Resending-Records) | `BG Task: Resend` | `Upsert` |
 | A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
 | A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |
+| A [diagnostic trigger](Trigger-Diagnostics), for testing only | `Diag: ` and the event, such as `Diag: IdoPostItemUpdate` | The event's operation, or `Upsert` for a collection event. The Status is always `Skipped`. |
 
 `Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
 

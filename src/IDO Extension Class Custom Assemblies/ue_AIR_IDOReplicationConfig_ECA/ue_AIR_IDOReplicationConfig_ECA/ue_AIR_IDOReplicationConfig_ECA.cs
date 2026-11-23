@@ -140,6 +140,32 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
                     break;
 
+                case "SetupDiagnosticTriggers":
+
+                    // FOR TESTING ONLY: CREATE ACTIVE EVENT HANDLERS THAT LOG EVERY UPDATE EVENT ON THE IDO (SEE SetupDiagnosticTriggers)
+
+                    result = this.SetupDiagnosticTriggers(
+                        sytelineAPI: sytelineAPI,
+                        idoName: idoName
+                    );
+
+                    break;
+
+                case "RemoveDiagnosticTriggers":
+
+                    result = this.RemoveTriggers(
+                        sytelineAPI: sytelineAPI,
+                        idoName: idoName,
+                        removed: out int removedDiagnostic,
+                        description: DiagnosticTriggerDescription
+                    );
+
+                    this.Message = removedDiagnostic > 0
+                        ? $"The {removedDiagnostic} diagnostic triggers for {idoName} were removed."
+                        : $"{idoName} has no diagnostic triggers, so nothing was removed.";
+
+                    break;
+
                 default:
 
                     this.Message = $"'{action}' isn't a trigger action.";
@@ -153,15 +179,15 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
         }
 
-        // LOADS THE IDO'S REPLICATION TRIGGERS (ITS EVENT HANDLERS)
+        // LOADS THE IDO'S REPLICATION TRIGGERS (ITS EVENT HANDLERS), OR ITS DIAGNOSTIC TRIGGERS WHEN GIVEN THEIR DESCRIPTION
 
-        private LoadRecordsResponseData LoadTriggers(SytelineInternalAPI sytelineAPI, string idoName)
+        private LoadRecordsResponseData LoadTriggers(SytelineInternalAPI sytelineAPI, string idoName, string description = TriggerDescription)
         {
 
             return sytelineAPI.LoadRecords(
                 IDOName: "ue_AIR_EventHandlers",
                 filter: sytelineAPI.BuildFilterString(new List<string>(){
-                    $"Description = '{TriggerDescription}'",
+                    $"Description = '{description}'",
                     $"IDOCollections = {sytelineAPI.QuoteFilterValue(idoName)}"
                 }),
                 orderBy: "",
@@ -398,11 +424,204 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
 
 
-        private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName, out int removed)
+        /**********************************************************************************************************/
+        /*
+        /* DIAGNOSTIC TRIGGERS, FOR TESTING HOW SYTELINE FIRES EVENTS. THEY AREN'T PART OF REPLICATION.
+        /*
+        /* SetupDiagnosticTriggers CREATES ONE SYNCHRONOUS EVENT HANDLER FOR EACH UPDATE EVENT (THE TWO COLLECTION EVENTS AND THE SIX
+        /* ITEM EVENTS), PLUS AN ASYNCHRONOUS ONE FOR IdoPostUpdateCollection. EACH CALLS ue_LogTriggerEvent ON THE RULES IDO, WHICH
+        /* WRITES A "Diag: <event>" ROW TO THE REPLICATION LOG WITH WHAT THE HANDLER PASSED: THE EVENT, THE IDO, P("RowPointer"),
+        /* THE IDO'S KEY PROPERTIES AND P("_ItemId").
+        /*
+        /* UNLIKE THE REPLICATION TRIGGERS, THEY ARE CREATED ACTIVE, SO EVERY SAVE TO THE IDO WRITES ROWS UNTIL THEY ARE REMOVED. THEY
+        /* HAVE THEIR OWN DESCRIPTION, SO THE CONFIGS FORM'S TRIGGER STATUS, FIX TRIGGERS AND ACTIVATE ALL DON'T SEE THEM. USE THEM ON
+        /* A TEST SYSTEM AND REMOVE THEM WITH RemoveDiagnosticTriggers WHEN THE TESTS ARE DONE.
+        /*
+        /**********************************************************************************************************/
+
+        private const string DiagnosticTriggerDescription = "ue_AIR_DiagnosticTrigger";
+
+        private static readonly string[] DiagnosticEventNames = {
+            "IdoOnUpdateCollection",
+            "IdoPostUpdateCollection",
+            "IdoOnItemInsert",
+            "IdoPostItemInsert",
+            "IdoOnItemUpdate",
+            "IdoPostItemUpdate",
+            "IdoOnItemDelete",
+            "IdoPostItemDelete"
+        };
+
+        private int SetupDiagnosticTriggers(SytelineInternalAPI sytelineAPI, string idoName)
+        {
+
+            // THE HANDLERS ARE ACTIVE AT ONCE AND RUN ON EVERY SAVE TO THE IDO, AND EXECUTE IS GRANTED ON THE CONFIGS IDO AS A WHOLE, NOT PER
+            // METHOD, SO ONLY A SUPER USER MAY CREATE THEM. THIS PROJECT'S OWN IDOs ARE REFUSED: A DIAGNOSTIC TRIGGER ON THE LOG WOULD FIRE ON
+            // ITS OWN LOG ROW, AND AGAIN ON THAT ONE, WITHOUT END.
+
+            if (!IsSuperUser())
+            {
+                this.Message = "Only a super user can set up diagnostic triggers.";
+                return 1;
+            }
+
+            string trimmedIdoName = (idoName ?? "").Trim();
+
+            if (trimmedIdoName == ""
+                || trimmedIdoName.StartsWith("ue_AIR_", StringComparison.OrdinalIgnoreCase)
+                || trimmedIdoName.Equals("EventHandlers", StringComparison.OrdinalIgnoreCase)
+                || trimmedIdoName.Equals("EventActions", StringComparison.OrdinalIgnoreCase))
+            {
+                this.Message = $"Diagnostic triggers can't be set up on '{idoName}'. Pick the IDO you want to test, not one of this project's IDOs or the event system's.";
+                return 1;
+            }
+
+            try
+            {
+
+                // START CLEAN, SO RUNNING SETUP TWICE DOESN'T DOUBLE THE ROWS
+
+                this.RemoveTriggers(sytelineAPI, idoName, out int removedBefore, DiagnosticTriggerDescription);
+
+                List<string> keyNames;
+                string keyValuesExpression = this.BuildKeyValuesExpression(idoName, out keyNames);
+
+                // EACH HANDLER: ITS EVENT AND WHETHER IT IS SYNCHRONOUS. THE FIRST IS A TEMPORARY HANDLER, AS IN SetupTriggers, BECAUSE THE
+                // FIRST HANDLER INSERTED IN A BATCH DOESN'T GET ITS SEQUENCE NUMBER ASSIGNED PROPERLY. IT IS DELETED AFTERWARD.
+
+                List<KeyValuePair<string, bool>> handlers = new List<KeyValuePair<string, bool>>
+                {
+                    new KeyValuePair<string, bool>("CustomAIR", true)
+                };
+                handlers.AddRange(DiagnosticEventNames.Select(eventName => new KeyValuePair<string, bool>(eventName, true)));
+                handlers.Add(new KeyValuePair<string, bool>("IdoPostUpdateCollection", false));
+
+                int sequence = -399;
+                List<IDOUpdateItem> eventHandlers = new List<IDOUpdateItem>();
+
+                for (int i = 0; i < handlers.Count; i++)
+                {
+
+                    eventHandlers.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
+                        {"AccessAs", "ue_"},
+                        {"EventName", handlers[i].Key},
+                        {"Description", DiagnosticTriggerDescription},
+                        {"IDOCollections", idoName},
+                        {"Active", i == 0 ? 0 : 1},
+                        {"Synchronous", handlers[i].Value ? 1 : 0},
+                        {"Transactional", 0},
+                        {"IgnoreFailure", 1}, // IF THE HANDLER ITSELF FAILS, FOR EXAMPLE EVALUATING ITS PARMS, THE SAVE STILL GOES THROUGH
+                        {"Sequence", sequence},
+                        {"NewSequence", sequence},
+                        {"RowPointer", ""}
+                    }));
+
+                    sequence += 2;
+
+                }
+
+                IDOUpdateItems insertedEventHandlers = sytelineAPI.CreateRecords(
+                    IDOName: "ue_AIR_EventHandlers",
+                    records: eventHandlers
+                );
+
+                if (insertedEventHandlers == null)
+                {
+                    this.Message = $"The diagnostic triggers for {idoName} couldn't be created.";
+                    return 1;
+                }
+
+                sytelineAPI.DeleteRecord(
+                    IDOName: "ue_AIR_EventHandlers",
+                    record: sytelineAPI.BuildDeleteItem(insertedEventHandlers[0].ItemID)
+                );
+
+                // THE INSERTED HANDLERS COME BACK IN THE ORDER THEY WERE SENT, SO HANDLER i + 1 IS handlers[i + 1]
+
+                List<IDOUpdateItem> eventActions = new List<IDOUpdateItem>();
+
+                for (int i = 1; i < insertedEventHandlers.Count; i++)
+                {
+
+                    string eventName = handlers[i].Key;
+                    string mode = handlers[i].Value ? "Sync" : "Async";
+
+                    eventActions.Add(sytelineAPI.BuildInsertItem(new Dictionary<string, object>(){
+                        {"EventHandlerRowPointer", insertedEventHandlers[i].Properties["RowPointer"].GetValue<string>()},
+                        {"Description", DiagnosticTriggerDescription},
+                        {"Sequence", "10"},
+                        {"ActionType", "21"},
+                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_LogTriggerEvent\") PARMS(\"" + eventName + "\", \"" + idoName + "\", P(\"RowPointer\"), " + keyValuesExpression + ", P(\"_ItemId\"), \"" + mode + "\")"},
+                    }));
+
+                }
+
+                if (sytelineAPI.CreateRecords(IDOName: "EventActions", records: eventActions) == null)
+                {
+                    this.Message = $"The diagnostic event handlers for {idoName} were created, but their actions couldn't be. Run RemoveDiagnosticTriggers, then try again.";
+                    return 1;
+                }
+
+                this.Message = $"{eventActions.Count} diagnostic triggers for {idoName} were created and are active. Every save to {idoName} now writes Diag rows to the replication log."
+                    + (keyNames.Count > 0 ? $" Key properties passed: {string.Join(", ", keyNames)}." : $" {idoName} has no key properties, so only RowPointer and _ItemId are passed.")
+                    + " Run RemoveDiagnosticTriggers when the tests are done.";
+
+                return 0;
+
+            }
+            catch (Exception ex)
+            {
+                this.Message = $"The diagnostic triggers for {idoName} couldn't be set up: {ex.Message}";
+                return 1;
+            }
+
+        }
+
+        // WHETHER THE SIGNED-IN USER IS A SUPER USER. FALSE WHEN THE RUNTIME CAN'T SAY.
+
+        private static bool IsSuperUser()
+        {
+
+            try
+            {
+                return IDORuntime.Context != null && IDORuntime.Context.SuperUser;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+        }
+
+        // THE EVENT EXPRESSION THAT PASSES THE IDO'S KEY PROPERTIES AS "Name=Value|Name=Value", IN KEY ORDER, OR AN EMPTY STRING WHEN THE
+        // IDO HAS NO KEYS. P() IN AN ITEM EVENT ONLY SEES THE PROPERTIES THE CALLER SENT FOR THAT RECORD, WHICH IS WHAT THE DIAGNOSTIC TESTS.
+
+        private string BuildKeyValuesExpression(string idoName, out List<string> keyNames)
+        {
+
+            keyNames = this.Context.Commands.GetPropertyInfo(idoName).Properties
+                .Cast<Mongoose.IDO.Protocol.PropertyInfo>()
+                .Where(propertyInfo => propertyInfo.Key > 0)
+                .OrderBy(propertyInfo => propertyInfo.Key)
+                .Select(propertyInfo => propertyInfo.Name)
+                .ToList();
+
+            if (keyNames.Count == 0)
+            {
+                return "\"\"";
+            }
+
+            string template = string.Join("|", keyNames.Select((name, index) => name + "={" + index + "}"));
+
+            return "SUBSTITUTE(\"" + template + "\", " + string.Join(", ", keyNames.Select(name => "P(\"" + name + "\")")) + ")";
+
+        }
+
+        private int RemoveTriggers(SytelineInternalAPI sytelineAPI, string idoName, out int removed, string description = TriggerDescription)
         {
             int result = 0;
 
-            LoadRecordsResponseData eventHandlerResponse = this.LoadTriggers(sytelineAPI, idoName);
+            LoadRecordsResponseData eventHandlerResponse = this.LoadTriggers(sytelineAPI, idoName, description);
 
             removed = eventHandlerResponse.Items.Count;
 
