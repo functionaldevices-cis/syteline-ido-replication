@@ -1,13 +1,13 @@
 # Replication Redesign: AES Plan
 
-**Status: proposal.** Nothing on this page is built yet. It describes one way replication could change, built on the application event system (AES): event handlers on the replicated IDOs, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). Another option, extension class code on IDOs that extend the replicated ones, is still to be explored and tested before either is built. The rest of the wiki describes replication as it works today.
+**Status: proposal.** Nothing on this page is built yet. It describes one way replication could change, and why, based on the tests in [Trigger Diagnostics](Trigger-Diagnostics). This plan is built on the application event system (AES): event handlers on the replicated IDOs. It doesn't extend the replicated IDOs: everything it adds is event handlers, background tasks, and this project's own tables and IDOs. Another option, extension class code on IDOs that extend the replicated ones, is still to be explored and tested before either is built. The rest of the wiki describes replication as it works today.
 
 ## Goals
 
 1. **No change is lost.** Every insert, update and delete that reaches the database reaches the target, or shows in the replication log as not sent, with the reason.
 2. **Close to real time.** A change reaches the target within seconds of its save, well under the delay of an external integration that polls Syteline (about 30 seconds in the case that prompted this work).
 3. **Far less cost to the user's save than today.** A large save should spend a fraction of the time it spends replicating now.
-4. **Nothing beyond what a standard tenant has.** No indexes on Syteline's tables, no SQL access, no extending the replicated IDOs. An administrator sets it up with this project's install package: its tables, IDOs, forms, event handlers and background task definitions.
+4. **Nothing beyond what a standard tenant has.** No indexes on Syteline's tables and no SQL access. An administrator sets it up with this project's install package: its tables, IDOs, forms, event handlers and background task definitions.
 
 ## Why today's design can't meet them
 
@@ -33,7 +33,7 @@ Today a trigger on each record's save loads the record and sends it to the targe
 - **`IdoPostItemInsert` and `IdoPostItemUpdate` get the record's keys from forms and from REST and extension class callers that name records by key,** including a key Syteline assigns during the insert (tests 4, 6, 7 and 12, and the cascade delete test). Not from ItemId callers, and not from Syteline's own follow-on updates, such as the order header after a line save.
 - **On the general ledger, a filter on `RecordDate` behaved like a full table scan:** about 2 seconds per poll when the table was in memory and 9 seconds on the first run, against 0.25 seconds on the key (the polling cost test; inferred from timing, other tables not tested).
 
-## The design
+## The plan
 
 ### 1. A change queue
 
@@ -118,7 +118,7 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 
 ## Building it
 
-In phases, each usable on its own:
+If this plan is chosen, in phases, each usable on its own:
 
 1. The queue table and IDO, the capture triggers writing queue rows, and the sender with retries inside it, with the doorbell and Max Concurrent 1. The triggers can switch between today's in-save sending and the queue, rule by rule, while it's proven. The Resend form and the Test tab queue their work for the sender, and the retry task is unscheduled once no rule sends in the save.
 2. Dependencies between rules, cascade deletes and parent re-sends.
