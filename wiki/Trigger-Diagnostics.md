@@ -114,6 +114,28 @@ What the doorbell results establish:
 - **Task Manager started the task 0.4 to 3.9 seconds after the save's last event**, so at most that long after the commit. The task's code began roughly 0.5 to 1.9 seconds after that, about 1 to 6 seconds after the save's last event in all.
 - **The doorbell cost each save about 0.1 to 0.7 seconds**, whatever the number of records. From the `Diag: IdoOnUpdateCollection` row to the `DoorbellSubmit` row it was 0.12 to 0.66 seconds, which includes calling the method and part of the diagnostic handler's own work. The doorbell's own share, from its first row to its second, was 0.06 to 0.41 seconds, and the submission alone 49 to 322 ms. The two form saves cost the most. Every save ran on a newly started app domain (why isn't known), so a save on a server that's already running may cost less. A real doorbell would write one row, not two.
 
+### Burst results
+
+B1 and B2 are summarized with the burst tests above. B3 was run the same day, with **Max Concurrent** 1 and the doorbell with the queued-task check: 20 single-record saves, plus a 100-record save started alongside them.
+
+| | |
+| --- | --- |
+| Saves | 21 |
+| Tasks submitted | 9 |
+| Saves that skipped | 12, each relying on one of three queued tasks |
+| Skipped saves the relied-on task could see | 12 of 12 |
+| Time for the look in `ActiveBGTasks` (`checkMs`) | 4 to 399 ms, most under 160 ms |
+
+What B3 established:
+
+- **A queued task shows in `ActiveBGTasks` as `READY` with no Start Date.** Every task a save relied on looked like that, and every one of them ran.
+- **Every save that skipped was seen by the task it relied on.** Each listed the skipped saves' doorbell rows among those it could see. They were short saves, so each had committed before its task started.
+- **The look sees only committed submissions, and doesn't wait for others.** The 100-record save submitted its task at the start of its save. That task wasn't listed by any other save's look during the burst, although it sat uncommitted for about 45 seconds, and no look waited for it. So a save can't rely on a submission that later rolls back.
+- **Task Manager ran the committed tasks while the uncommitted one waited.** The long save's task started 64 seconds after its submission, once its save had committed, and didn't hold up the others.
+- **Saves that look at the same moment can't see each other's uncommitted tasks,** so some submit a task of their own. Four saves at the same second each submitted one. That costs extra tasks, not lost changes.
+- **The burst's queue cleared about 15 seconds after its last save,** against 43 seconds in B2 for the same 20 saves.
+- **Not tested: a long save that skips.** The doorbell rings at the start of a save. A long save that relied on a queued task could see that task start and finish before it commits, and its changes would then wait for the next run. Ringing the doorbell at the end of the save (`IdoPostUpdateCollection`) would leave only the time between that event and the commit.
+
 ## The polling cost test
 
 A sender that finds changes by polling runs a query like `RecordDate >= <its last run>` on each IDO it covers. On a large table without an index on that column, every poll reads the whole table. The script's read-only `TimeLoad` action measures what such a poll costs: it runs one `ido/load` per repeat and prints how long each took, through the ION API, including the gateway's round trip. Run each test against the sandbox, with the same `$conn` as the other tests, and in the same PowerShell version throughout (Windows PowerShell 5.1 reuses its connection between calls; PowerShell 7 may not), so the times compare.
@@ -135,6 +157,38 @@ Reading the results:
 - `$since` uses the computer's clock, so run P4 on a computer set to the site's time zone.
 
 Repeat P2 on `SLCoitems` and `SLCos` for smaller tables.
+
+### Polling results
+
+Run on November 23, 2026, in the same cloud sandbox, on `SLLedgers` (the general ledger; its row count in the sandbox wasn't recorded), five runs each, through the ION API.
+
+| # | Filter | First run | Median | Fastest |
+| --- | --- | --- | --- | --- |
+| P1 | `1=0` | 0.78 s | 0.66 s | 0.10 s |
+| P2 | `RecordDate > '20990101'` | 9.2 s | 2.4 s | 2.4 s |
+| P3 | `TransNum > 999999999` | 0.47 s | 0.25 s | 0.24 s |
+| P4 | `RecordDate` within the last 5 minutes | 4.8 s | 2.0 s | 2.0 s |
+
+A poll on the key costs no more than the call itself, while a poll by `RecordDate` takes about 2 seconds more, and 4 to 9 seconds when the table isn't in memory. That suggests `RecordDate` has no index on the ledger, so each poll reads the whole table. An index on a standard table isn't an option for this project: it could be lost in an Infor update, and the project is meant to need no database work from an administrator. So polling by `RecordDate` can only be a slow safety net, not how changes are found every few seconds.
+
+## The cascade delete test
+
+Tests whether deleting a parent record fires events for the child records Syteline removes with it. The diagnostic triggers were set up on both `SLCos` and `SLCoitems` (`-Action SetupDiagnostics -IDOName SLCos`, then `-IDOName SLCoitems`), a customer order with one line was created in the Customer Orders form, the line was changed, and the order header was deleted.
+
+| Step | `SLCos` (header) | `SLCoitems` (line) |
+| --- | --- | --- |
+| Insert the header | `IdoOnItemInsert` with the order number `TBD`, then `IdoPostItemInsert` with the assigned number. RowPointer and keys sent both times | |
+| Insert the line | | Insert events with keys and RowPointer |
+| After the line was saved | An update with **nothing** sent: no keys, no RowPointer | |
+| Change the line | | Update events with keys and RowPointer |
+| After the line was saved | An update with nothing sent, again | |
+| Delete the header | Delete events with keys and RowPointer | **No events**, though the line was gone afterward |
+
+What it established, seen once, on one order:
+
+- **Deleting an order header removed its line without any `SLCoitems` event.** Syteline deletes the child records some other way than through their IDO, so no trigger on the child sees the delete. Other parent and child pairs most likely behave the same; not tested.
+- **A key Syteline assigns during an insert is only known by `IdoPostItemInsert`.** The order number was `TBD` in `IdoOnItemInsert`.
+- **Saving an order line was followed by an update of the header that sent nothing the trigger could read.** Most likely Syteline recalculating the order's totals (not checked). A trigger that finds the record by its keys or RowPointer misses that change.
 
 ## Results
 
