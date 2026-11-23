@@ -7,7 +7,7 @@ Form: **IDO Replication Credentials (AIR)** (`ue_AIR_IDOReplicationCredentials`)
 ## Adding a credential
 
 1. Add a record and give it a name.
-2. Choose or type the **Target Type**: `AzureEventHub` or `SalesforceRESTAPI`, spelled exactly, including capitals. The form then shows and labels only the values that target uses. If no value fields appear, the Target Type is misspelled.
+2. Choose or type the **Target Type**: `AzureEventHub`, `SalesforceRESTAPI` or `LogOnly`, spelled exactly, including capitals. The form then shows and labels only the values that target uses. If no value fields appear, the Target Type is misspelled.
 3. Fill in the values and save.
 
 The Target Type can only be set on a new credential. Once the credential is saved, it is locked.
@@ -18,6 +18,7 @@ The Target Type can only be set on a new credential. Once the credential is save
 | --- | --- | --- |
 | `AzureEventHub` | Connection String | Event Source, Max Batch KB Override |
 | `SalesforceRESTAPI` | Client ID, Client Secret | Domain |
+| `LogOnly` | (none) | (none) |
 
 A value of 12 characters or fewer previews as `...`, so the preview never shows a whole value.
 
@@ -33,6 +34,9 @@ The Target Type can't be changed. To use a different target type, add a new cred
 | --- | --- | --- | --- |
 | `AzureEventHub` | Connection String | Event Source | Max Batch KB Override (optional) |
 | `SalesforceRESTAPI` | Client ID | Client Secret | Domain |
+| `LogOnly` | | | |
+
+`LogOnly` sends nothing, so it has no values, and a `LogOnly` rule doesn't need a credential. It is for testing. See [Trigger Diagnostics](Trigger-Diagnostics).
 
 What each value means is on the target's page:
 - [Azure Event Hubs](Target-Azure-Event-Hubs)

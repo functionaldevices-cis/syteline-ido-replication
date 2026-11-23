@@ -19,3 +19,4 @@
 **For developers**
 - [Architecture](Architecture)
 - [Development](Development)
+- [Trigger Diagnostics](Trigger-Diagnostics)

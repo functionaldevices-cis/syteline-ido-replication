@@ -276,8 +276,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationCredentials</LabelStringID>
-         <RevisionNo>7</RevisionNo>
-         <RevisionDate>2026-11-17T18:24:33</RevisionDate>
+         <RevisionNo>8</RevisionNo>
+         <RevisionDate>2026-11-23T08:39:27</RevisionDate>
          <ReplaceFlag>0</ReplaceFlag>
          <QuoteTableAliases>0</QuoteTableAliases>
          <IDOOpInsert>1</IDOOpInsert>
@@ -377,7 +377,7 @@ END</Expression>
                <ColumnTableAlias>cred</ColumnTableAlias>
                <PropertyAttributes>
                   <IsRequired>1</IsRequired>
-                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert) DISPLAY(1,2) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert,LogOnly\Log Only - Sends Nothing) DISPLAY(1,2) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
@@ -779,7 +779,7 @@ END</Expression>
                <ColumnTableAlias>log</ColumnTableAlias>
                <PropertyAttributes>
                   <IsRequired>1</IsRequired>
-                  <InlineList>ENTRIES(Event: After-Insert,Event: After-Update,Event: Before-Delete,Event: Unknown,BG Task: Bulk,BG Task: Test,BG Task: Resend) DISPLAY(1) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(Event: After-Insert,Event: After-Update,Event: Before-Delete,Event: Unknown,BG Task: Bulk,BG Task: Test,BG Task: Resend,Diag: IdoOnUpdateCollection,Diag: IdoPostUpdateCollection,Diag: IdoOnItemInsert,Diag: IdoPostItemInsert,Diag: IdoOnItemUpdate,Diag: IdoPostItemUpdate,Diag: IdoOnItemDelete,Diag: IdoPostItemDelete,Diag: Other) DISPLAY(1) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="Status" Key="0" Binding="BOUND" Sequence="18">
@@ -798,7 +798,7 @@ END</Expression>
                <BoundToColumn>target_type</BoundToColumn>
                <ColumnTableAlias>log</ColumnTableAlias>
                <PropertyAttributes>
-                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert) DISPLAY(1,2) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert,LogOnly\Log Only - Sends Nothing) DISPLAY(1,2) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">
@@ -1175,8 +1175,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>30</RevisionNo>
-         <RevisionDate>2026-11-20T10:28:25</RevisionDate>
+         <RevisionNo>31</RevisionNo>
+         <RevisionDate>2026-11-23T08:39:27</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -1202,6 +1202,57 @@ END</Expression>
             <Table Name="ue_AIR_idorepl_rule" Alias="idorepl_rule" Type="PRIMARY" />
          </Tables>
          <Methods>
+            <Method Name="ue_DiagUpdateCollection" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="action" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="count" Sequence="5">
+                     <DBDataType Length="30" Scale="0">LONG</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="extraProperties" Sequence="6">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="failLast" Sequence="8">
+                     <DBDataType Length="30" Scale="0">LONG</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="identify" Sequence="7">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="IDOName" Sequence="1">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="keyPrefix" Sequence="4">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="keyProperty" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="results" Sequence="9">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <OUTPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
+            </Method>
             <Method Name="ue_LoadOutputPreview" Transactional="NO" Type="CustomLoad">
                <MethodType>3</MethodType>
                <Parameters>
@@ -1243,6 +1294,42 @@ END</Expression>
                   <Property Sequence="19">OutputPreviewField19</Property>
                   <Property Sequence="20">OutputPreviewField20</Property>
                </ResultSetProperties>
+            </Method>
+            <Method Name="ue_LogTriggerEvent" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="eventName" Sequence="1">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="IDOName" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="itemID" Sequence="5">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="keyValues" Sequence="4">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="mode" Sequence="6">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="rowPointer" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
             </Method>
             <Method Name="ue_ReplicateRecordToExternalSystems" Transactional="NO">
                <MethodType>2</MethodType>
@@ -1770,7 +1857,7 @@ END</Expression>
                <ColumnTableAlias>idorepl_rule</ColumnTableAlias>
                <PropertyAttributes>
                   <IsRequired>1</IsRequired>
-                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert) DISPLAY(1,2) VALUE(1)</InlineList>
+                  <InlineList>ENTRIES(AzureEventHub\Azure Event Hubs,SalesforceRESTAPI\Salesforce REST API Upsert,LogOnly\Log Only - Sends Nothing) DISPLAY(1,2) VALUE(1)</InlineList>
                </PropertyAttributes>
             </Property>
             <Property Name="UpdatedBy" Key="0" Binding="BOUND" Sequence="2">

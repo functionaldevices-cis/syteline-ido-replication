@@ -34,6 +34,7 @@ One row per record per rule.
 | A [manual resend](Resending-Records) | `BG Task: Resend` | `Upsert` |
 | A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
 | A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |
+| A [diagnostic trigger](Trigger-Diagnostics), for testing only | `Diag: ` and the event, such as `Diag: IdoPostItemUpdate` | The event's operation, or `Upsert` for a collection event. The Status is always `Skipped`. |
 
 `Upsert` means insert or update, whichever applies. A bulk load or a test doesn't know if the target already has the record.
 

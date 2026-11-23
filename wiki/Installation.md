@@ -40,7 +40,7 @@ Folder: `dist/3 - Mongoose Objects (FormSync)/`
 
 1. Import the forms and `Strings.XML` with FormSync.
 2. Unload global form objects (Form > Definition > Unload All Global Form Objects).
-3. Optional: create a user-defined type named `IDOReplicationTargetType` with the values `AzureEventHub` and `SalesforceRESTAPI`. The Target Type drop-down on the Rules and Credentials forms takes its list from it, and the package doesn't create it. Without it the list is empty and you type the value, spelled exactly.
+3. Optional: create a user-defined type named `IDOReplicationTargetType` with the values `AzureEventHub`, `SalesforceRESTAPI` and `LogOnly`. The Target Type drop-down on the Rules and Credentials forms takes its list from it, and the package doesn't create it. Without it the list is empty and you type the value, spelled exactly.
 
 | Form | Use |
 | --- | --- |
@@ -100,4 +100,5 @@ Do steps 2 to 4 together, at a quiet time. Between them the IDOs, the assemblies
    If you can't run SQL against the database, the log rows written before the upgrade have no record row pointer. [Resend Errors](Resending-Records) then can't reload their records. A failed row with a stored payload is left to the retry task, which sends that stored payload. A failed row with no stored payload can't be resent, isn't listed on the Resend form, and stays `Failed`. To send those records' current data, use **Bulk Resync** after the upgrade.
 7. Notes for specific versions:
    - **The version that makes `RecordRowPointer` writable:** the replication log's `RecordRowPointer` property was read-only through its property class, and Syteline dropped the value without an error, so every log row written before this version has no record row pointer. [Resend Errors](Resending-Records) can't reload those rows' records: it leaves rows with a stored payload to the retry task, and the rest need **Bulk Resync**. No new columns.
+   - **The version that adds `LogOnly` and the trigger diagnostics:** the Rules IDO has two new methods, `ue_LogTriggerEvent` and `ue_DiagUpdateCollection`. After step 3, use **Resync Parameters** on both. No new columns. See [Trigger Diagnostics](Trigger-Diagnostics).
 8. Open the IDO Replication Configs form. If an IDO's status changed to **Broken**, the trigger format changed. Click **Fix Triggers**. It keeps each trigger active or inactive as it was, so an IDO that was replicating before the upgrade should show **Active**. If it shows **Inactive** or **Partly Active** and it should replicate, click **Activate All**. See [Setting Up Triggers](Setting-Up-Triggers).

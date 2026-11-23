@@ -69,6 +69,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.ValueTuple" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
@@ -85,6 +86,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Diagnostics.cs" />
     <Compile Include="Helpers\AzureEventHubPusher.cs" />
     <Compile Include="Helpers\FilterStringParser.cs" />
     <Compile Include="Helpers\PerfDebugger.cs" />

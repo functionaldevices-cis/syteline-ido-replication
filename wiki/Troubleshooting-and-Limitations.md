@@ -16,7 +16,7 @@ Check these in order:
 | --- | --- |
 | `Rule '...' couldn't load its records from IDO '...'` | The rule's source records couldn't be loaded. Most often its field map names a property the IDO doesn't have, and the message then lists the properties. Fix the field map, then run a [bulk load](Bulk-Loads) for the records that changed in the meantime. Only that rule is affected. If every rule on the IDO shows this message, the cause is something they share, such as the filter of a bulk load. |
 | `Replication setup failed for IDO '...'` | The rules themselves couldn't be loaded, or something unexpected failed before the rules ran. The error follows the message. |
-| `Unknown target type '...'` | The rule's Target Type isn't `AzureEventHub` or `SalesforceRESTAPI` |
+| `Unknown target type '...'` | The rule's Target Type isn't `AzureEventHub`, `SalesforceRESTAPI` or `LogOnly` |
 | `The payload is over 4,000 characters, so it wasn't stored and can't be retried.` | The record was still sent. Only the log copy was dropped. If it failed, resend it with a [bulk load](Bulk-Loads). |
 | `Warning: Field '...': couldn't apply ... so it was sent unchanged` | A [transformation](Replication-Rules-and-Field-Maps#transformations) couldn't convert the value. Check the source property's type and the transformation. |
 | `Superseded by a newer replication of this record, so it wasn't resent.` | Expected. The retry task skipped an old failed row because newer data was sent. |

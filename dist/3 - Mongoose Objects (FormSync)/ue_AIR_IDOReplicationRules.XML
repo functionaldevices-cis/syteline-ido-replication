@@ -1845,6 +1845,19 @@
                <ScriptLine>                     Choice("Delete", "Send all deletes through to Salesforce.")</ScriptLine>
                <ScriptLine>                  )</ScriptLine>
                <ScriptLine>               }</ScriptLine>
+               <ScriptLine>            },</ScriptLine>
+               <ScriptLine>            {</ScriptLine>
+               <ScriptLine>               "LogOnly",</ScriptLine>
+               <ScriptLine>               new List&lt;KeyValuePair&lt;string, string[]&gt;&gt;()</ScriptLine>
+               <ScriptLine>               {</ScriptLine>
+               <ScriptLine>                  Option("DelayMilliseconds"),</ScriptLine>
+               <ScriptLine>                  Option("RecordIDFieldName"),</ScriptLine>
+               <ScriptLine>                  Option(</ScriptLine>
+               <ScriptLine>                     "SimulatedResult",</ScriptLine>
+               <ScriptLine>                     Choice("Succeeded", "Log every record as sent."),</ScriptLine>
+               <ScriptLine>                     Choice("Failed", "Log every record as failed.")</ScriptLine>
+               <ScriptLine>                  )</ScriptLine>
+               <ScriptLine>               }</ScriptLine>
                <ScriptLine>            }</ScriptLine>
                <ScriptLine>         };</ScriptLine>
                <ScriptLine />

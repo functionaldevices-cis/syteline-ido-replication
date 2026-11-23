@@ -13,6 +13,7 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 | --- | --- | --- |
 | **Azure Event Hubs** | :white_check_mark: Working | Batched sends sized for every Event Hubs tier. Works with Microsoft Fabric Eventstreams through a custom endpoint, including standard, [inferred multi-schema](https://learn.microsoft.com/fabric/real-time-intelligence/event-streams/process-events-with-multiple-schemas) and [Event Schema](https://learn.microsoft.com/fabric/real-time-intelligence/schema-sets/use-event-schemas) Eventstreams. For Event Schema Eventstreams, set the rule's Event Schema URI and the credential's Event Source, and each event carries the CloudEvents properties Fabric needs. |
 | **Salesforce REST API** | :white_check_mark: Working | Upserts by external ID. Deletes are optional, per rule. |
+| Log only (`LogOnly`) | :test_tube: For testing | Sends nothing. Writes the replication log as if it had, so triggers and field maps can be tested without a target. |
 | Other Syteline instances (REST or SOAP) | :x: Not started | Conceptual |
 | SQL databases (PostgreSQL, SQL Server, MySQL, ...) | :x: Not started | Conceptual |
 | Other ERP systems with a REST API | :x: Not started | Conceptual |
@@ -55,6 +56,8 @@ All objects use the `AIR` prefix (`ue_AIR_...`) on IDO server `ue_AIR`.
 - `ue_AIR_IDOReplicationRules_ECA`: replication, output preview, logging and retries
 - `ue_AIR_IDOReplicationConfig_ECA`: trigger setup, removal and repair
 
+**Test tools:** diagnostic triggers that log how Syteline fires each IDO event, and `tools/Test-AIRTriggers.ps1`, which saves test records through the REST API or an extension class. They are for a test system. See [Trigger Diagnostics](../../wiki/Trigger-Diagnostics).
+
 Screenshots (from an earlier version):
 
 ![Rules form](https://github.com/user-attachments/assets/78fe11a2-e623-480b-bd1d-1b44760298ea)
@@ -82,6 +85,7 @@ The install package is in `dist/`. Its folders are numbered in install order.
 | --- | --- | --- | --- |
 | `AzureEventHub` | Connection string (from a shared access policy on the event hub itself, including `EntityPath`) | Event Source: a URL identifying your organization, required for Event Schema Eventstreams | Max Batch KB Override (optional). Leave blank for the default of about 220 KB, safe for every tier; Standard tier and above can use up to 850. |
 | `SalesforceRESTAPI` | Client ID: the consumer key of a Salesforce external client app | Client secret: the app's consumer secret | Domain: your My Domain name, `mycompany` for production or `mycompany--sandboxname.sandbox` for a sandbox |
+| `LogOnly` | none | none | none. A `LogOnly` rule doesn't need a credential. |
 
 Salesforce sign-in uses the OAuth client credentials flow only. Turn that flow on for the external client app and choose the user it runs as. No username or password is stored in Syteline.
 
@@ -91,6 +95,7 @@ Salesforce sign-in uses the OAuth client credentials flow only. Turn that flow o
 | --- | --- | --- | --- |
 | `AzureEventHub` | Event Schema URI (optional, for Fabric Event Schema Eventstreams) | ID field: the output field used to identify records in the log | Operation Field Name (optional): adds the operation to each event body under this name. Your event schema must then include it. |
 | `SalesforceRESTAPI` | sObject name | External ID field | Delete Behavior: `Skip` (default) or `Delete` |
+| `LogOnly` | Delay Milliseconds (optional): wait this long per send, at most 60,000, to stand in for a slow target | ID field: the output field used to identify records in the log | Simulated Result: `Succeeded` (default) or `Failed` |
 
 ### Field maps
 
