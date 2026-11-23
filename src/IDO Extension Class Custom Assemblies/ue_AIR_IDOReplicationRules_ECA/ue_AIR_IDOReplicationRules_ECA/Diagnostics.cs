@@ -304,23 +304,27 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     // TaskProfileParms, RequestingUser, Initiator, PrintPreview, TaskHistoryRowPointer (out), PreviewInterval (out), then the
                     // schedule (SchedStartDateTime through SchedIsEnabled) and BaseTaskNumber, all left blank for a task that runs once, now
 
+                    // A BLANK VALUE IS ADDED AS Add(null, false), NEVER Add(null): A null LITERAL PICKS THE Add(InvokeParameter) OVERLOAD AND
+                    // ADDS A null ELEMENT, NOT A PARAMETER WITH NO VALUE, AND THE RUNTIME THROWS ON IT. THE REQUESTING USER IS THE USER WHOSE
+                    // SAVE RANG THE DOORBELL, AND "READY" IS THE STATUS INFOR'S OWN STORED PROCEDURES SUBMIT TASKS WITH.
+
                     InvokeParameterList parameters = new InvokeParameterList();
-                    parameters.Add(DoorbellTaskName);
-                    parameters.Add(taskParms);
-                    parameters.Add(null);
+                    parameters.Add(DoorbellTaskName, false);
+                    parameters.Add(taskParms, false);
+                    parameters.Add(null, false);
                     parameters.Add("", true);
                     parameters.Add(null, true);
-                    parameters.Add("READY");
-                    parameters.Add(null);
-                    parameters.Add(null);
-                    parameters.Add("ue_AIR_DiagDoorbell");
-                    parameters.Add(null);
+                    parameters.Add("READY", false);
+                    parameters.Add(null, false);
+                    parameters.Add(SafeRead(() => IDORuntime.Context.UserName), false);
+                    parameters.Add("ue_AIR_DiagDoorbell", false);
+                    parameters.Add(0, false);
                     parameters.Add(null, true);
                     parameters.Add(null, true);
 
                     for (int i = 0; i < 10; i++)
                     {
-                        parameters.Add(null);
+                        parameters.Add(null, false);
                     }
 
                     InvokeResponseData response = this.Context.Commands.Invoke(new InvokeRequestData
@@ -388,9 +392,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /* Name:     ue_DiagDoorbellTask
         /* Purpose:  The background task ue_DiagRingDoorbell submits (task name ue_AIR_DiagDoorbellTask). Sends nothing.
         /*           It looks for the save's doorbell row: right away, then again after 1, 2, 5, 10, 20, 30, 45 and 60
-        /*           seconds, until it sees the row. Not seeing it at first, and then seeing it, means the task started
-        /*           before the save committed. Seeing it at once means it had committed, or that the load read data
-        /*           that wasn't committed yet: compare the task's start with the end of the save to tell. Then it writes one row, "DoorbellTask=<token>", with when it started, how long
+        /*           seconds, until it sees the row. Each look records when it began and how long it took, because a
+        /*           load can wait on the save's lock and only answer once the save commits. Not seeing the row at
+        /*           first, and then seeing it, means the task started before the save committed. So does a first
+        /*           look that took a long time. A first look that answered quickly and saw the row means the save
+        /*           had committed, or that the load read data that wasn't committed yet: compare the task's start
+        /*           with the end of the save to tell.
+        /*
+        /*           A background run (BGTaskNum above 0) is open to the user whose save submitted it. A direct call
+        /*           holds a server thread for up to a minute, so it needs a super user. Then it writes one row, "DoorbellTask=<token>", with when it started, how long
         /*           after the submission that was (by the application servers' clocks), and what each look found.
         /*           Always returns 0.
         /*
@@ -403,6 +413,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             try
             {
+
+                if (BGTaskNum <= 0 && !IsSuperUser())
+                {
+                    return 0;
+                }
 
                 DateTime startedUtc = DateTime.UtcNow;
                 Stopwatch timer = Stopwatch.StartNew();
@@ -443,6 +458,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     }
 
                     string error = "";
+                    double lookStartedMs = timer.Elapsed.TotalMilliseconds;
 
                     try
                     {
@@ -465,6 +481,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     looks.Add(new Dictionary<string, object>()
                     {
+                        { "startedAtMs", Math.Round(lookStartedMs) },
+                        { "tookMs", Math.Round(timer.Elapsed.TotalMilliseconds - lookStartedMs) },
                         { "afterMs", Math.Round(timer.Elapsed.TotalMilliseconds) },
                         { "doorbellRowVisible", seen },
                         { "error", error }
@@ -497,8 +515,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 string summary = !tokenIsValid
                     ? "Doorbell task: no valid token was passed, so it couldn't look for the doorbell row."
                     : $"Doorbell task {BGTaskNum} started {(delayMs.HasValue ? Math.Round(delayMs.Value) + " ms" : "an unknown time")} after the doorbell. "
-                        + (firstLook != null && (bool)firstLook["doorbellRowVisible"]
+                        + (firstLook != null && (bool)firstLook["doorbellRowVisible"] && Convert.ToDouble(firstLook["afterMs"], CultureInfo.InvariantCulture) <= 2000
                             ? "The doorbell row was visible at once."
+                            : firstLook != null && (bool)firstLook["doorbellRowVisible"]
+                            ? $"The first look saw the doorbell row, but only answered after about {firstLook["afterMs"]} ms: it most likely waited for the save to commit, so the task started before the save committed."
                             : seen
                                 ? $"The doorbell row wasn't visible at first and appeared after about {lastLook["afterMs"]} ms: the task started before the save committed."
                                 : "The doorbell row never became visible in 60 seconds: the save may have rolled back, or is still running.");
