@@ -20,3 +20,4 @@
 - [Architecture](Architecture)
 - [Development](Development)
 - [Trigger Diagnostics](Trigger-Diagnostics)
+- [Replication Redesign: AES Plan](Replication-Redesign-AES-Plan)
