@@ -188,8 +188,10 @@ function New-AIRProperty {
     return @{ Name = $Name; Value = $Value; Modified = $Modified; IsNull = ($null -eq $Value) }
 }
 
-# ido/load, PAGED BY BOOKMARK AS IN THE syteline-api-examples REPOSITORY: EACH RESPONSE HAS Items (OBJECTS), Bookmark AND
-# MoreRowsExist. ROWS GIVEN AS LISTS OF Name/Value PAIRS ARE READ TOO. $Cap 0 MEANS EVERY MATCHING RECORD.
+# ido/load, PAGED BY BOOKMARK AS IN THE syteline-api-examples REPOSITORY: EVERY REQUEST SENDS loadType=NEXT, LATER ONES WITH THE
+# PREVIOUS RESPONSE'S Bookmark, AND EACH RESPONSE HAS Items (OBJECTS), Bookmark AND MoreRowsExist. ROWS GIVEN AS LISTS OF
+# Name/Value PAIRS ARE READ TOO. $Cap 0 MEANS EVERY MATCHING RECORD. THE LOOP ALSO STOPS WHEN THE BOOKMARK REPEATS OR A PAGE
+# ADDS NO NEW KEY, SO A SERVER THAT IGNORES THE BOOKMARK CAN'T KEEP IT RETURNING THE SAME PAGE.
 
 function Get-AIRRecords {
     param([int] $Cap)
@@ -198,9 +200,10 @@ function Get-AIRRecords {
     $filter = "{0} LIKE '{1}%'" -f $KeyProperty, $KeyPrefix
     $bookmark = ''
     $records = @()
+    $seenKeys = @{}
 
     do {
-        $url = "{0}/load/{1}?properties={2}&filter={3}&recordCap={4}&orderBy={5}" -f $BaseUrl, $IDOName,
+        $url = "{0}/load/{1}?properties={2}&filter={3}&recordCap={4}&orderBy={5}&loadType=NEXT" -f $BaseUrl, $IDOName,
             [Uri]::EscapeDataString("$KeyProperty,RowPointer,_ItemId"), [Uri]::EscapeDataString($filter), $pageSize, [Uri]::EscapeDataString($KeyProperty)
         if ($bookmark -ne '') {
             $url += '&bookmark=' + [Uri]::EscapeDataString($bookmark)
@@ -211,6 +214,7 @@ function Get-AIRRecords {
             throw ('The load failed: {0}' -f (Get-AIRField $response 'Message'))
         }
 
+        $newKeys = 0
         foreach ($item in @(Get-AIRField $response 'Items')) {
             if ($null -eq $item) { continue }
             $values = @{}
@@ -220,15 +224,19 @@ function Get-AIRRecords {
             else {
                 foreach ($property in $item.PSObject.Properties) { $values[$property.Name] = $property.Value }
             }
+            $key = [string]$values[$KeyProperty]
+            if ($key -ne '' -and $seenKeys.ContainsKey($key)) { continue }
+            if ($key -ne '') { $seenKeys[$key] = $true; $newKeys++ }
             $records += [pscustomobject]@{
-                Key        = [string]$values[$KeyProperty]
+                Key        = $key
                 RowPointer = [string]$values['RowPointer']
                 ItemId     = [string]$values['_ItemId']
             }
         }
 
+        $previousBookmark = $bookmark
         $bookmark = [string](Get-AIRField $response 'Bookmark')
-        $more = (Get-AIRField $response 'MoreRowsExist') -eq $true -and $bookmark -ne ''
+        $more = (Get-AIRField $response 'MoreRowsExist') -eq $true -and $bookmark -ne '' -and $bookmark -ne $previousBookmark -and $newKeys -gt 0
     } while ($more -and ($Cap -eq 0 -or $records.Count -lt $Cap))
 
     if ($Cap -gt 0 -and $records.Count -gt $Cap) {
@@ -318,6 +326,7 @@ switch ($Action) {
 
     'Insert' {
         if ($Count -lt 1) { throw 'Insert needs a -Count of at least 1.' }
+        if ($FailLast -and $Count -lt 2) { throw '-FailLast on Insert needs a -Count of at least 2: the last record fails by repeating the first key.' }
         $digits = [Math]::Max(3, ([string]$Count).Length)
         $changes = @()
         for ($i = 1; $i -le $Count; $i++) {

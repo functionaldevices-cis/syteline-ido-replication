@@ -327,6 +327,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
                         return 1;
                     }
 
+                    if (failLast == 1 && count < 2)
+                    {
+                        results = "failLast on Insert needs a count of at least 2: the last record fails by repeating the first key.";
+                        return 1;
+                    }
+
                     // THE NUMBER AFTER THE PREFIX HAS 3 DIGITS, OR MORE WHEN count NEEDS THEM. KEEP THE PREFIX SHORT ENOUGH FOR THE KEY'S
                     // LENGTH (SLEndtypes' EndUserType HOLDS 6 CHARACTERS, SO A 2-CHARACTER PREFIX LEAVES ROOM FOR 9,999 RECORDS).
 
