@@ -230,34 +230,34 @@ Seen in the forms and through their IDOs:
 
 | Piece | Form (IDO) | What it holds or does |
 | --- | --- | --- |
-| Categories | **Replication Categories** (`SLRepCategories`, `SLRepObjectCategories`) | The objects to replicate: tables (Object Type 1) or stored procedures (2), each with Skip Insert, Skip Update, Skip Delete and a filter. A category's **Replication Transfer Type** is **IDO XML**, **Data Lake** or **Business Object Document** |
-| Rules | **Replication Rules** (`SLRepRules`) | A category from a source site to a target site, with an **Interval Type** (**Transactional**, **Immediate**, **Minutes**, **Hours**, **Days**), **Disable Replication** and **Update All Columns** |
-| Triggers | **Replication Management** (`SLReplicationTriggers`, method `RegenerateReplicationTriggers`) | "Changes to replication rules do not take effect until you regenerate the replication triggers." There is one regenerate for all rules, with a **Regenerate All Triggers** check box but no choice of category or table. **View Logs** lists its errors (`TriggerLogMessages`) |
-| Queue | **Replication Viewer** (`ReplicatedRows3s`, `ShadowValues`) | One row per change: the table, the changed row's `RefRowPointer`, the operation, an `OperationNumber` and the target site. `ShadowValues` holds name and value pairs marked old or new, per operation number (never seen with data) |
-| Sending | Not a form | Messages were written by `InitiatorApp` `Replicator`. Its errors went to the outbox (`CorOutboxEntries`) with the logical ID `lid://ERROR`. No background task for it appeared in the task history |
+| Categories | **Replication Categories** (`SLRepCategories`, `SLRepObjectCategories`) | The objects to replicate, each a table (Object Type 1) or a stored procedure (2, as in the BOD category), with a filter, Skip Insert, Skip Update, Skip Delete, Skip Method and a To Object Name. A category's **Replication Transfer Type** is **IDO XML**, **Data Lake** or **Business Object Document** |
+| Rules | **Replication Rules** (`SLRepRules`) | A category from a source site to a target site, with an **Interval Type** (**Transactional**, **Immediate**, **Minutes**, **Hours**, **Days**), an Interval, a Start Interval At date, **Disable Replication** and **Update All Columns** |
+| Triggers | **Replication Management** (`SLReplicationTriggers`, method `RegenerateReplicationTriggers`) | "Changes to replication rules do not take effect until you regenerate the replication triggers." The form has **Regenerate Replication Triggers** with a **Regenerate All Triggers** check box, and no field for a category or table. What a regenerate with the box cleared rebuilds wasn't checked. **View Logs** lists errors (`TriggerLogMessages`) |
+| Queue | **Replication Viewer** (`ReplicatedRows3s`, `ShadowValues`) | One row per change: the table, the changed row's `RefRowPointer`, the operation, an `OperationNumber` and the target site. `ShadowValues` has name and value pairs marked old or new, per operation number; it never had rows |
+| Sending | Not a form | The messages seen came from `InitiatorApp` `Replicator`. Its failed sends went to the outbox (`CorOutboxEntries`) with the logical ID `lid://ERROR`. No background task for it appeared in production's task history |
 | Checks | **Find Replication Setup Issue** | For one table, type and target site, lists what stops it replicating, such as a disabled rule |
 
-Infor's own feed to Data Lake works this way: an external target site `DATALAKE` on an intranet with ION transport, and a `DATALAKE` category of about 150 tables with the transfer type **Data Lake**. In Data Lake each table is an object named `csi_` plus the table name (`csi_co_mst`). In the tenant tested, that feed had stopped after the tenant moved to new servers, and its rule was found disabled, last changed a month later. The Replication Management log in production had three failed regenerates: lock request timeouts (September 2025 and the day after the feed stopped) and deadlocks (August 2026), on busy tables such as `coitem_mst`, `item_mst` and `customer_mst`.
+Infor's own feed to Data Lake is set up this way: an external target site `DATALAKE` on its own intranet ("Infor DataLake Connection Intranet", Transport `J`, ION transfer type 2), and a `DATALAKE` category of 154 tables with the transfer type **Data Lake**. In Data Lake each table is an object named `csi_` plus the table name (`csi_co_mst`). In production, the newest `csi_` object was from shortly after the tenant moved to new servers, both `DATALAKE` rules (one per site) were disabled, last changed one and six months later, and nothing depended on the feed, so its stop went unnoticed. Production's Replication Management log had errors on three days: lock request timeouts (September 2025 on `coitem_mst` and `itemwhse_mst`, and the day after the newest `csi_` object on `slsman_mst`, `state_mst` and `territory_mst`) and deadlocks (August 2026 on `coitem_mst`, `customer_mst`, `item_mst` and `site`). Whether each was a whole regenerate that failed, and how many regenerates worked without logging anything, isn't known.
 
 ### The test
 
-A category `AIRTEST` holding only `endtype_mst`, and a rule from the tenant's site to the existing `DATALAKE` site with the Interval Type **Days**, an interval of 365 and a start date months away, so that, if the interval held the rows, they would wait in the queue. Then **Regenerate Replication Triggers**, and saves on End User Types. The LogOnly rule's AES triggers were active on `SLEndtypes`, so the replication log timed each save.
+A category `AIRTEST` holding only `endtype_mst`, and a rule from the sandbox's site to the existing `DATALAKE` site with the Interval Type **Days**, an interval of 365 and a Start Interval At date four months away, so that, if the interval held the rows, they would wait in the queue. Then **Regenerate Replication Triggers** (with **Regenerate All Triggers** cleared), and saves on End User Types. The LogOnly rule's AES triggers were active on `SLEndtypes`, so the replication log shows when each AES trigger ran.
 
 | Run | Transfer type | Saves | What happened |
 | --- | --- | --- | --- |
-| 1 | Data Lake | Insert, update and delete, twice | Nothing visible: no queue rows, no shadow values, no outbox entries and no errors, and no delay was noticed. **Find Replication Setup Issue** found no problem with the setup |
-| 2 | IDO XML | Insert | A queue row (operation 1, the record's `RowPointer`, target `DATALAKE`) appeared 0.35 s after the row was written, and was gone by the next look. The save took 14.8 s more than usual: the AES `IdoPostItemInsert` trigger ran 14.8 s after the row was written. 27 s after the change, the outbox had an error message holding the change |
-| 3 | IDO XML | Delete, then an insert | Neither save was held up (the insert's AES trigger ran 1.1 s after the row was written). Each change became an outbox error message 9 to 11 s after it, one after the other |
+| 1 | Data Lake | Insert, update and delete, twice | Nothing in the tables checked: `ReplicatedRows3s`, `ShadowValues`, `DatalakeLogs`, the outbox and `IONMessagingErrors`. **Find Replication Setup Issue** said "No problems found. The replication triggers may need to be regenerated." |
+| 2 | IDO XML (regenerated again) | Insert | A queue row (operation 1, the record's `RowPointer`, target `DATALAKE`) appeared 0.35 s after the row was written, and was gone by the next look. The form seemed stuck saving: the AES `IdoPostItemInsert` trigger ran 14.8 s after the row was written. 27 s after the change, the outbox had an error message holding the change |
+| 3 | IDO XML | Delete, then an insert | The insert's AES trigger ran 1.1 s after the row was written (the delete's save wasn't timed). Each change became an outbox error message 9 to 11 s after it, one after the other |
 
-Each error message was an IDO `UpdateCollection` request on `TABLE!endtype_mst`, from `Replicator` to the target configuration `DATALAKE`. An insert carried every column of the row. A delete carried `Action="Delete" UseKeys="Y"` with the table's key columns (`end_user_type`, `site_ref`).
+Each error message was an IDO `UpdateCollection` request on `TABLE!endtype_mst`, from `Replicator` to the target configuration `DATALAKE`. The inserts carried every column of the row. The delete carried `Action="Delete" UseKeys="Y"` with the table's key columns (`end_user_type`, `site_ref`). After the rule and category were removed and the triggers regenerated, a delete produced no message.
 
-What it established, seen once:
+What it established, seen once, with IDO XML, Days and a start date in the future:
 
-- **The SQL triggers capture changes no IDO event sees**, and their messages carry the whole row, and a delete's keys.
-- **The queue doesn't hold changes for the interval.** With **Days**, the IDO XML rows were taken and sent within seconds, so another program can't count on reading them from `ReplicatedRows3`.
-- **With the Data Lake transfer type, nothing showed in any table an IDO can read.** It most likely sends another way.
-- **The first save after the regenerate was held up by about 15 seconds**; later saves weren't. Why wasn't found.
-- **The changes go to another Syteline site or out through ION**, and replication doesn't use ION.
+- **The trigger's queue row was taken within seconds**, not held for the interval, so another program can't count on reading changes from `ReplicatedRows3s`. Other interval types weren't tried.
+- **The messages carry the whole row, and a delete's keys.** Only failed sends were seen, all to `DATALAKE`; a send that worked, or one to another Syteline site, wasn't.
+- **The first save of that run was held up by about 15 seconds**; the later insert wasn't. Why wasn't found.
+
+Not established: whether the Data Lake transfer type sends another way or its triggers didn't take effect (run 1), and whether the triggers see changes IDO events miss, such as stored procedures and cascade deletes, which follows from their being SQL triggers but wasn't tried.
 
 ## Results
 
