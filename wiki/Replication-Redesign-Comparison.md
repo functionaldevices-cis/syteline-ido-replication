@@ -1,6 +1,6 @@
 # Replication Redesign: Comparing the Options
 
-**Status: analysis.** Nothing on this page is built. It compares the two ways replication could find out about changes, weighs risk, complexity and how quickly a change reaches the target, and recommends one. The evidence comes from the sandbox tests in [Trigger Diagnostics](Trigger-Diagnostics) and from reading Infor's DLLs in `Lib/`. A point marked *DLLs* was read from the DLLs and not tested, one marked *tested* was seen in a cloud sandbox, and one marked *design* follows from how the option would be built.
+**Status: analysis.** Nothing on this page is built. It compares two ways replication could find out about changes, AES event handlers and an extending IDO, weighs risk, complexity and how quickly a change reaches the target, and recommends one. A third way, Syteline's own SQL replication triggers, was tested and ruled out ([below](#a-third-option-sql-replication-triggers)). The evidence comes from the sandbox tests in [Trigger Diagnostics](Trigger-Diagnostics) and from reading Infor's DLLs in `Lib/`. A point marked *DLLs* was read from the DLLs and not tested, one marked *tested* was seen in a cloud sandbox, and one marked *design* follows from how the option would be built.
 
 ## What the two options share
 
@@ -64,12 +64,33 @@ A **side IDO** below is an IDO that extends a base without replacing it, such as
 - It relies on an in-process event API known here only from the DLLs. Infor's Mongoose developer documentation may describe it; that hasn't been checked.
 - It makes AIR part of every request to the base IDO, loads included, so a bad assembly upload affects more.
 
+## A third option: SQL replication triggers
+
+Syteline's own replication framework captures changes with SQL triggers on the tables, generated from replication categories and rules, and it is what Infor's table feed to Data Lake uses. It was tested in a sandbox ([The SQL replication test](Trigger-Diagnostics#the-sql-replication-test)).
+
+**For it**
+
+- SQL triggers see every write: ItemId callers, stored procedures, cascade deletes and saves made by other event handlers *(design; seen for form saves)*.
+- Its messages carry the whole row, and a delete carries the table's keys *(tested)*.
+- It is set up with Syteline's own forms, with no SQL access.
+
+**Against it**
+
+- **Replication can't read the changes.** The framework's own sender takes each change from the queue within seconds, whatever the rule's interval, and sends it to another Syteline site or out through ION *(tested)*. Replication doesn't use ION, and the Data Lake transfer type left nothing an IDO can read.
+- **Changing it means regenerating every replication trigger.** There is one regenerate for all rules, so it also rebuilds the triggers that Infor's BOD publishing and multi-site replication depend on, and in the production tenant checked it failed three times out of three on lock timeouts or deadlocks, on busy tables *(tested, from the Replication Management log)*.
+- **It can hold up a save.** The first save after a regenerate took about 15 seconds longer *(tested once)*.
+- **It failed silently once already.** The tenant's Data Lake feed stopped when it moved to new servers, and nobody noticed for months.
+- Changes are per table, not per IDO record, so replication would have to trace each table change back to the IDO's record.
+
+So the SQL path is ruled out as a way to capture changes. Its one lesson for the other two options: a feed can stop without anyone noticing, so whichever is built should check its own triggers and warn when a rule that usually sees changes goes quiet.
+
 ## Recommendation
 
 1. **Build the shared parts with AES capture first:** the queue, the doorbell, the sender, the merge rules, Depends On and the sweep. They're needed whichever capture is used. That gives changes within seconds for form saves and for REST and extension-class saves that send the keys.
 2. **Find out how big the gaps are.** Check whether the integrations in use, and Infor's own ION flows, update or delete by `_ItemId`, and whether the replicated IDOs are saved by other event handlers. If not, the AES option's limits are only those the [AES plan](Replication-Redesign-AES-Plan#known-limits) already lists.
-3. **If they matter, test before building extending IDO capture:**
+3. **Add a health check, whichever capture is built:** confirm the handlers (or IDOs) it depends on are still in place, and warn when a rule that usually sees changes has been quiet for longer than usual.
+4. **If the gaps matter, test before building extending IDO capture:**
    - Does an extension class on an extending IDO get the in-process item events, and see the record's RowPointer, for a REST update and delete by ItemId?
    - Do its queue writes roll back with a failed save?
    - Does Mongoose refuse a second IDO that replaces a base another IDO already replaces? `IdoCollections` has an `IdoCollectionExtendsValidSp` method, which may check this. If it does, the main risk above mostly goes away.
-4. **If the answers are yes, consider extending IDO capture as an option per IDO, alongside the AES triggers, not in place of them.** If our IDO ever drops out of the chain, the AES triggers still capture form saves and saves that send the keys. That needs more of the merge rules than the AES plan has: rows for the same operation captured twice (Insert and Insert, Update and Insert, Delete and Delete), and both captures naming the record the same way, by RowPointer or by keys. Running both also gives up the lower cost per save.
+5. **If the answers are yes, consider extending IDO capture as an option per IDO, alongside the AES triggers, not in place of them.** If our IDO ever drops out of the chain, the AES triggers still capture form saves and saves that send the keys. That needs more of the merge rules than the AES plan has: rows for the same operation captured twice (Insert and Insert, Update and Insert, Delete and Delete), and both captures naming the record the same way, by RowPointer or by keys. Running both also gives up the lower cost per save.
