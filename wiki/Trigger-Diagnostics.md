@@ -190,6 +190,36 @@ What it established, seen once, on one order:
 - **A key Syteline assigns during an insert is only known by `IdoPostItemInsert`.** The order number was `TBD` in `IdoOnItemInsert`.
 - **Saving an order line was followed by an update of the header that sent nothing the trigger could read.** Most likely Syteline recalculating the order's totals (not checked). A trigger that finds the record by its keys or RowPointer misses that change.
 
+## The IDO definition test
+
+Tests whether an event handler can see someone add an IDO that extends and replaces one that replication watches. That matters to the option beside the [AES plan](Replication-Redesign-AES-Plan), replication on an IDO that extends the replicated one: per the DLLs (below), such an IDO's extension class runs for a save to the base IDO only while it is in the chain of the base's replacer, and an administrator can later add an IDO that leaves it out, for example a second IDO that replaces the same base.
+
+The diagnostic triggers were set up on the standard `IdoCollections` IDO (`-Action SetupDiagnostics -IDOName IdoCollections`), which holds one row per IDO and version (key `CollectionName` and `DevelopmentFlag`, 1 for a checked-out version). That includes the doorbell handler, with Ignore Failure off, so every save in the IDOs form fails while the Rules assembly can't be loaded. Run it only on a test system, and remove it with `-Action RemoveDiagnostics -IDOName IdoCollections` when done. Then a test IDO, `ue_AIRTEST_SLEndtypes`, was created with the New IDO wizard, extending and replacing an existing IDO that itself extends and replaces `SLEndtypes`. It was checked in, checked out and in again, exported, deleted in the IDOs form, and brought back with the IDO Import Wizard.
+
+| Step | Events on `IdoCollections` | The `IdoCollections` row afterward |
+| --- | --- | --- |
+| Create with the New IDO wizard | `IdoOnUpdateCollection`, `IdoOnItemInsert`, `IdoPostItemInsert`, `IdoPostUpdateCollection`, and the doorbell. The item events had the keys (`CollectionName`, `DevelopmentFlag=1`), no RowPointer | A checked-out version |
+| Check in | **None** | `DevelopmentFlag` 0, revision 2, `CreateDate` equal to `RecordDate` |
+| Check out, then check in | **None** | Revision 3 |
+| Export | None | |
+| Delete in the IDOs form | `IdoOnUpdateCollection`, `IdoOnItemDelete`, `IdoPostItemDelete`, `IdoPostUpdateCollection`, and the doorbell. The item events had the RowPointer and the keys, with `DevelopmentFlag=1` though the IDO was checked in | Gone |
+| Import with the IDO Import Wizard | **None** | `DevelopmentFlag` 0, revision 3 as in the file, `CreateDate` equal to `RecordDate` |
+
+What it established, seen once:
+
+- **Of the steps tried, only the wizard's create and the delete fired events on `IdoCollections`.** Check-in and import, the two steps that write an IDO's live version, fired none. Most likely they don't go through an `UpdateCollection` save at all: `IdoMethods` lists `IdoCollectionCheckIn` and `ImportFromXmlString` on `IdoCollections`, which are most likely what they call (inferred from the names, not traced). Editing a checked-out IDO in the IDOs form wasn't tried. So an event handler can't be how replication learns that a new replacer has been written. Reading `IdoCollections` can show what is written, but not when each application server starts using it (see below).
+- **The Replace checkbox was disabled on the checked-out IDO in the IDOs form**, and **Extends** looked read-only (not confirmed). In earlier testing, outside this run, an import changed Replace on an existing IDO. A save to `IdoCollections` through REST or an extension class wasn't tried.
+- **The `CreateDate` and `RecordDate` of an `IdoCollections` row looked like UTC.** They matched the UTC times the diagnostic rows recorded, about five hours ahead of the site's time in the log's Create Date.
+
+### Replace chains in the DLLs
+
+Not tested. This is what `IDOCore.dll` and `IDORequestProcessor.dll` in `Lib/` show:
+
+- **Each runtime app domain works out the replace chains once.** Its IDO metadata cache reads the list of IDOs from the `Collections` table (`IDOListQuery`), checked-out versions included, and gives each base IDO one replacer (`IDOVersionInfoMap.ResolveInheritance`). Nothing reads the list again on a timer or by revision. It is read again when the cache is discarded (`IDORuntime.DiscardMetadataCache`, run by the internal `DiscardMetadataCache` request, most likely what **Refresh Form Metadata** sends; whether one request reaches every server isn't known), or when the app domain is replaced: after 10 minutes without a request (`RuntimeAppDomainManager`), or when the process restarts. So a busy server may keep an old chain until the cache is discarded, and a quiet one picks up a new one by itself.
+- **A replacer created with the wizard can go live without a discard.** A server that read the list while the checked-out version existed already treats it as the base's replacer. Until check-in, everyone but the user who checked it out gets the base, because the live version isn't there yet and the runtime asks for it again on each request (`IDODefinitionCollection.LoadIDODefinition`). After check-in, it finds it. An IDO with both a checked-out and a live version takes its Extends and Replace from whichever row the query returns first.
+- **A base has one replacer, the top of its chain, and every IDO below that stays in.** When an IDO replaces an IDO that itself replaces a base, the top one becomes the replacer of each IDO below it (`SetReplacedBy`). A save to the base loads the replacer and then each IDO it inherits from (`CreateAggregateIDODefinition`), with their extension classes. So an IDO that extends and replaces replication's IDO keeps it in. One that replaces the same base as replication's IDO cuts it out: the one read last wins, and the query has no `ORDER BY`, so which one that is isn't defined.
+- **A replacing IDO whose base isn't in the list breaks IDO metadata on the app domain.** Reading the list throws `Error in IDO metadata: base IDO {0} not found for {1} IDO.`, the list isn't kept, and the next request that needs IDO metadata reads it and throws again, until the row is fixed.
+
 ## Results
 
 First run: November 23, 2026, in an Infor CloudSuite Industrial sandbox (multi-tenant cloud), on `SLEndtypes`, with a `LogOnly` rule and the replication triggers active. Every REST call went through the ION API. Tests 1 to 10 were run, in a different order, plus the two variants below. Tests 12 and 15 were run later the same day, after the fix that writes a blank Record Row Pointer as blank. Test 15 used 100 and 500 records instead of 2,000, with the diagnostic triggers still active. Its records were REST inserts and deletes by key, which the replication trigger doesn't load or send (it only writes a `Skipped` row), so its timings show how the time grows with the number of records, not what replicating a record costs. Test 11 (a failing REST update), test 13 (a failing extension-class save) and test 14's run with DelayMilliseconds haven't been run.
