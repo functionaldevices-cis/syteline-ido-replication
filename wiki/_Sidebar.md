@@ -21,3 +21,4 @@
 - [Development](Development)
 - [Trigger Diagnostics](Trigger-Diagnostics)
 - [Replication Redesign: AES Plan](Replication-Redesign-AES-Plan)
+- [Replication Redesign: Comparing the Options](Replication-Redesign-Comparison)
