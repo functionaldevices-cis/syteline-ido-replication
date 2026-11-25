@@ -38,7 +38,7 @@ Today a trigger on each record's save loads the record and sends it to the targe
 
 And two results that change the plan:
 
-- **A REST load reads a save's uncommitted rows,** and returns them before the save commits ([F3](Trigger-Diagnostics#results-of-the-last-tests)). A load from an extension class can ask for committed data instead (`ReadMode` `ReadCommitted`, which `SytelineInternalAPI.LoadRecords` already does). That load skipped a running save's rows, quickly and without waiting, and returned them once the save committed (F3b).
+- **A REST load reads a save's uncommitted rows,** and returns them before the save commits ([F3](Trigger-Diagnostics#results-of-the-last-tests)). A load from an extension class can ask for committed data instead (`ReadMode` `ReadCommitted`, which `SytelineInternalAPI.LoadRecords` already does). That load skipped a running insert's new rows, quickly and without waiting, and returned them once the save committed (F3b, seen once).
 - **Lines saved as a nested update of their header fired no events on the line IDO,** and seem to have been written after the header's events (F7, seen once). So no trigger on the line IDO captures them.
 
 ## The plan
@@ -71,7 +71,7 @@ One background task definition, with **Max Concurrent** 1, so two senders never 
 
 Each run:
 
-Every load the sender makes, of the queue and of the records, asks for committed data (`ReadMode` `ReadCommitted`), as `SytelineInternalAPI.LoadRecords` does. The site's default can read rows a save hasn't committed (F3), and a sender that read those could send a change that later rolls back, or remove a queue row whose save then fails. A committed load skips a running save's rows without waiting for it (F3b), so a long save doesn't hold the sender up, and the save's rows wait for the next run.
+Every load the sender makes, of the queue and of the records, asks for committed data (`ReadMode` `ReadCommitted`), as `SytelineInternalAPI.LoadRecords` does. The site's default can read rows a save hasn't committed (F3), and a sender that read those could send a change that later rolls back, or remove a queue row whose save then fails. A committed load skipped a running insert's new rows without waiting for it (F3b, seen once), so a long save shouldn't hold the sender up, and its queue rows wait for the next run. A record a running save is updating most likely reads as its last committed values (not tested); the save's own queue row brings it back once it commits.
 
 1. Reads the queue, and combines rows for the same record, oldest first, so the target is told what happened overall:
 
@@ -121,7 +121,7 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 [The last tests before building](Trigger-Diagnostics#the-last-tests-before-building) answered most of this list ([results](Trigger-Diagnostics#results-of-the-last-tests)).
 
 - ~~Whether Ignore Failure off puts a handler's writes in the save's transaction on `IdoPostItemUpdate`, `IdoOnItemDelete` and `IdoPostUpdateCollection`, and whether a doorbell on `IdoPostUpdateCollection` still never starts its task before the commit~~: yes on the item events (F1). `IdoPostUpdateCollection` can't be shown, because a failed save doesn't reach it, and its doorbell's task started about 5 seconds after the save (F2).
-- ~~Whether a load that asks for committed data waits for a running save or skips its rows~~: it skips them, without waiting (F3b). A REST load reads them (F3).
+- ~~Whether a load that asks for committed data waits for a running save or skips its rows~~: it skipped a running insert's rows, without waiting (F3b, seen once). A REST load reads them (F3). Rows a running save updates or deletes weren't tested.
 - A long save that skips its doorbell, and whether the sender's check for leftover rows catches it.
 - ~~Whether `ActiveBGTasks` lists a scheduled run that isn't due yet as `READY`~~: in one read on the test system, scheduled tasks showed as `WAITING` with no Start Date, and the doorbell's look filters on its own task name anyway.
 - ~~Whether a parent's `IdoOnItemDelete` can still load its children~~: it can (F6).
