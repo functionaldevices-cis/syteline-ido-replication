@@ -71,7 +71,7 @@ Screenshots (from an earlier version):
 The install package is in `dist/`. Its folders are numbered in install order.
 
 1. **SQL** (`dist/1 - SQL (Paste Rows Append)/`): paste the rows of `SQL Tables.csv` and `SQL Columns.csv` into Syteline's SQL Tables and SQL Columns forms as appended rows. Then create each table's view (the table name without `_mst`).
-2. **IDOs and extension classes** (`dist/2 - IDOs and Extension Classes (IDO Import Wizard)/`): import the file with the IDO Import Wizard. It includes both extension class assemblies. Then run **Refresh Form Metadata** to clear the IDO cache.
+2. **IDOs and extension classes** (`dist/2 - IDOs and Extension Classes (IDO Import Wizard)/`): import the file with the IDO Import Wizard. It includes both extension class assemblies. Then run **Refresh Form Metadata** to clear the IDO cache. If you build the assemblies yourself, upload them after this import, not before: the import most likely puts the export's own assemblies in place.
 3. **Forms and strings** (`dist/3 - Mongoose Objects (FormSync)/`): import the forms and `Strings.XML` with FormSync. Then unload global form objects (Form > Definition > Unload All Global Form Objects).
 4. **Background tasks:** create Background Task Definitions for:
    - **replication**, called from the Rules form: `ue_AIR_ReplicateRecordToExternalSystems`, with parameters `BG~TASKID~, <filter>, <IDO name>, <record cap>, <rule number>`. The rule number is optional. A background run shows as failed when a rule fails or nothing could be sent, and its task messages say why
