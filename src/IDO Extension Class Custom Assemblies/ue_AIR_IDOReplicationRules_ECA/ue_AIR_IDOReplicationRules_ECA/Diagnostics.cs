@@ -228,7 +228,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /*
         /* Name:     ue_DiagRingDoorbell
-        /* Purpose:  Called by the diagnostic doorbell handler (IdoOnUpdateCollection, Ignore Failure off), once per
+        /* Purpose:  Called by the diagnostic doorbell handler (IdoOnUpdateCollection, or IdoPostUpdateCollection in the strict set; Ignore Failure off), once per
         /*           save. Tests whether a save can start a background task that runs right after the save commits.
         /*           It writes a "doorbell" row to the replication log, then submits the ue_AIR_DiagDoorbellTask
         /*           background task through BGTaskDefinitions.BGTaskSubmit2, then writes a row with what the
