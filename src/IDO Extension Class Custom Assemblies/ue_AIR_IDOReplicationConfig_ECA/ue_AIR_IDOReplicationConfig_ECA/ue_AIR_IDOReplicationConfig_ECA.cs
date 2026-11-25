@@ -141,12 +141,15 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                     break;
 
                 case "SetupDiagnosticTriggers":
+                case "SetupStrictDiagnosticTriggers":
 
-                    // FOR TESTING ONLY: CREATE ACTIVE EVENT HANDLERS THAT LOG EVERY UPDATE EVENT ON THE IDO (SEE SetupDiagnosticTriggers)
+                    // FOR TESTING ONLY: CREATE ACTIVE EVENT HANDLERS THAT LOG EVERY UPDATE EVENT ON THE IDO (SEE SetupDiagnosticTriggers).
+                    // THE STRICT SET HAS IGNORE FAILURE OFF ON EVERY HANDLER AND THE DOORBELL ON IdoPostUpdateCollection.
 
                     result = this.SetupDiagnosticTriggers(
                         sytelineAPI: sytelineAPI,
-                        idoName: idoName
+                        idoName: idoName,
+                        strict: action == "SetupStrictDiagnosticTriggers"
                     );
 
                     break;
@@ -439,6 +442,11 @@ namespace ue_AIR_IDOReplicationConfig_ECA
         /* NO TASK, AND NO TASK STARTED BEFORE ITS SAVE ENDED). ue_DiagRingDoorbell NEVER THROWS, BUT IF THE RULES ASSEMBLY ON THE SERVER
         /* DOESN'T HAVE IT, OR CAN'T BE LOADED, EVERY SAVE TO THE IDO FAILS UNTIL THE TRIGGERS ARE REMOVED.
         /*
+        /* SetupStrictDiagnosticTriggers CREATES THE SAME SET WITH IGNORE FAILURE OFF ON EVERY HANDLER, NO ASYNCHRONOUS HANDLER, AND
+        /* THE DOORBELL ON IdoPostUpdateCollection, WHERE THE AES PLAN PUTS IT. IT TESTS WHETHER EACH EVENT'S WRITES ROLL BACK WITH A
+        /* FAILED SAVE, AND WHETHER A DOORBELL ON IdoPostUpdateCollection STILL STARTS ITS TASK ONLY AFTER THE COMMIT. WITH IGNORE FAILURE
+        /* OFF EVERYWHERE, A HANDLER THAT CAN'T RUN (THE RULES ASSEMBLY MISSING OR NOT YET LOADED) FAILS EVERY SAVE TO THE IDO.
+        /*
         /* UNLIKE THE REPLICATION TRIGGERS, THEY ARE CREATED ACTIVE, SO EVERY SAVE TO THE IDO WRITES ROWS UNTIL THEY ARE REMOVED. THEY
         /* HAVE THEIR OWN DESCRIPTION, SO THE CONFIGS FORM'S TRIGGER STATUS, FIX TRIGGERS AND ACTIVATE ALL DON'T SEE THEM. USE THEM ON
         /* A TEST SYSTEM AND REMOVE THEM WITH RemoveDiagnosticTriggers WHEN THE TESTS ARE DONE.
@@ -480,7 +488,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
         }
 
-        private int SetupDiagnosticTriggers(SytelineInternalAPI sytelineAPI, string idoName)
+        private int SetupDiagnosticTriggers(SytelineInternalAPI sytelineAPI, string idoName, bool strict = false)
         {
 
             // THE HANDLERS ARE ACTIVE AT ONCE AND RUN ON EVERY SAVE TO THE IDO, AND EXECUTE IS GRANTED ON THE CONFIGS IDO AS A WHOLE, NOT PER
@@ -523,8 +531,15 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                     new DiagnosticHandler("CustomAIR", true, false)
                 };
                 handlers.AddRange(DiagnosticEventNames.Select(eventName => new DiagnosticHandler(eventName, true, false)));
-                handlers.Add(new DiagnosticHandler("IdoPostUpdateCollection", false, false));
-                handlers.Add(new DiagnosticHandler("IdoOnUpdateCollection", true, true));
+                if (strict)
+                {
+                    handlers.Add(new DiagnosticHandler("IdoPostUpdateCollection", true, true));
+                }
+                else
+                {
+                    handlers.Add(new DiagnosticHandler("IdoPostUpdateCollection", false, false));
+                    handlers.Add(new DiagnosticHandler("IdoOnUpdateCollection", true, true));
+                }
 
                 int sequence = -399;
                 List<IDOUpdateItem> eventHandlers = new List<IDOUpdateItem>();
@@ -542,7 +557,8 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                         {"Transactional", 0},
                         // IF A LOGGING HANDLER ITSELF FAILS, FOR EXAMPLE EVALUATING ITS PARMS, THE SAVE STILL GOES THROUGH. THE DOORBELL HAS IT
                         // OFF, AS A REAL ONE WOULD, SO ITS WRITES ARE IN THE SAVE'S TRANSACTION IF THIS EVENT BEHAVES LIKE IdoPostItemInsert.
-                        {"IgnoreFailure", handlers[i].IsDoorbell ? 0 : 1},
+                        // THE STRICT SET HAS IT OFF ON EVERY HANDLER, TO SEE WHICH EVENTS' WRITES ROLL BACK WITH A FAILED SAVE.
+                        {"IgnoreFailure", strict || handlers[i].IsDoorbell ? 0 : 1},
                         {"Sequence", sequence},
                         {"NewSequence", sequence},
                         {"RowPointer", ""}
@@ -598,7 +614,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                     return 1;
                 }
 
-                this.Message = $"{eventActions.Count} diagnostic triggers for {idoName} were created and are active, including the doorbell, which submits the {DoorbellTaskName} background task once per save. Every save to {idoName} now writes Diag rows to the replication log."
+                this.Message = $"{eventActions.Count} {(strict ? "strict " : "")}diagnostic triggers for {idoName} were created and are active, including the doorbell, which submits the {DoorbellTaskName} background task once per save{(strict ? " from IdoPostUpdateCollection, and every handler has Ignore Failure off" : "")}. Every save to {idoName} now writes Diag rows to the replication log."
                     + (keyNames.Count > 0 ? $" Key properties passed: {string.Join(", ", keyNames)}." : $" {idoName} has no key properties, so only RowPointer and _ItemId are passed.")
                     + " Run RemoveDiagnosticTriggers when the tests are done.";
 
