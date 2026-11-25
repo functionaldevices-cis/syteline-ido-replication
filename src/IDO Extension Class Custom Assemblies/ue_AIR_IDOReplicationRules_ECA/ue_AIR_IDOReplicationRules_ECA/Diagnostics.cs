@@ -19,7 +19,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
     /* Diagnostics: methods for testing how Syteline fires IDO events and runs saves. They aren't part of
     /* replication. The Config assembly's SetupDiagnosticTriggers action creates event handlers (description
     /* ue_AIR_DiagnosticTrigger) that call ue_LogTriggerEvent, and ue_DiagUpdateCollection saves test records
-    /* through an extension class, the way other extension classes do. See the wiki page Trigger Diagnostics.
+    /* through an extension class, the way other extension classes do, and ue_DiagTimeLoad times loads with a chosen
+    /* ReadMode. See the wiki page Trigger Diagnostics.
     /*
     /* Everything here lives in this file, so it can be removed in one piece once the tests are done.
     /*
@@ -966,6 +967,162 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 stopwatch.Stop();
                 results = "The save failed after " + stopwatch.ElapsedMilliseconds.ToString(CultureInfo.InvariantCulture) + " ms: " + this.DescribeException(ex);
+                return 1;
+
+            }
+
+        }
+
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+        /*
+        /* Name:     ue_DiagTimeLoad
+        /* Purpose:  Loads from an IDO through this.Context.Commands.LoadCollection with a chosen ReadMode, and times
+        /*           each load, for the test of whether a sender that asks for committed data waits for a save that
+        /*           is still running, skips its rows, or sees them (F3b on the wiki page Trigger Diagnostics). A
+        /*           REST ido/load passes no ReadMode, so it gets the site's default, which on the test system read
+        /*           uncommitted rows (F3). SytelineInternalAPI.LoadRecords asks for ReadCommitted.
+        /*
+        /*           IDOName     the IDO to load from
+        /*           filter      the load's filter
+        /*           properties  the properties to load, comma-separated. Blank loads RecordDate only.
+        /*           readMode    Committed, Uncommitted or Default (Default lets the runtime choose: the site's
+        /*                       CollectionReadMode setting, else ReadCommitted)
+        /*           recordCap   the record cap, 1 to 5000. A load of every row isn't offered.
+        /*           repeat      how many loads to run, one after another, 1 to 200
+        /*           results     one line per load (its time and row count, or its error), then a summary
+        /*
+        /*           Read only. Only a super user can run it, as with the other diagnostics. Returns 0 when at
+        /*           least one load worked and 1 otherwise. Never throws.
+        /*
+        /**********************************************************************************************************/
+        /**********************************************************************************************************/
+
+        [IDOMethod(MethodFlags.None, "Infobar")]
+        public int ue_DiagTimeLoad(string IDOName, string filter, string properties, string readMode, int recordCap, int repeat, ref string results)
+        {
+
+            try
+            {
+
+                IDOName = (IDOName ?? "").Trim();
+                filter = (filter ?? "").Trim();
+                properties = (properties ?? "").Trim();
+                string normalizedReadMode = (readMode ?? "").Trim();
+
+                if (!IsSuperUser())
+                {
+                    results = "Only a super user can run ue_DiagTimeLoad.";
+                    return 1;
+                }
+
+                if (IDOName == "")
+                {
+                    results = "IDOName is required.";
+                    return 1;
+                }
+
+                ReadMode mode;
+
+                if (string.Equals(normalizedReadMode, "Committed", StringComparison.OrdinalIgnoreCase))
+                {
+                    mode = ReadMode.ReadCommitted;
+                }
+                else if (string.Equals(normalizedReadMode, "Uncommitted", StringComparison.OrdinalIgnoreCase))
+                {
+                    mode = ReadMode.ReadUncommitted;
+                }
+                else if (string.Equals(normalizedReadMode, "Default", StringComparison.OrdinalIgnoreCase))
+                {
+                    mode = ReadMode.Default;
+                }
+                else
+                {
+                    results = "readMode must be Committed, Uncommitted or Default.";
+                    return 1;
+                }
+
+                if (recordCap < 1 || recordCap > 5000)
+                {
+                    results = "recordCap must be 1 to 5000.";
+                    return 1;
+                }
+
+                if (repeat < 1 || repeat > 200)
+                {
+                    results = "repeat must be 1 to 200.";
+                    return 1;
+                }
+
+                if (properties == "")
+                {
+                    properties = "RecordDate";
+                }
+
+                List<string> lines = new List<string>();
+                List<double> times = new List<double>();
+                int failures = 0;
+
+                for (int run = 1; run <= repeat; run++)
+                {
+
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    try
+                    {
+
+                        // A NEW REQUEST EACH TIME, SO NO BOOKMARK OR STATE CARRIES OVER FROM THE LOAD BEFORE
+
+                        LoadCollectionRequestData request = new LoadCollectionRequestData()
+                        {
+                            IDOName = IDOName,
+                            RecordCap = recordCap,
+                            Filter = filter,
+                            OrderBy = "",
+                            ReadMode = mode
+                        };
+                        request.PropertyList.SetProperties(properties);
+
+                        LoadCollectionResponseData response = this.Context.Commands.LoadCollection(request);
+                        stopwatch.Stop();
+
+                        int rows = response != null && response.Items != null ? response.Items.Count : 0;
+                        times.Add(stopwatch.Elapsed.TotalMilliseconds);
+                        lines.Add(string.Format(CultureInfo.InvariantCulture, "Run {0} at {1:HH:mm:ss.fff} UTC: {2:N0} ms, {3} row(s)",
+                            run, DateTime.UtcNow, stopwatch.Elapsed.TotalMilliseconds, rows));
+
+                    }
+                    catch (Exception ex)
+                    {
+
+                        stopwatch.Stop();
+                        failures++;
+                        lines.Add(string.Format(CultureInfo.InvariantCulture, "Run {0} at {1:HH:mm:ss.fff} UTC: failed after {2:N0} ms: {3}",
+                            run, DateTime.UtcNow, stopwatch.Elapsed.TotalMilliseconds, this.DescribeException(ex)));
+
+                    }
+
+                }
+
+                if (times.Count == 0)
+                {
+                    lines.Add(string.Format(CultureInfo.InvariantCulture, "{0} with read mode {1}: every load failed ({2} of {2}).", IDOName, mode, repeat));
+                    results = string.Join(Environment.NewLine, lines);
+                    return 1;
+                }
+
+                List<double> sorted = times.OrderBy(time => time).ToList();
+                lines.Add(string.Format(CultureInfo.InvariantCulture,
+                    "{0} with read mode {1}, filter {2}: fastest {3:N0} ms, median {4:N0} ms, slowest {5:N0} ms, over {6} load(s) that worked; {7} failed.",
+                    IDOName, mode, filter == "" ? "(none)" : filter, sorted[0], sorted[(sorted.Count - 1) / 2], sorted[sorted.Count - 1], times.Count, failures));
+                results = string.Join(Environment.NewLine, lines);
+                return 0;
+
+            }
+            catch (Exception ex)
+            {
+
+                results = "ue_DiagTimeLoad failed: " + this.DescribeException(ex);
                 return 1;
 
             }

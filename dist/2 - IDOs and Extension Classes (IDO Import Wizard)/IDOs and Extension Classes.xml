@@ -1175,8 +1175,8 @@ END</Expression>
          <ServerName>ue_AIR</ServerName>
          <AccessAs>ue_</AccessAs>
          <LabelStringID>oue_AIR_IDOReplicationRules</LabelStringID>
-         <RevisionNo>33</RevisionNo>
-         <RevisionDate>2026-11-23T15:36:12</RevisionDate>
+         <RevisionNo>34</RevisionNo>
+         <RevisionDate>2026-11-25T15:06:30</RevisionDate>
          <CustomAssemblyName>ue_AIR_IDOReplicationRules_ECA</CustomAssemblyName>
          <ExtClassNamespace>ue_AIR_IDOReplicationRules_ECA</ExtClassNamespace>
          <ExtClassName>ue_AIR_IDOReplicationRules_ECA</ExtClassName>
@@ -1239,6 +1239,47 @@ END</Expression>
                   <Parameter Name="IDOName" Sequence="2">
                      <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
                      <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+               </Parameters>
+               <ResultSetProperties />
+            </Method>
+            <Method Name="ue_DiagTimeLoad" Transactional="NO">
+               <MethodType>2</MethodType>
+               <Parameters>
+                  <Parameter Name="filter" Sequence="2">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="IDOName" Sequence="1">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="properties" Sequence="3">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="readMode" Sequence="4">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="recordCap" Sequence="5">
+                     <DBDataType Length="30" Scale="0">LONG</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="repeat" Sequence="6">
+                     <DBDataType Length="30" Scale="0">LONG</DBDataType>
+                     <INPUT />
+                     <COMDataType>VARIANT</COMDataType>
+                  </Parameter>
+                  <Parameter Name="results" Sequence="7">
+                     <DBDataType Length="30" Scale="0">VARCHAR</DBDataType>
+                     <OUTPUT />
                      <COMDataType>VARIANT</COMDataType>
                   </Parameter>
                </Parameters>
