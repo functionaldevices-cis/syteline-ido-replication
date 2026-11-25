@@ -1114,7 +1114,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 List<double> sorted = times.OrderBy(time => time).ToList();
                 lines.Add(string.Format(CultureInfo.InvariantCulture,
                     "{0} with read mode {1}, filter {2}: fastest {3:N0} ms, median {4:N0} ms, slowest {5:N0} ms, over {6} load(s) that worked; {7} failed.",
-                    IDOName, mode, filter == "" ? "(none)" : filter, sorted[0], sorted[sorted.Count / 2], sorted[sorted.Count - 1], times.Count, failures));
+                    IDOName, mode, filter == "" ? "(none)" : filter, sorted[0], sorted[(sorted.Count - 1) / 2], sorted[sorted.Count - 1], times.Count, failures));
                 results = string.Join(Environment.NewLine, lines);
                 return 0;
 

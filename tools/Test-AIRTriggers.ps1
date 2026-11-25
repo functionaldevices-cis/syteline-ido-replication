@@ -356,8 +356,9 @@ function Invoke-AIRMethod {
 function Assert-AIRReturnValue {
     param($Response, [string] $What)
     if ((Get-AIRField $Response 'Success') -eq $false -or [string](Get-AIRField $Response 'ReturnValue') -ne '0') {
-        $parameters = @(Get-AIRField $Response 'Parameters')
+        $parameters = @(Get-AIRField $Response 'Parameters' | Where-Object { $null -ne $_ })
         $reason = if ($parameters.Count -gt 0) { [string]$parameters[-1] } else { [string](Get-AIRField $Response 'Message') }
+        if ($reason -eq '') { $reason = 'no reason was returned.' }
         throw ("{0} didn't work: {1}" -f $What, $reason)
     }
 }
@@ -436,8 +437,9 @@ switch ($Action) {
             try {
                 $response = Invoke-AIRRequest -Method 'POST' -Url ("{0}/invoke/{1}?method=ue_DiagTimeLoad" -f $BaseUrl, $RulesIDO) -Body $body
                 $stopwatch.Stop()
-                $parameters = @(Get-AIRField $response 'Parameters')
+                $parameters = @(Get-AIRField $response 'Parameters' | Where-Object { $null -ne $_ })
                 $text = if ($parameters.Count -ge 7) { [string]$parameters[6] } else { [string](Get-AIRField $response 'Message') }
+                if ($text -eq '') { $text = 'ue_DiagTimeLoad returned no results.' }
                 $line = @($text -split "`r?`n")[0]
                 if ((Get-AIRField $response 'Success') -eq $false -or [string](Get-AIRField $response 'ReturnValue') -ne '0') {
                     throw $text
@@ -521,9 +523,16 @@ switch ($Action) {
         }
         $extra = if ($Action -eq 'Insert') { $InsertProperties } elseif ($Action -eq 'Update') { $UpdateProperties } else { @{} }
         $extraText = ($extra.GetEnumerator() | ForEach-Object { '{0}={1}' -f $_.Key, $_.Value }) -join ';'
-        Invoke-AIRMethod -IDO $RulesIDO -Method 'ue_DiagUpdateCollection' -Parameters @(
+        $response = Invoke-AIRMethod -IDO $RulesIDO -Method 'ue_DiagUpdateCollection' -Parameters @(
             $IDOName, $Action, $KeyProperty, $KeyPrefix, $Count, $extraText, $Identify, [int][bool]$FailLast, ''
-        ) | Out-Null
+        )
+        # 1 MEANS THE SAVE DIDN'T GO THROUGH (EXPECTED WITH -FailLast) OR WAS REFUSED; SAY SO RATHER THAN LOOK LIKE IT WORKED
+        if ([string](Get-AIRField $response 'ReturnValue') -eq '0') {
+            Write-Host 'The save went through.' -ForegroundColor Green
+        }
+        else {
+            Write-Host 'The save failed or was refused; the reason is the last parameter above.' -ForegroundColor Yellow
+        }
         break
     }
 
