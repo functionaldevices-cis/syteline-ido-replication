@@ -107,10 +107,12 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 
 ## Still to test
 
+[The last tests before building](Trigger-Diagnostics#the-last-tests-before-building) cover most of this list in one session.
+
 - Whether Ignore Failure off puts a handler's writes in the save's transaction on `IdoPostItemUpdate`, `IdoOnItemDelete` and `IdoPostUpdateCollection`, and whether a doorbell on `IdoPostUpdateCollection` still never starts its task before the commit.
 - A long save that skips its doorbell, and whether the sender's check for leftover rows catches it.
 - Whether the sender's read of the queue waits on, or skips, a save's uncommitted queue rows.
-- Whether `ActiveBGTasks` lists a scheduled run that isn't due yet as `READY`, which would let a save rely on a run up to a minute away.
+- ~~Whether `ActiveBGTasks` lists a scheduled run that isn't due yet as `READY`~~: it doesn't. On the test system every scheduled task shows as `WAITING` with no Start Date.
 - Whether a parent's `IdoOnItemDelete` can still load its children, for targets that need their keys.
 - What a queue row costs in the save, on a server that's already running.
 - What a sweep costs on `SLCos`, `SLCoitems` and other tables, not only the ledger.

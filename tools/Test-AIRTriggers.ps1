@@ -9,6 +9,8 @@
     Actions:
       SetupDiagnostics   Creates the diagnostic event handlers on -IDOName (ue_UpdateAESTriggers, SetupDiagnosticTriggers).
                          They are active at once, so every save to the IDO writes "Diag:" rows to the replication log.
+                         With -Strict (SetupStrictDiagnosticTriggers), every handler has Ignore Failure off and the doorbell
+                         is on IdoPostUpdateCollection, to see which events' writes roll back with a failed save.
       RemoveDiagnostics  Removes them again.
       Insert             Inserts -Count records with keys -KeyPrefix001, -KeyPrefix002 and so on.
       Update             Updates the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
@@ -74,6 +76,10 @@
 .PARAMETER LoadCap
     TimeLoad only: the record cap, at least 1. A poll's cost is in finding the rows, so there is no option to load every row.
 
+.PARAMETER Strict
+    With -Action SetupDiagnostics, creates the strict set: Ignore Failure off on every handler, no asynchronous handler,
+    and the doorbell on IdoPostUpdateCollection. Every save to the IDO fails while the Rules assembly can't run them.
+
 .PARAMETER Repeat
     TimeLoad only: how many times to run the load.
 
@@ -124,6 +130,8 @@ param(
     [hashtable] $UpdateProperties = $null,
 
     [switch] $Force,
+
+    [switch] $Strict,
 
     [string] $LoadFilter = '1=0',
 
@@ -429,7 +437,8 @@ switch ($Action) {
     }
 
     'SetupDiagnostics' {
-        Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, 'SetupDiagnosticTriggers', '') | Out-Null
+        $setupAction = if ($Strict) { 'SetupStrictDiagnosticTriggers' } else { 'SetupDiagnosticTriggers' }
+        Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, $setupAction, '') | Out-Null
     }
 
     'RemoveDiagnostics' {
