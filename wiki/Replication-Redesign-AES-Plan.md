@@ -26,12 +26,20 @@ Today a trigger on each record's save loads the record and sends it to the targe
 
 ## What the tests showed is possible
 
-- **A synchronous event handler with Ignore Failure off writes inside the save's transaction.** Its rows commit with the save and roll back with it. Seen on `IdoPostItemInsert` (test 10b) and `IdoOnUpdateCollection` (D3); the other events this design uses aren't tested yet.
-- **A save can start a background task, and the task never started before the save's last event.** A failed save left no task. Task Manager started the task 0.4 to 3.9 seconds after the save's last event, and its code ran about 1 to 6 seconds after it (the doorbell tests).
+- **A synchronous event handler with Ignore Failure off writes inside the save's transaction.** Its rows commit with the save and roll back with it. Seen on `IdoPostItemInsert` (test 10b), `IdoOnUpdateCollection` (D3), and in failed inserts, updates and deletes on the item events of the records saved before the failure ([F1](Trigger-Diagnostics#results-of-the-last-tests)). `IdoPostUpdateCollection` can't be seen this way, because a failed save doesn't reach it.
+- **A save can start a background task, and the task never started before the save's last event.** A failed save left no task. Task Manager started the task 0.4 to 3.9 seconds after the save's last event, and its code ran about 1 to 6 seconds after it (the doorbell tests). A doorbell on `IdoPostUpdateCollection` behaved the same: its task started about 5 seconds after the save's last event (F2).
 - **A task definition with Max Concurrent 1 runs one copy at a time,** across every task server (B2, B3).
 - **A save can see whether a task is already queued, and skip submitting another.** A queued task shows in `ActiveBGTasks` as `READY` with no Start Date, and only committed submissions were visible. In a burst of 21 saves, 13 skipped and every one of them was picked up (B3).
 - **`IdoPostItemInsert` and `IdoPostItemUpdate` get the record's keys from forms and from REST and extension class callers that name records by key,** including a key Syteline assigns during the insert (tests 4, 6, 7 and 12, and the cascade delete test). Not from ItemId callers, and not from Syteline's own follow-on updates, such as the order header after a line save.
-- **On the general ledger, a filter on `RecordDate` behaved like a full table scan:** about 2 seconds per poll when the table was in memory and 9 seconds on the first run, against 0.25 seconds on the key (the polling cost test; inferred from timing, other tables not tested).
+- **On the general ledger, a filter on `RecordDate` behaved like a full table scan:** about 2 seconds per poll when the table was in memory and 9 seconds on the first run, against 0.25 seconds on the key (the polling cost test; inferred from timing). On `SLCos`, `SLCoitems` and `SLCustomers` in the sandbox, a date filter cost about what a key load did, a few hundred milliseconds (F5).
+- **A parent's `IdoOnItemDelete` can load its children,** while they still exist: deleting an order logged each of its lines through a rule on the line IDO (F6).
+- **A handler that writes one row costs about 90 ms per record in the save,** measured with the diagnostic handler, which also does more than a queue row would (F4).
+- **A REST caller that sends an `_ItemId` property, even one that isn't an ItemID, gets the row's real ItemID in `IdoPostItemUpdate`,** with both base tables' RowPointers in it, as well as the keys (F8).
+
+And two results that change the plan:
+
+- **A REST load reads a save's uncommitted rows,** and returns them before the save commits ([F3](Trigger-Diagnostics#results-of-the-last-tests)). A load from an extension class can ask for committed data instead (`ReadMode` `ReadCommitted`, which `SytelineInternalAPI.LoadRecords` already does). Whether that waits for the save or skips its rows is F3b.
+- **Lines saved as a nested update of their header fire no events on the line IDO,** and don't exist yet during any of the header's events (F7). So nothing in the save can capture them.
 
 ## The plan
 
@@ -47,7 +55,7 @@ The replication triggers stop sending. Each writes a queue row instead, with Ign
 - **Deletes:** `IdoOnItemDelete`, while the record still exists. Because the sender can't load a deleted record, the trigger also stores what each rule's target needs to delete it, such as the Salesforce external ID. That loads the record in the save, so a delete costs more than an insert or update.
 - **A save that gives the trigger nothing** (an ItemId caller, the header update after a line save) still writes a queue row, marked as having no keys. See the sweep below.
 
-A queue row should cost about 0.1 seconds per record in the save, about what a diagnostic trigger's log row cost, against 0.2 to 0.4 seconds for replicating in the save today. A 5,000-record save would then spend roughly 8 minutes, not half an hour. To be measured once it's built.
+A queue row should cost under 0.1 seconds per record in the save: a diagnostic handler's log row cost about 90 ms (F4), and a queue row does less. Replicating in the save costs 0.2 to 0.4 seconds per record today. A 5,000-record save would then spend roughly 8 minutes or less, not half an hour. To be measured once it's built.
 
 ### 3. The doorbell
 
@@ -62,6 +70,8 @@ One background task definition, with **Max Concurrent** 1, so two senders never 
 - **The retry task, `ue_AIR_RetryFailedReplications`,** is unscheduled once every rule uses the queue. The sender takes over its purge of old `Succeeded` and `Skipped` log rows.
 
 Each run:
+
+Every load the sender makes, of the queue and of the records, asks for committed data (`ReadMode` `ReadCommitted`), as `SytelineInternalAPI.LoadRecords` does. The site's default can read rows a save hasn't committed (F3), and a sender that read those could send a change that later rolls back, or remove a queue row whose save then fails.
 
 1. Reads the queue, and combines rows for the same record, oldest first, so the target is told what happened overall:
 
@@ -88,7 +98,8 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 
 - Inserts and updates go out parents first, and deletes children first.
 - A child that fails because its parent isn't at the target yet keeps its retries for a time the rule sets, instead of today's 3 tries a minute apart.
-- **Deleting a parent deletes its children at the target.** Syteline removed an order's line without its IDO's events, and by the time the sender runs, the children are gone from Syteline. So a child rule says how its records relate to the parent's keys, and when the parent's delete is sent, the sender deletes that parent's children at the target. A target that can be queried, such as Salesforce, is asked for the children by the parent's key; a Salesforce master-detail relationship already deletes them on its own. A target that can't be queried, such as Event Hubs, needs the children's keys captured in the parent's `IdoOnItemDelete`, at a cost to the save, or a "parent deleted" event that the consumer acts on.
+- **Deleting a parent deletes its children at the target.** Syteline removed an order's line without its IDO's events, and by the time the sender runs, the children are gone from Syteline. So a child rule says how its records relate to the parent's keys, and when the parent's delete is sent, the sender deletes that parent's children at the target. A target that can be queried, such as Salesforce, is asked for the children by the parent's key; a Salesforce master-detail relationship already deletes them on its own. A target that can't be queried, such as Event Hubs, needs the children's keys captured in the parent's `IdoOnItemDelete`, which can still load them (F6), at a cost to the save, or a "parent deleted" event that the consumer acts on.
+- **A parent's insert can queue its children.** Lines saved nested under a new header fire no events of their own and don't exist during the header's events (F7). So a child rule can say "when a parent is inserted, send its children": the parent's queue row is enough, and the sender, which runs after the commit, loads the children by the parent's key. The sweep catches the rest.
 - **A child's change can queue its parent.** A line save changed the order header through a save the trigger couldn't read, so a rule can say "when one of these records changes, send its parent again." That covers the header without a sweep.
 
 ### 6. Safety nets
@@ -100,22 +111,22 @@ A rule can name the rules it depends on (**Depends On**), for example order line
 
 - **A delete the triggers can't identify isn't sent:** a delete from a caller that names the record only by ItemId, or one done by a stored procedure such as a purge utility. It's logged as an unidentified delete where the trigger saw it. Finding the rest would take a reconciliation job that compares the keys at the target with those in Syteline: possible later, per target type, nightly or weekly.
 - **Children deleted with a parent that has no rule, or whose child rule doesn't name it in Depends On, aren't deleted at the target.**
-- **Inserts and updates the triggers can't identify reach the target only as often as the sweep runs:** ItemId callers, Syteline's own stored procedures, and follow-on updates such as the order header, unless a "queue the parent" rule covers them.
+- **Inserts and updates the triggers can't identify reach the target only as often as the sweep runs:** ItemId callers, Syteline's own stored procedures, and follow-on updates such as the order header, unless a "queue the parent" rule covers them. That includes children saved as a nested update of their parent, unless a "queue the children" rule covers them.
 - **Until every rule uses the queue, an old value can still overwrite a newer one.** While some rules still send in the save (build phase 1), the retry task and the Resend form keep running as separate tasks, and can send a record at the same time as the sender, as they can today.
 - **The delay depends on Task Manager.** A single task started up to about 7 seconds after its save in the tests, and a burst of 20 saves cleared about 15 seconds after the last one (B1, B3).
 - **For a few minutes after an assembly upload, saves to a replicated IDO can fail,** because the capture triggers and the doorbell have Ignore Failure off and the extension class may not be loaded yet. Deactivate the triggers before uploading.
 
 ## Still to test
 
-[The last tests before building](Trigger-Diagnostics#the-last-tests-before-building) cover most of this list in one session.
+[The last tests before building](Trigger-Diagnostics#the-last-tests-before-building) answered most of this list ([results](Trigger-Diagnostics#results-of-the-last-tests)).
 
-- Whether Ignore Failure off puts a handler's writes in the save's transaction on `IdoPostItemUpdate`, `IdoOnItemDelete` and `IdoPostUpdateCollection`, and whether a doorbell on `IdoPostUpdateCollection` still never starts its task before the commit.
+- ~~Whether Ignore Failure off puts a handler's writes in the save's transaction on `IdoPostItemUpdate`, `IdoOnItemDelete` and `IdoPostUpdateCollection`, and whether a doorbell on `IdoPostUpdateCollection` still never starts its task before the commit~~: yes on the item events (F1). `IdoPostUpdateCollection` can't be shown, because a failed save doesn't reach it, and its doorbell's task started about 5 seconds after the save (F2).
+- **Whether a load that asks for committed data waits for a running save or skips its rows** (F3b). A REST load reads them (F3).
 - A long save that skips its doorbell, and whether the sender's check for leftover rows catches it.
-- Whether the sender's read of the queue waits on, or skips, a save's uncommitted queue rows.
 - ~~Whether `ActiveBGTasks` lists a scheduled run that isn't due yet as `READY`~~: in one read on the test system, scheduled tasks showed as `WAITING` with no Start Date, and the doorbell's look filters on its own task name anyway.
-- Whether a parent's `IdoOnItemDelete` can still load its children, for targets that need their keys.
-- What a queue row costs in the save, on a server that's already running.
-- What a sweep costs on `SLCos`, `SLCoitems` and other tables, not only the ledger.
+- ~~Whether a parent's `IdoOnItemDelete` can still load its children~~: it can (F6).
+- ~~What a queue row costs in the save~~: under about 90 ms per record (F4); to be measured again once built.
+- ~~What a sweep costs on `SLCos`, `SLCoitems` and other tables~~: a few hundred milliseconds in the sandbox (F5); a production table may be larger.
 - Whether a purge utility fires any IDO event, callers through ION, whether other parent and child pairs cascade like orders and order lines, and Salesforce lookup and master-detail relationships when a parent is deleted.
 
 ## Building it

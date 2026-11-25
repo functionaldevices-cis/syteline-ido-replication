@@ -17,7 +17,12 @@
       Delete             Deletes the records whose key starts with -KeyPrefix (at most -Count, 0 = all).
       Cleanup            Deletes every record whose key starts with -KeyPrefix, by key, always through REST.
       TimeLoad           Read only. Loads -IDOName with -LoadFilter through REST -Repeat times and prints how long each load
-                         took and how many rows came back, to measure what a poll for changed records costs.
+                         took and how many rows came back, to measure what a poll for changed records costs. With -ReadMode,
+                         each load goes through the Rules IDO's ue_DiagTimeLoad instead, which asks for that read mode, as an
+                         extension class can and a REST load can't (needs a super user).
+
+    SetupDiagnostics and RemoveDiagnostics stop with an error when the method returns anything but 0, for example when
+    Syteline still has an older Config assembly that doesn't know the action.
 
     -Via Rest sends one ido/update request with every record in it. -Via ExtensionClass asks the Rules IDO's
     ue_DiagUpdateCollection method to do the same save through this.Context.Commands.UpdateCollection. Setting up
@@ -83,6 +88,11 @@
 .PARAMETER Repeat
     TimeLoad only: how many times to run the load.
 
+.PARAMETER ReadMode
+    TimeLoad only: Committed, Uncommitted or Default. Loads through ue_DiagTimeLoad with that ReadMode instead of a REST
+    load, which passes none and so gets the site's default. Each run prints the time the load took on the server and
+    the round trip. The record cap is at most 5000.
+
 .EXAMPLE
     $conn = @{ IonApiFile = 'C:\path\to\credentials.ionapi'; MongooseConfig = '<config>' }
     .\Test-AIRTriggers.ps1 @conn -Action SetupDiagnostics
@@ -140,8 +150,11 @@ param(
     [ValidateRange(1, 100000)]
     [int] $LoadCap = 200,
 
-    [ValidateRange(1, 50)]
-    [int] $Repeat = 5
+    [ValidateRange(1, 200)]
+    [int] $Repeat = 5,
+
+    [ValidateSet('Committed', 'Uncommitted', 'Default')]
+    [string] $ReadMode
 )
 
 $ErrorActionPreference = 'Stop'
@@ -337,6 +350,18 @@ function Invoke-AIRMethod {
     return $response
 }
 
+# ue_UpdateAESTriggers RETURNS 0 WHEN THE ACTION WORKED AND 1 WITH THE REASON IN ITS LAST PARAMETER. Success ONLY SAYS THE METHOD
+# RAN, SO A REFUSED ACTION (FOR EXAMPLE ONE AN OLDER ASSEMBLY DOESN'T KNOW) MUST STOP THE SCRIPT INSTEAD OF LOOKING LIKE IT WORKED.
+
+function Assert-AIRReturnValue {
+    param($Response, [string] $What)
+    if ((Get-AIRField $Response 'Success') -eq $false -or [string](Get-AIRField $Response 'ReturnValue') -ne '0') {
+        $parameters = @(Get-AIRField $Response 'Parameters')
+        $reason = if ($parameters.Count -gt 0) { [string]$parameters[-1] } else { [string](Get-AIRField $Response 'Message') }
+        throw ("{0} didn't work: {1}" -f $What, $reason)
+    }
+}
+
 function Confirm-AIRDelete {
     param([object[]] $Records)
 
@@ -398,6 +423,48 @@ $startedAt = Get-Date
 
 switch ($Action) {
 
+    { ($_ -eq 'TimeLoad') -and $ReadMode } {
+        # READ ONLY: ONE ue_DiagTimeLoad CALL PER REPEAT, EACH ONE LOAD WITH THE GIVEN ReadMode, SO EACH RUN IS PRINTED AS IT HAPPENS.
+        # THE TIME THAT COUNTS IS THE ONE THE SERVER MEASURED AROUND THE LOAD; THE ROUND TRIP ADDS THE ION API AND THE INVOKE.
+        if ($LoadCap -gt 5000) { throw 'With -ReadMode, -LoadCap can be at most 5000.' }
+        $properties = if ($LoadProperties -ne '') { $LoadProperties } else { 'RecordDate' }
+        $times = @()
+        $failures = 0
+        for ($i = 1; $i -le $Repeat; $i++) {
+            $body = ConvertTo-Json -InputObject @($IDOName, $LoadFilter, $properties, $ReadMode, [string]$LoadCap, '1', '') -Depth 3
+            $stopwatch = [Diagnostics.Stopwatch]::StartNew()
+            try {
+                $response = Invoke-AIRRequest -Method 'POST' -Url ("{0}/invoke/{1}?method=ue_DiagTimeLoad" -f $BaseUrl, $RulesIDO) -Body $body
+                $stopwatch.Stop()
+                $parameters = @(Get-AIRField $response 'Parameters')
+                $text = if ($parameters.Count -ge 7) { [string]$parameters[6] } else { [string](Get-AIRField $response 'Message') }
+                $line = @($text -split "`r?`n")[0]
+                if ((Get-AIRField $response 'Success') -eq $false -or [string](Get-AIRField $response 'ReturnValue') -ne '0') {
+                    throw $text
+                }
+                if ($line -match ': ([\d,.]+) ms, (\d+) row') {
+                    $times += [double]($Matches[1] -replace ',', '')
+                }
+                Write-Host ("Run {0}: {1} (round trip {2:N0} ms)" -f $i, ($line -replace '^Run 1 ', ''), $stopwatch.Elapsed.TotalMilliseconds)
+            }
+            catch {
+                $stopwatch.Stop()
+                $failures++
+                Write-Host ("Run {0}: failed after {1:N0} ms: {2}" -f $i, $stopwatch.Elapsed.TotalMilliseconds, $_.Exception.Message) -ForegroundColor Yellow
+            }
+        }
+        $label = "{0} with read mode {1}, filter {2}, properties {3}, record cap {4}" -f $IDOName, $ReadMode, $LoadFilter, $properties, $LoadCap
+        if ($times.Count -eq 0) {
+            Write-Host ("{0}: no run worked ({1} failed of {2})." -f $label, $failures, $Repeat) -ForegroundColor Yellow
+        }
+        else {
+            $sorted = @($times | Sort-Object)
+            Write-Host ("{0}: on the server, fastest {1:N0} ms, median {2:N0} ms, slowest {3:N0} ms, over {4} run(s) that worked; {5} failed." -f $label,
+                $sorted[0], $sorted[[int][Math]::Floor(($sorted.Count - 1) / 2)], $sorted[-1], $sorted.Count, $failures) -ForegroundColor Green
+        }
+        break
+    }
+
     'TimeLoad' {
         # READ ONLY: ONE ido/load PER REPEAT, NO PAGING, SO EACH TIME IS ONE QUERY. THE FIRST RUN CAN BE SLOWER (A COLD CACHE).
         $properties = if ($LoadProperties -ne '') { $LoadProperties } else { 'RecordDate' }
@@ -438,11 +505,13 @@ switch ($Action) {
 
     'SetupDiagnostics' {
         $setupAction = if ($Strict) { 'SetupStrictDiagnosticTriggers' } else { 'SetupDiagnosticTriggers' }
-        Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, $setupAction, '') | Out-Null
+        $response = Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, $setupAction, '')
+        Assert-AIRReturnValue -Response $response -What $setupAction
     }
 
     'RemoveDiagnostics' {
-        Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, 'RemoveDiagnosticTriggers', '') | Out-Null
+        $response = Invoke-AIRMethod -IDO $ConfigsIDO -Method 'ue_UpdateAESTriggers' -Parameters @($IDOName, 'RemoveDiagnosticTriggers', '')
+        Assert-AIRReturnValue -Response $response -What 'RemoveDiagnosticTriggers'
     }
 
     { ($_ -in @('Insert', 'Update', 'Delete')) -and ($Via -eq 'ExtensionClass') } {
