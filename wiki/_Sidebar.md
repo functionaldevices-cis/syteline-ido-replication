@@ -12,6 +12,7 @@
 
 **Running it**
 - [Replication Log and Retries](Replication-Log-and-Retries)
+- [Replication Queue](Replication-Queue)
 - [Resending Records](Resending-Records)
 - [Bulk Loads](Bulk-Loads)
 - [Troubleshooting and Limitations](Troubleshooting-and-Limitations)

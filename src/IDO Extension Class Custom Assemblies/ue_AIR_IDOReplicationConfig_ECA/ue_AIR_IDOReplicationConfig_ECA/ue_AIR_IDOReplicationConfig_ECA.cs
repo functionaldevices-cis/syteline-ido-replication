@@ -321,6 +321,14 @@ namespace ue_AIR_IDOReplicationConfig_ECA
         private int SetupTriggers(SytelineInternalAPI sytelineAPI, string idoName)
         {
 
+            // THE RECORD'S KEYS, AS "Name=Value|~|Name=Value", SO A RULE THAT USES THE QUEUE CAN NAME THE RECORD WHEN THE CALLER DIDN'T
+            // SEND ITS RowPointer (A REST OR EXTENSION CLASS CALLER THAT NAMES RECORDS BY KEY), AND A RULE THAT SENDS IN THE SAVE CAN LOAD
+            // IT BY THEM. THE SEPARATOR IS ReplicationKeySeparator, WHICH THE RULES ASSEMBLY SPLITS ON. WORKED OUT FIRST, SO AN IDO THE
+            // RUNTIME DOESN'T KNOW FAILS HERE, BEFORE ANY HANDLER IS CREATED.
+
+            List<string> keyNames;
+            string keyValuesExpression = this.BuildKeyValuesExpression(idoName, out keyNames, ReplicationKeySeparator);
+
             int defaultSequence = -499;
             int result = 1;
 
@@ -372,9 +380,10 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 {
 
                     // EACH TRIGGER PASSES ITS OWN OPERATION. THE RECORD CAP (1) AND A BLANK RULE NUMBER (EVERY RULE) ARE
-                    // PASSED ONLY TO REACH THE OPERATION PARAMETER.
-                    // TWO DERIVED PROPERTIES COMPARE THESE STRINGS EXACTLY, SO KEEP BOTH IN SYNC WITH ANY CHANGE HERE (AND
-                    // WITH OperationForEvent):
+                    // PASSED ONLY TO REACH THE OPERATION PARAMETER, AND THE KEY VALUES COME LAST.
+                    // TWO DERIVED PROPERTIES CHECK THESE STRINGS, SO KEEP BOTH IN SYNC WITH ANY CHANGE HERE (AND WITH
+                    // OperationForEvent). THEY COMPARE EVERYTHING UP TO THE OPERATION EXACTLY, AND ONLY CHECK THAT SOMETHING
+                    // FOLLOWS IT, BECAUSE THE KEY EXPRESSION DEPENDS ON THE IDO'S KEYS, WHICH SQL CAN'T WORK OUT:
                     //   - ue_AIR_IDOReplicationConfigs.ue_EventHandlersAreSetup (ONE COMPARISON PER EVENT)
                     //   - ue_AIR_EventHandlers.ue_IsSetup (ONE COMPARISON, PICKING THE OPERATION FROM EventName)
 
@@ -385,7 +394,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                         {"Description", TriggerDescription},
                         {"Sequence", "10"},
                         {"ActionType", "21"},
-                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\", 1, \"\", \"" + operation + "\")"},
+                        {"Parameters", "IDO(\"ue_AIR_IDOReplicationRules\") METHOD(\"ue_ReplicateRecordToExternalSystems\") PARMS(-1, SUBSTITUTE(\"RowPointer = '{0}'\", P(\"RowPointer\")), \"" + idoName + "\", 1, \"\", \"" + operation + "\", " + keyValuesExpression + ")"},
                     }));
 
                 }
@@ -405,6 +414,11 @@ namespace ue_AIR_IDOReplicationConfig_ECA
             return result;
 
         }
+
+        // WHAT SEPARATES THE KEYS IN THE REPLICATION TRIGGERS' KEY VALUES. IT MUST MATCH KeyValueSeparator IN THE RULES ASSEMBLY. IT IS
+        // THREE CHARACTERS, SO A "|" IN A KEY VALUE DOESN'T SPLIT IT.
+
+        private const string ReplicationKeySeparator = "|~|";
 
         // KEEP IN SYNC WITH THE CASE EventName IN THE ue_AIR_EventHandlers IDO'S ue_IsSetup DERIVED PROPERTY
 
@@ -645,10 +659,11 @@ namespace ue_AIR_IDOReplicationConfig_ECA
 
         }
 
-        // THE EVENT EXPRESSION THAT PASSES THE IDO'S KEY PROPERTIES AS "Name=Value|Name=Value", IN KEY ORDER, OR AN EMPTY STRING WHEN THE
-        // IDO HAS NO KEYS. P() IN AN ITEM EVENT ONLY SEES THE PROPERTIES THE CALLER SENT FOR THAT RECORD, WHICH IS WHAT THE DIAGNOSTIC TESTS.
+        // THE EVENT EXPRESSION THAT PASSES THE IDO'S KEY PROPERTIES AS "Name=Value", JOINED BY separator ("|" FOR THE DIAGNOSTICS,
+        // ReplicationKeySeparator FOR THE REPLICATION TRIGGERS), IN KEY ORDER, OR AN EMPTY STRING WHEN THE IDO HAS NO KEYS. P() IN AN ITEM
+        // EVENT ONLY SEES THE PROPERTIES THE CALLER SENT FOR THAT RECORD, SO A KEY THE CALLER DIDN'T SEND COMES THROUGH BLANK.
 
-        private string BuildKeyValuesExpression(string idoName, out List<string> keyNames)
+        private string BuildKeyValuesExpression(string idoName, out List<string> keyNames, string separator = "|")
         {
 
             keyNames = this.Context.Commands.GetPropertyInfo(idoName).Properties
@@ -663,7 +678,7 @@ namespace ue_AIR_IDOReplicationConfig_ECA
                 return "\"\"";
             }
 
-            string template = string.Join("|", keyNames.Select((name, index) => name + "={" + index + "}"));
+            string template = string.Join(separator, keyNames.Select((name, index) => name + "={" + index + "}"));
 
             return "SUBSTITUTE(\"" + template + "\", " + string.Join(", ", keyNames.Select(name => "P(\"" + name + "\")")) + ")";
 

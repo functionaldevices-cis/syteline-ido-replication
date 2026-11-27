@@ -64,6 +64,11 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
 
         public string Option10 { get; set; }
 
+        // WHETHER THE RULE'S TRIGGERS QUEUE A CHANGE FOR THE SENDER (ue_SendQueuedReplications) INSTEAD OF SENDING IT IN THE SAVE.
+        // FALSE WHEN THE RULE WAS LOADED WITHOUT IT.
+
+        public bool UseQueue { get; set; }
+
         public Dictionary<string, ReplicationField> MapFields { get; set; }
 
         public List<string> SourceIDOProperties => this.MapFields.Values.Where(field => field.SourceType == "IDOProperty").Select(field => field.SourceValue).Distinct().ToList();
@@ -107,6 +112,7 @@ namespace ue_AIR_IDOReplicationRules_ECA.Models
             this.Option08 = record.PropertyValues[propertyKeys["Option08"]].Value;
             this.Option09 = record.PropertyValues[propertyKeys["Option09"]].Value;
             this.Option10 = record.PropertyValues[propertyKeys["Option10"]].Value;
+            this.UseQueue = propertyKeys.ContainsKey("UseQueue") && (record.PropertyValues[propertyKeys["UseQueue"]].Value ?? "").Trim() == "1";
 
             this.MapFields = new Dictionary<string, ReplicationField>();
 

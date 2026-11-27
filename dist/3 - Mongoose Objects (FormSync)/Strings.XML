@@ -317,5 +317,9 @@
          <TableName>Strings</TableName>
          <String>Target Type</String>
       </String>
+      <String Name="ue_AIR_sUseQueue" Scope="1" ScopeName="[NULL]">
+         <TableName>Strings</TableName>
+         <String>Use Queue</String>
+      </String>
    </Strings>
 </FormsAndObjectsExport>

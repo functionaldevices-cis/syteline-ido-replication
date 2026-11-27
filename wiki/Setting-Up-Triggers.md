@@ -51,10 +51,11 @@ Each handler has one event action that calls:
 
 ```
 IDO("ue_AIR_IDOReplicationRules") METHOD("ue_ReplicateRecordToExternalSystems")
-PARMS(-1, SUBSTITUTE("RowPointer = '{0}'", P("RowPointer")), "<IDO name>", 1, "", "<operation>")
+PARMS(-1, SUBSTITUTE("RowPointer = '{0}'", P("RowPointer")), "<IDO name>", 1, "", "<operation>",
+SUBSTITUTE("<Key1>={0}|~|<Key2>={1}", P("<Key1>"), P("<Key2>")))
 ```
 
-The parameters are: no background task (`-1`), a filter for the changed row, the IDO name, a record cap of 1, a blank rule number (every active rule), and the operation.
+The parameters are: no background task (`-1`), a filter for the changed row, the IDO name, a record cap of 1, a blank rule number (every active rule), the operation, and the record's keys, in the IDO's key order (`""` for an IDO with no keys). The keys let a rule find the record when the caller didn't send its RowPointer, as REST callers that name records by key don't, and they are what a rule that uses the [queue](Replication-Queue) stores. Triggers set up before the keys were added show **Broken** until you click **Fix Triggers**.
 
 The delete trigger runs before the row is removed, so the record can still be read and sent.
 

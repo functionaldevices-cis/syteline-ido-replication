@@ -29,7 +29,9 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 
 Replication errors are caught and logged, so they don't fail the user's save. The one exception seen in testing: for a few minutes after an assembly is uploaded, a save can fail because Syteline can't load the extension class (see [Upgrading](../../wiki/Installation#upgrading)).
 
-Saves made in Syteline's forms replicate. A REST API or extension class update replicates only when it includes the record's `RowPointer`, and their inserts aren't replicated; those changes are logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
+Saves made in Syteline's forms replicate. The triggers also pass the record's keys, so a REST API or extension class save that names its records by key replicates too, inserts included, once the triggers have been set up or fixed with this version. A save that sends neither the RowPointer nor every key is logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
+
+A rule can send through a **replication queue** instead of inside the user's save: check **Use Queue** on the rule, and schedule the sender's background task. The save then only writes a queue row, and the sender sends the change a little later, after the save has committed. See the wiki page Replication Queue.
 
 You can also run replication as a background task over many records, for example for an initial load.
 
@@ -76,6 +78,7 @@ The install package is in `dist/`. Its folders are numbered in install order.
 4. **Background tasks:** create Background Task Definitions for:
    - **replication**, called from the Rules form: `ue_AIR_ReplicateRecordToExternalSystems`, with parameters `BG~TASKID~, <filter>, <IDO name>, <record cap>, <rule number>`. The rule number is optional. A background run shows as failed when a rule fails or nothing could be sent, and its task messages say why
    - **retries:** `ue_AIR_RetryFailedReplications`, calling the Rules IDO method `ue_RetryFailedReplications` with parameters `BG~TASKID~, 90`. The second parameter is how many days to keep successful log rows, and `0` keeps them forever. Schedule it to run every minute, and don't let two runs overlap.
+   - **sender:** `ue_AIR_SendQueuedReplications`, calling the Rules IDO method `ue_SendQueuedReplications` with parameter `BG~TASKID~`. Set Max Concurrent to 1 and schedule it every minute. It sends the changes of rules with **Use Queue** on (see the wiki page Replication Queue).
    - **resend:** `ue_AIR_ResendReplications`, calling the Rules IDO method `ue_ResendReplications`. The IDO Replication Resend form submits it, so it isn't scheduled.
 5. **Configure:** add credentials and rules (below), then set up triggers on the IDO Replication Configs form.
 
@@ -99,6 +102,8 @@ Salesforce sign-in uses the OAuth client credentials flow only. Turn that flow o
 | `SalesforceRESTAPI` | sObject name | External ID field | Delete Behavior: `Skip` (default) or `Delete` |
 | `LogOnly` | Delay Milliseconds (optional): wait this long per send, at most 60,000, to stand in for a slow target | ID field: the output field used to identify records in the log | Simulated Result: `Succeeded` (default) or `Failed` |
 
+Every rule also has **Use Queue**: checked, its changes go through the replication queue and are sent by the sender's background task after the save; unchecked, they are sent inside the save, as before.
+
 ### Field maps
 
 Each map field has an output name, a source type (`IDOProperty` or `Literal`), a source value (the property name or the literal), and an optional transformation:
@@ -117,7 +122,7 @@ Empty values stay empty. A value a transformation can't convert is sent unchange
 ## Replication log and retries
 
 `ue_AIR_IDOReplicationLogs` holds one row per record per rule. Each row stores:
-- the source (which trigger event, a bulk load or a test), the operation (`Insert`, `Update`, `Upsert` or `Delete`; a Salesforce rule logs an insert or an update as `Upsert`, which is what Salesforce does with it) and the record's ID
+- the source (which trigger event, the queue's sender, a bulk load or a test), the operation (`Insert`, `Update`, `Upsert` or `Delete`; a Salesforce rule logs an insert or an update as `Upsert`, which is what Salesforce does with it) and the record's ID
 - the payload as sent (up to 4,000 characters)
 - the status (`Succeeded`, `Failed` or `Skipped`) and the error
 - the number of retries left (3 to start)

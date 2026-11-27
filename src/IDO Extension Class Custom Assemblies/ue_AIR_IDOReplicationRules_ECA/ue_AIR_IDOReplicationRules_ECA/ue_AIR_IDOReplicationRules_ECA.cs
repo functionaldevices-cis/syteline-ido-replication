@@ -142,7 +142,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const int BackgroundTaskFailedReturnCode = 16;
 
         [IDOMethod(MethodFlags.None, "Infobar")]
-        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "")
+        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "", string keyValues = "")
         {
 
             // TRIGGERS PASS A BLANK RULE NUMBER TO REACH THE OPERATION PARAMETER. BLANK MEANS EVERY ACTIVE RULE FOR THE IDO.
@@ -176,6 +176,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 BGTaskNum: BGTaskNum
             );
 
+            // A TRIGGER RUN (BGTaskNum -1) PASSES THE RECORD'S KEYS TOO (keyValues). IT QUEUES THE CHANGE FOR EVERY RULE THAT USES THE QUEUE
+            // AND SENDS IT IN THE SAVE FOR EVERY OTHER RULE, AS BEFORE. SEE Queue.cs. IT NEVER THROWS AND ALWAYS RETURNS 0.
+
+            if (BGTaskNum <= 0)
+            {
+                this.RunTriggerReplication(sytelineAPI, utils, queryFilter, IDOName, recordCap, ruleNum, operation, source, keyValues);
+                return 0;
+            }
+
             ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, queryFilter, IDOName, recordCap, ruleNum, operation, source);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
@@ -207,9 +216,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
         // ONE REPLICATION RUN: LOADS THE RULES AND THE RECORDS THAT MATCH THE FILTER, SENDS THEM, AND WRITES THE REPLICATION LOG.
-        // ue_ReplicateRecordToExternalSystems AND ue_ResendReplications BOTH RUN THROUGH HERE. operation IS ALREADY NORMALIZED.
+        // ue_ReplicateRecordToExternalSystems, ue_ResendReplications AND THE QUEUE'S SENDER ALL RUN THROUGH HERE. operation IS ALREADY
+        // NORMALIZED. A CALLER THAT HAS ALREADY LOADED THE RULES PASSES THEM AS preloadedRules, AND ONLY THOSE RULES RUN.
 
-        private ReplicationRunResult RunReplication(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string queryFilter, string IDOName, int recordCap, string ruleNum, string operation, string source)
+        private ReplicationRunResult RunReplication(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string queryFilter, string IDOName, int recordCap, string ruleNum, string operation, string source, Dictionary<string, ReplicationRule> preloadedRules = null)
         {
 
             ReplicationRunResult runResult = new ReplicationRunResult();
@@ -241,7 +251,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
+                replicationRules = preloadedRules ?? this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
 
                 if (replicationRules.Keys.Count == 0)
                 {
@@ -3182,7 +3192,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "Option07" },
                     { "Option08" },
                     { "Option09" },
-                    { "Option10" }
+                    { "Option10" },
+                    { "UseQueue" }
                 },
                 filter: "( IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " )" + (includeInactive ? "" : " AND ( IsActive = 1 )") + (ruleNum != null ? " AND ( RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " )" : ""),
                 orderBy: "RuleNum ASC"
