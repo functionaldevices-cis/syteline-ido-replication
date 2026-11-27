@@ -316,9 +316,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /**********************************************************************************************************/
         /**********************************************************************************************************/
 
-        // HOW MANY RUNS A QUEUE ROW THE SENDER CAN'T HANDLE IS KEPT FOR, BEFORE IT IS LOGGED AS Failed AND REMOVED
+        // HOW MANY RUNS A QUEUE ROW THE SENDER CAN'T HANDLE IS KEPT FOR, BEFORE IT IS LOGGED AS Failed AND REMOVED. ONLY A PROBLEM ON THE
+        // SYTELINE SIDE KEEPS A ROW (A FAILED SEND IS LOGGED WITH ITS PAYLOAD FOR THE RETRY TASK INSTEAD), SO THIS IS ABOUT AN HOUR AT ONE RUN
+        // A MINUTE: LONG ENOUGH TO RIDE OUT A SHORT OUTAGE, SHORT ENOUGH THAT A RULE THAT CAN'T WORK DOESN'T STAY QUEUED FOREVER.
 
-        private const int QueueMaxAttempts = 5;
+        private const int QueueMaxAttempts = 60;
 
         [IDOMethod(MethodFlags.None, "Infobar")]
         public int ue_SendQueuedReplications(int BGTaskNum = -1)
@@ -529,13 +531,13 @@ namespace ue_AIR_IDOReplicationRules_ECA
         // SENDS ONE RULE'S QUEUED RECORDS. THE ROWS ARE IN THE ORDER THEY WERE QUEUED. EACH RECORD'S ROWS ARE COMBINED, SO THE TARGET IS TOLD
         // WHAT HAPPENED OVERALL:
         //
-        //   ROWS (OLDEST FIRST)                   SENT AS
-        //   Insert, then anything but a Delete    Insert
-        //   Insert, ..., Delete                   NOTHING (LOGGED AS Skipped): THE TARGET NEVER HAD IT
-        //   Update or Upsert, ..., Delete         Delete
-        //   Update or Upsert, ..., Delete, ...    Delete, THEN Insert (THE RECORD WAS DELETED AND CREATED AGAIN)
-        //   Updates only                          Update
-        //   Any Upsert, no Insert or Delete       Upsert (A TRIGGER THAT PASSED NO OPERATION)
+        //   ROWS (OLDEST FIRST)                          SENT AS
+        //   FIRST AN Insert, LAST NOT A Delete           Insert (ANY DELETE IN BETWEEN IS NEVER SENT: THE TARGET NEVER HAD IT)
+        //   FIRST AN Insert, LAST A Delete               NOTHING (LOGGED AS Skipped)
+        //   FIRST NOT AN Insert, LAST A Delete           Delete
+        //   FIRST NOT AN Insert, A Delete, THEN MORE     Delete, THEN Insert (THE RECORD WAS DELETED AND CREATED AGAIN)
+        //   Updates only                                 Update
+        //   Updates and at least one Upsert              Upsert (A TRIGGER THAT PASSED NO OPERATION)
         //
         // DELETES GO FIRST, THEN INSERTS, UPDATES AND UPSERTS. EACH PART'S ROWS ARE REMOVED ONCE IT IS SENT AND LOGGED. RETURNS THE ROWS
         // THAT MUST BE KEPT FOR THE NEXT RUN. THROWS ONLY WHEN ROWS CAN'T BE REMOVED.
@@ -659,7 +661,31 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             if (deletes.Count > 0)
             {
-                this.FinishQueuedPart(sytelineAPI, deletes, this.SendQueuedDeletes(sytelineAPI, utils, IDOName, replicationRule, deletes.Select(record => record.Delete).ToList()));
+
+                bool deletesHandled = this.SendQueuedDeletes(sytelineAPI, utils, IDOName, replicationRule, deletes.Select(record => record.Delete).ToList());
+
+                // A RECORD THAT WAS DELETED AND CREATED AGAIN: ONCE ITS DELETE IS SENT, THE ROWS UP TO THAT DELETE ARE REMOVED, SO IF ITS INSERT
+                // FAILS ONLY THE LATER ROWS ARE KEPT, AND THE NEXT RUN SENDS THEM AS AN INSERT WITHOUT SENDING THE DELETE AGAIN. IF THE DELETE
+                // FAILED, THE INSERT ISN'T SENT EITHER, SO THE TWO CAN'T REACH THE TARGET IN THE WRONG ORDER.
+
+                foreach (QueuedRecord record in deletes.Where(record => record.Upsert != null))
+                {
+
+                    if (!deletesHandled)
+                    {
+                        record.Upsert = null;
+                        continue;
+                    }
+
+                    int deleteIndex = record.Rows.IndexOf(record.Delete);
+                    this.RemoveQueueRows(sytelineAPI, record.Rows.Take(deleteIndex + 1).ToList());
+                    record.Rows = record.Rows.Skip(deleteIndex + 1).ToList();
+                    record.PartsLeft--;
+
+                }
+
+                this.FinishQueuedPart(sytelineAPI, deletes.Where(record => record.Upsert == null), deletesHandled);
+
             }
 
             // THEN INSERTS, UPDATES AND UPSERTS, QueueRecordsPerLoad AT A TIME. A BATCH THAT FAILS KEEPS ONLY ITS OWN RECORDS.
@@ -671,8 +697,23 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 for (int i = 0; i < upserts.Count; i += QueueRecordsPerLoad)
                 {
+
                     List<QueuedRecord> batch = upserts.Skip(i).Take(QueueRecordsPerLoad).ToList();
-                    this.FinishQueuedPart(sytelineAPI, batch, this.SendQueuedUpsertBatch(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, batch.Select(record => record.Upsert).ToList(), operation, QueueSource(operation)));
+
+                    if (this.SendQueuedUpsertBatch(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, batch.Select(record => record.Upsert).ToList(), operation, QueueSource(operation)))
+                    {
+                        this.FinishQueuedPart(sytelineAPI, batch, true);
+                        continue;
+                    }
+
+                    // A BATCH THAT FAILED IS TRIED AGAIN ONE RECORD AT A TIME, SO ONE RECORD THAT CAN'T BE LOADED (A KEY VALUE THE FILTER CAN'T
+                    // CONVERT, SAY) KEEPS ONLY ITSELF. A RECORD THE FAILED BATCH ALREADY SENT IS SENT AGAIN.
+
+                    foreach (QueuedRecord record in batch)
+                    {
+                        this.FinishQueuedPart(sytelineAPI, new[] { record }, batch.Count > 1 && this.SendQueuedUpsertBatch(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, new List<QueueRow>() { record.Upsert }, operation, QueueSource(operation)));
+                    }
+
                 }
 
             }
@@ -702,8 +743,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        // COUNTS A RUN THAT KEPT THESE ROWS. A ROW KEPT QueueMaxAttempts TIMES IS LOGGED AS Failed (A DELETE WITH ITS STORED PAYLOAD, SO THE RETRY
-        // TASK CAN STILL SEND IT; AN INSERT OR UPDATE WITHOUT ONE, FOR A BULK RESYNC) AND REMOVED, SO IT ISN'T TRIED FOREVER. NEVER THROWS.
+        // COUNTS A RUN THAT KEPT THESE ROWS. A ROW KEPT QueueMaxAttempts TIMES IS LOGGED AS Failed, WITHOUT A PAYLOAD SO THE RETRY TASK LEAVES IT
+        // ALONE, AND REMOVED, SO IT ISN'T TRIED FOREVER. NEVER THROWS.
 
         private void CountQueueAttempts(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string ruleNum, List<QueueRow> kept)
         {
@@ -714,24 +755,26 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 List<QueueRow> givenUp = kept.Where(row => row.AttemptCount + 1 >= QueueMaxAttempts).ToList();
                 List<QueueRow> stillQueued = kept.Where(row => row.AttemptCount + 1 < QueueMaxAttempts).ToList();
 
-                if (stillQueued.Count > 0)
-                {
-                    sytelineAPI.UpdateRecords(QueueIDOName, stillQueued.Select(row => sytelineAPI.BuildUpdateItem(row.ItemID, new List<IDOUpdateProperty>()
+                if (stillQueued.Count > 0 && sytelineAPI.UpdateRecords(QueueIDOName, stillQueued.Select(row => sytelineAPI.BuildUpdateItem(row.ItemID, new List<IDOUpdateProperty>()
                     {
                         new IDOUpdateProperty("AttemptCount", (row.AttemptCount + 1).ToString(CultureInfo.InvariantCulture), true)
-                    })).ToList());
+                    })).ToList()) == null)
+                {
+                    utils.WriteLogMessage("Syteline didn't confirm the new attempt counts of " + stillQueued.Count + " kept queue row(s) for rule '" + ruleNum + "'.");
                 }
 
                 foreach (IGrouping<string, QueueRow> operationRows in givenUp.GroupBy(row => row.Operation))
                 {
 
-                    string message = "The queue's sender couldn't send this after " + QueueMaxAttempts + " runs, so it was taken off the queue. The task's messages from those runs say why."
-                        + (operationRows.Key == OperationDelete ? "" : " A Bulk Resync can send the record's current values.");
+                    string message = "The queue's sender couldn't handle this in " + QueueMaxAttempts + " runs, so it was taken off the queue. The task's messages from those runs say why."
+                        + (operationRows.Key == OperationDelete ? " The delete wasn't sent; delete the record at the target by hand if it should be gone." : " A Bulk Resync or Resend Errors can send the record's current values.");
                     ReplicationRuleResult failed = new ReplicationRuleResult(ruleNum, "", operationRows.Count(), false, message, operationRows.Key);
 
                     foreach (QueueRow row in operationRows)
                     {
-                        failed.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(row), operationRows.Key == OperationDelete ? row.Payload : null, ReplicationRecordOutcome.StatusFailed, message)
+                        // NO PAYLOAD, SO THE RETRY TASK DOESN'T SEND AN OLD DELETE LATER, OVER A NEWER INSERT OF THE SAME RECORD
+
+                        failed.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(row), null, ReplicationRecordOutcome.StatusFailed, message)
                         {
                             RecordRowPointer = row.RecordRowPointer ?? ""
                         });
