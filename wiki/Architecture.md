@@ -8,7 +8,7 @@ Everything uses the `AIR` prefix, on IDO server `ue_AIR`.
 
 | Layer | Objects |
 | --- | --- |
-| Tables | Five `ue_AIR_idorepl_*_mst` tables, each with a view of the same name without `_mst`. The IDOs bind to the views. |
+| Tables | Six `ue_AIR_idorepl_*_mst` tables, the replication queue among them, each with a view of the same name without `_mst`. The IDOs bind to the views. |
 | IDOs | `ue_AIR_IDOReplicationRules`, `ue_AIR_IDOReplicationCredentials`, `ue_AIR_IDOReplicationMapFields`, `ue_AIR_IDOReplicationMapFieldSources`, `ue_AIR_IDOReplicationLogs`, `ue_AIR_IDOReplicationConfigs` (extends `IdoCollections`), `ue_AIR_EventHandlers` (extends `EventHandlers`) |
 | Extension class assemblies | `ue_AIR_IDOReplicationRules_ECA` (replication, logging, retries) and `ue_AIR_IDOReplicationConfig_ECA` (trigger setup). .NET Framework 4.8. |
 | Forms | `ue_AIR_IDOReplicationConfigs`, `ue_AIR_IDOReplicationRules`, `ue_AIR_IDOReplicationCredentials`, plus the Import Map windows |
@@ -17,7 +17,8 @@ Everything uses the `AIR` prefix, on IDO server `ue_AIR`.
 
 | IDO | Method | Purpose |
 | --- | --- | --- |
-| `ue_AIR_IDOReplicationRules` | `ue_ReplicateRecordToExternalSystems(BGTaskNum, queryFilter, IDOName, recordCap, ruleNum, operation)` | The entry point. Called by triggers and by the bulk-load background task. |
+| `ue_AIR_IDOReplicationRules` | `ue_ReplicateRecordToExternalSystems(BGTaskNum, queryFilter, IDOName, recordCap, ruleNum, operation, keyValues)` | The entry point. Called by triggers, which also pass the record's keys, and by the bulk-load background task. A trigger run queues the change for rules with Use Queue on and sends it for the others. |
+| `ue_AIR_IDOReplicationRules` | `ue_SendQueuedReplications(BGTaskNum)` | The [replication queue](Replication-Queue)'s sender, a scheduled background task |
 | `ue_AIR_IDOReplicationRules` | `ue_RetryFailedReplications(BGTaskNum, purgeAfterDays)` | The retry and purge background task |
 | `ue_AIR_IDOReplicationRules` | `ue_LoadOutputPreview(ruleNum, IDOName, queryFilter)` | Custom load method that returns up to 5 remapped records for a rule |
 | `ue_AIR_IDOReplicationConfigs` | `ue_UpdateAESTriggers(idoName, action, ref results)` | `SetupTriggers`, `RemoveTriggers`, `FixTriggers`, `ActivateAllTriggers`, `DeactivateAllTriggers` |
@@ -34,7 +35,7 @@ sequenceDiagram
     participant S as Syteline IDOs
     participant X as Target
     U->>T: IdoPostItemInsert / IdoPostItemUpdate / IdoOnItemDelete
-    T->>R: ue_ReplicateRecordToExternalSystems(-1, filter, IDO, 1, "", operation)
+    T->>R: ue_ReplicateRecordToExternalSystems(-1, filter, IDO, 1, "", operation, keys)
     R->>S: Load active rules and map fields
     R->>S: Load the record (union of every rule's properties)
     loop each rule

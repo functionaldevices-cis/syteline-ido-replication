@@ -29,7 +29,7 @@ Full documentation for administrators and developers is in the [wiki](../../wiki
 
 Replication errors are caught and logged, so they don't fail the user's save. The one exception seen in testing: for a few minutes after an assembly is uploaded, a save can fail because Syteline can't load the extension class (see [Upgrading](../../wiki/Installation#upgrading)).
 
-Saves made in Syteline's forms replicate. The triggers also pass the record's keys, so a REST API or extension class save that names its records by key replicates too, inserts included, once the triggers have been set up or fixed with this version. A save that sends neither the RowPointer nor every key is logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
+Saves made in Syteline's forms replicate. The triggers also pass the record's keys, so a REST API or extension class save that names its records by key should replicate too, inserts included, once the triggers have been set up or fixed with this version. That follows from what the triggers were seen to receive in testing; it hasn't been seen end to end yet, and a key Syteline stores padded, such as a customer number, may need the padding sent. A save that sends neither the RowPointer nor every key is logged as skipped instead of sent. See [Known limitations](../../wiki/Troubleshooting-and-Limitations#known-limitations).
 
 A rule can send through a **replication queue** instead of inside the user's save: check **Use Queue** on the rule, and schedule the sender's background task. The save then only writes a queue row, and the sender sends the change a little later, after the save has committed. See the wiki page Replication Queue.
 
@@ -45,12 +45,14 @@ All objects use the `AIR` prefix (`ue_AIR_...`) on IDO server `ue_AIR`.
 - `ue_AIR_idorepl_mapfield_mst`: field maps
 - `ue_AIR_idorepl_mapfieldsource_mst`: map field sources
 - `ue_AIR_idorepl_log_mst`: the replication log
+- `ue_AIR_idorepl_queue_mst`: the replication queue, for rules with Use Queue on
 
 **IDOs**
-- `ue_AIR_IDOReplicationRules`: rules, with the replication, output preview and retry methods
+- `ue_AIR_IDOReplicationRules`: rules, with the replication, output preview, retry, resend and queue sender methods
 - `ue_AIR_IDOReplicationCredentials`
 - `ue_AIR_IDOReplicationMapFields` and `ue_AIR_IDOReplicationMapFieldSources`
 - `ue_AIR_IDOReplicationLogs`: the replication log
+- `ue_AIR_IDOReplicationQueue`: the replication queue
 - `ue_AIR_IDOReplicationConfigs`: extends `IdoCollections` to manage triggers per IDO
 - `ue_AIR_EventHandlers`: extends `EventHandlers` to show trigger status
 
@@ -73,7 +75,7 @@ Screenshots (from an earlier version):
 The install package is in `dist/`. Its folders are numbered in install order.
 
 1. **SQL** (`dist/1 - SQL (Paste Rows Append)/`): paste the rows of `SQL Tables.csv` and `SQL Columns.csv` into Syteline's SQL Tables and SQL Columns forms as appended rows. Then create each table's view (the table name without `_mst`).
-2. **IDOs and extension classes** (`dist/2 - IDOs and Extension Classes (IDO Import Wizard)/`): import the file with the IDO Import Wizard. It includes both extension class assemblies. Then run **Refresh Form Metadata** to clear the IDO cache. If you build the assemblies yourself, upload them after this import, not before: the import most likely puts the export's own assemblies in place.
+2. **IDOs and extension classes** (`dist/2 - IDOs and Extension Classes (IDO Import Wizard)/`): import the file with the IDO Import Wizard. It includes both extension class assemblies, but those can be older than the source: right now the export's assemblies don't have the replication queue or the key values the triggers pass, so build both from `src/` (or take them from a Build run) and upload them after the import. Then run **Refresh Form Metadata** to clear the IDO cache. If you build the assemblies yourself, upload them after this import, not before: the import most likely puts the export's own assemblies in place.
 3. **Forms and strings** (`dist/3 - Mongoose Objects (FormSync)/`): import the forms and `Strings.XML` with FormSync. Then unload global form objects (Form > Definition > Unload All Global Form Objects).
 4. **Background tasks:** create Background Task Definitions for:
    - **replication**, called from the Rules form: `ue_AIR_ReplicateRecordToExternalSystems`, with parameters `BG~TASKID~, <filter>, <IDO name>, <record cap>, <rule number>`. The rule number is optional. A background run shows as failed when a rule fails or nothing could be sent, and its task messages say why

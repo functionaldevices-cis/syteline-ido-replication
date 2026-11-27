@@ -209,6 +209,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             public bool NothingToSend = false;
 
+            // FALSE WHEN A LOG ROW COULDN'T BE WRITTEN. THE QUEUE'S SENDER KEEPS ITS ROWS THEN, SO A FAILURE ISN'T LOST WITH ITS LOG ROW.
+
+            public bool LogWritten = true;
+
             public HashSet<string> RecordRowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         }
@@ -423,7 +427,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
+            runResult.LogWritten = this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
 
             runResult.NothingToSend = nothingToSend;
             return runResult;
@@ -1359,7 +1363,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults)
+        // RETURNS FALSE WHEN A LOG ROW COULDN'T BE WRITTEN. IT NEVER THROWS.
+
+        private bool WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults)
         {
 
             try
@@ -1370,10 +1376,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 if (!ruleResults.Any(ruleResult => ruleResult.RecordOutcomes.Count > 0 || !ruleResult.Success))
                 {
-                    return;
+                    return true;
                 }
 
                 List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
+                bool everyRowWritten = true;
                 DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI, utils);
 
                 foreach (ReplicationRuleResult ruleResult in ruleResults)
@@ -1406,18 +1413,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 {
                     try
                     {
-                        sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList());
+                        if (sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList()) == null)
+                        {
+                            everyRowWritten = false;
+                        }
                     }
                     catch (Exception ex)
                     {
+                        everyRowWritten = false;
                         utils.WriteLogMessage("Couldn't write replication log rows " + (i + 1) + " to " + Math.Min(i + 200, logRows.Count) + ": " + this.DescribeException(ex));
                     }
                 }
+
+                return everyRowWritten;
 
             }
             catch (Exception ex)
             {
                 utils.WriteLogMessage("Couldn't write the replication log: " + this.DescribeException(ex));
+                return false;
             }
 
         }

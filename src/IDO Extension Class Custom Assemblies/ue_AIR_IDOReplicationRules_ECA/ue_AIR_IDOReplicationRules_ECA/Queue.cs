@@ -135,6 +135,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 string recordRowPointer = RowPointerFromFilter(queryFilter);
                 string keyJson = HasEveryKey(keys) ? JsonConvert.SerializeObject(keys) : null;
 
+                // A CALL WITH SOME OTHER FILTER, SUCH AS AN EVENT HANDLER MADE BY HAND THAT NAMES RECORDS BY A PARENT'S KEY, ISN'T ONE
+                // RECORD THE QUEUE CAN NAME. IT IS SENT IN THE SAVE, AS IT WOULD BE WITHOUT THE QUEUE.
+
+                if (recordRowPointer == null && keyJson == null && !string.IsNullOrWhiteSpace(queryFilter) && !IsBlankRowPointerFilter(queryFilter))
+                {
+                    this.RunReplication(sytelineAPI, utils, -1, queryFilter, IDOName, SytelineInternalAPI.NoRecordCap, null, operation, source, queueRules);
+                    return;
+                }
+
                 // A RECORD WITH NEITHER A RowPointer NOR EVERY KEY CAN'T BE FOUND AGAIN. EACH RULE GETS THE SAME Skipped ROW AS A TRIGGER
                 // WHOSE FILTER MATCHED NOTHING, SO THE LOG SHOWS WHAT THE TRIGGER WAS GIVEN.
 
@@ -212,7 +221,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                     try
                     {
-                        sytelineAPI.CreateRecords(QueueIDOName, queueRows);
+                        if (sytelineAPI.CreateRecords(QueueIDOName, queueRows) == null)
+                        {
+                            throw new Exception("Syteline didn't confirm the queue rows were saved.");
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -293,9 +305,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
         /* Purpose:  Background task method: the queue's sender. Reads the queue (committed rows only), combines
         /*           the rows for each record, sends each record's current values, or for a delete what was
         /*           stored when it was deleted, through each rule, writes the replication log, and removes the
-        /*           rows it handled. Run it on a schedule, or by hand, with Max Concurrent 1 on its Background
-        /*           Task Definition so two never run at once. Returns 16 when the queue couldn't be read or its
-        /*           rows couldn't be removed. Never throws.
+        /*           rows it handled. A rule whose records couldn't all be handled keeps its rows for the next
+        /*           run. Run it on a schedule, or by hand, with Max Concurrent 1 on its Background Task
+        /*           Definition so two never run at once. Returns 16 when the queue couldn't be read, rows
+        /*           couldn't be removed, or rows were kept. Never throws.
         /*
         /**********************************************************************************************************/
         /**********************************************************************************************************/
@@ -314,6 +327,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             );
 
             int rowsHandled = 0;
+            int rowsKept = 0;
 
             try
             {
@@ -333,17 +347,31 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                         List<QueueRow> rows = ruleGroup.ToList();
 
-                        this.SendQueuedRule(sytelineAPI, utils, BGTaskNum, rows[0].IDOName, rows[0].RuleNum, rows);
+                        // A RULE WHOSE RECORDS COULDN'T ALL BE HANDLED (THE RULE OR ITS RECORDS COULDN'T BE LOADED, OR A LOG ROW COULDN'T BE
+                        // WRITTEN) KEEPS ITS ROWS FOR THE NEXT RUN, WHICH SENDS THEM AGAIN. A RECORD ALREADY SENT IS THEN SENT TWICE, WHICH
+                        // AN UPSERT OR A DELETE BY KEY TOLERATES; LOSING IT WOULD BE WORSE.
+
+                        if (!this.SendQueuedRule(sytelineAPI, utils, BGTaskNum, rows[0].IDOName, rows[0].RuleNum, rows))
+                        {
+                            rowsKept += rows.Count;
+                            continue;
+                        }
 
                         // THE ROWS ARE REMOVED ONLY AFTER THEIR RECORDS WERE SENT AND LOGGED. A FAILED SEND IS IN THE LOG, WITH ITS PAYLOAD,
-                        // FOR THE RETRY TASK. IF THE ROWS CAN'T BE REMOVED, THE RUN STOPS, SO IT DOESN'T SEND THEM AGAIN AND AGAIN.
+                        // FOR THE RETRY TASK. IF THE ROWS CAN'T BE REMOVED, THE RUN STOPS; THE NEXT RUN SENDS THEM AGAIN.
 
-                        sytelineAPI.DeleteRecords(QueueIDOName, rows.Select(row => sytelineAPI.BuildDeleteItem(row.ItemID)).ToList());
+                        if (sytelineAPI.DeleteRecords(QueueIDOName, rows.Select(row => sytelineAPI.BuildDeleteItem(row.ItemID)).ToList()) == null)
+                        {
+                            throw new Exception("Syteline didn't confirm that " + rows.Count + " queue row(s) for rule '" + rows[0].RuleNum + "' were removed.");
+                        }
+
                         rowsHandled += rows.Count;
 
                     }
 
-                    if (queueRows.Count < QueueBatchSize)
+                    // KEPT ROWS ARE THE OLDEST, SO ANOTHER LOAD WOULD READ THEM AGAIN. THE RUN STOPS, AND THE NEXT RUN TRIES THEM FIRST.
+
+                    if (rowsKept > 0 || queueRows.Count < QueueBatchSize)
                     {
                         break;
                     }
@@ -357,8 +385,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 return BackgroundTaskFailedReturnCode;
             }
 
-            utils.WriteLogMessage("The queue's sender handled " + rowsHandled + " row(s).");
-            return 0;
+            utils.WriteLogMessage("The queue's sender handled " + rowsHandled + " row(s)" + (rowsKept > 0 ? " and kept " + rowsKept + " for the next run, because they couldn't all be sent and logged. The task's messages and the replication log say why." : "."));
+            return rowsKept > 0 ? BackgroundTaskFailedReturnCode : 0;
 
         }
 
@@ -376,8 +404,18 @@ namespace ue_AIR_IDOReplicationRules_ECA
             public string RecordRowPointer;
             public string Payload;
 
-            // THE RECORD THE ROW IS FOR: ITS KEYS WHEN IT HAS THEM, ELSE ITS RowPointer
-            public string RecordKey => !string.IsNullOrEmpty(this.KeyValues) ? "K:" + this.KeyValues : "R:" + (this.RecordRowPointer ?? "").ToLowerInvariant();
+            // THE RECORD THE ROW IS FOR: ITS KEYS WHEN IT HAS THEM (NAMES IN ORDER, VALUES TRIMMED, WITHOUT REGARD TO CASE), ELSE ITS
+            // RowPointer. A RECORD CAPTURED ONCE BY ITS KEYS AND ONCE BY ITS RowPointer ALONE STILL COUNTS AS TWO.
+            public string RecordKey
+            {
+                get
+                {
+                    Dictionary<string, string> keys = ParseKeyJson(this.KeyValues);
+                    return keys != null
+                        ? "K:" + string.Join("\u0001", keys.OrderBy(key => key.Key, StringComparer.OrdinalIgnoreCase).Select(key => key.Key.ToLowerInvariant() + "=" + (key.Value ?? "").Trim().ToLowerInvariant()))
+                        : "R:" + (this.RecordRowPointer ?? "").Trim().ToLowerInvariant();
+                }
+            }
         }
 
 
@@ -423,9 +461,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
         //   Update    Delete   Delete
         //   Delete    Insert   Delete, THEN Insert
         //
-        // DELETES GO FIRST, THEN INSERTS AND UPDATES. NEVER THROWS.
+        // DELETES GO FIRST, THEN INSERTS AND UPDATES. RETURNS FALSE WHEN THE RULE'S ROWS MUST BE KEPT FOR THE NEXT RUN. NEVER THROWS.
 
-        private void SendQueuedRule(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string IDOName, string ruleNum, List<QueueRow> rows)
+        private bool SendQueuedRule(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string IDOName, string ruleNum, List<QueueRow> rows)
         {
 
             ReplicationRule replicationRule = null;
@@ -436,23 +474,37 @@ namespace ue_AIR_IDOReplicationRules_ECA
             }
             catch (Exception ex)
             {
-                utils.WriteLogMessage("Couldn't load rule '" + ruleNum + "' for IDO '" + IDOName + "': " + this.DescribeException(ex));
+
+                // THE RULE COULDN'T BE LOADED, WHICH ISN'T THE SAME AS A RULE THAT IS GONE. ITS ROWS ARE KEPT FOR THE NEXT RUN.
+
+                utils.WriteLogMessage("Couldn't load rule '" + ruleNum + "' for IDO '" + IDOName + "', so its " + rows.Count + " queued row(s) were kept: " + this.DescribeException(ex));
+                return false;
+
             }
 
-            // A RULE THAT IS INACTIVE OR GONE SENDS NOTHING. EACH RECORD GETS A Skipped ROW, AND THE ROWS ARE REMOVED.
+            // A RULE THAT IS INACTIVE, GONE, OR NOW FOR ANOTHER IDO SENDS NOTHING. EACH RECORD GETS A Skipped ROW, AND THE ROWS ARE REMOVED, SO
+            // A RULE SWITCHED OFF DOESN'T LEAVE ITS ROWS BEHIND. A BULK RESYNC CAN SEND THEM WHEN IT IS SWITCHED BACK ON.
 
             if (replicationRule == null)
             {
 
-                ReplicationRuleResult skipped = new ReplicationRuleResult(ruleNum, "", 0, true, "", OperationUpsert);
+                bool written = true;
 
-                foreach (IGrouping<string, QueueRow> recordRows in rows.GroupBy(row => row.RecordKey))
+                foreach (IGrouping<string, QueueRow> operationRows in rows.GroupBy(row => row.Operation))
                 {
-                    skipped.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(recordRows.First()), null, ReplicationRecordOutcome.StatusSkipped, "Nothing was sent: rule '" + ruleNum + "' isn't active any more, or was deleted."));
+
+                    ReplicationRuleResult skipped = new ReplicationRuleResult(ruleNum, "", 0, true, "", operationRows.Key);
+
+                    foreach (IGrouping<string, QueueRow> recordRows in operationRows.GroupBy(row => row.RecordKey))
+                    {
+                        skipped.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(recordRows.First()), null, ReplicationRecordOutcome.StatusSkipped, "Nothing was sent: rule '" + ruleNum + "' isn't active for IDO '" + IDOName + "' any more, or was deleted."));
+                    }
+
+                    written &= this.WriteReplicationLog(sytelineAPI, utils, IDOName, operationRows.Key, QueueSource(operationRows.Key), new List<ReplicationRuleResult>() { skipped });
+
                 }
 
-                this.WriteReplicationLog(sytelineAPI, utils, IDOName, OperationUpsert, SourceQueueAfterUpdate, new List<ReplicationRuleResult>() { skipped });
-                return;
+                return written;
 
             }
 
@@ -506,27 +558,51 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             }
 
+            bool handled = true;
+
             if (nothingToSend.RecordOutcomes.Count > 0)
             {
-                this.WriteReplicationLog(sytelineAPI, utils, IDOName, OperationDelete, SourceQueueBeforeDelete, new List<ReplicationRuleResult>() { nothingToSend });
+                handled &= this.WriteReplicationLog(sytelineAPI, utils, IDOName, OperationDelete, SourceQueueBeforeDelete, new List<ReplicationRuleResult>() { nothingToSend });
             }
 
-            this.SendQueuedDeletes(sytelineAPI, utils, IDOName, replicationRule, deletes);
-            this.SendQueuedUpserts(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, inserts, OperationInsert, SourceQueueAfterInsert);
-            this.SendQueuedUpserts(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, updates, OperationUpdate, SourceQueueAfterUpdate);
+            handled &= this.SendQueuedDeletes(sytelineAPI, utils, IDOName, replicationRule, deletes);
+            handled &= this.SendQueuedUpserts(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, inserts, OperationInsert, SourceQueueAfterInsert);
+            handled &= this.SendQueuedUpserts(sytelineAPI, utils, BGTaskNum, IDOName, replicationRule, updates, OperationUpdate, SourceQueueAfterUpdate);
+
+            return handled;
 
         }
 
 
 
-        // SENDS THE QUEUED DELETES FROM THE PAYLOADS STORED WHEN THE RECORDS WERE DELETED, AS THE RETRY TASK SENDS A STORED PAYLOAD. NEVER THROWS.
+        // THE SOURCE OF THE LOG ROW FOR A QUEUED OPERATION
 
-        private void SendQueuedDeletes(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, ReplicationRule replicationRule, List<QueueRow> deletes)
+        private static string QueueSource(string operation)
+        {
+
+            switch (operation)
+            {
+                case OperationInsert:
+                    return SourceQueueAfterInsert;
+                case OperationDelete:
+                    return SourceQueueBeforeDelete;
+                default:
+                    return SourceQueueAfterUpdate;
+            }
+
+        }
+
+
+
+        // SENDS THE QUEUED DELETES FROM THE PAYLOADS STORED WHEN THE RECORDS WERE DELETED, AS THE RETRY TASK SENDS A STORED PAYLOAD. A SEND
+        // THAT FAILS IS LOGGED AS Failed WITH ITS PAYLOAD, FOR THE RETRY TASK. RETURNS FALSE WHEN THE LOG COULDN'T BE WRITTEN. NEVER THROWS.
+
+        private bool SendQueuedDeletes(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, ReplicationRule replicationRule, List<QueueRow> deletes)
         {
 
             if (deletes.Count == 0)
             {
-                return;
+                return true;
             }
 
             ReplicationRuleResult ruleResult = null;
@@ -589,7 +665,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
             ruleResult.Operation = operation;
             ruleResult.CredentialName = replicationRule.CredentialName ?? "";
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, OperationDelete, SourceQueueBeforeDelete, new List<ReplicationRuleResult>() { ruleResult });
+            return this.WriteReplicationLog(sytelineAPI, utils, IDOName, OperationDelete, SourceQueueBeforeDelete, new List<ReplicationRuleResult>() { ruleResult });
 
         }
 
@@ -597,9 +673,12 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
         // SENDS THE QUEUED INSERTS OR UPDATES, QueueRecordsPerLoad RECORDS AT A TIME. EACH BATCH IS FIRST LOADED BY ITS KEYS (OR RowPointer),
         // SO A RECORD DELETED SINCE IT WAS QUEUED GETS A Skipped ROW, AND THEN SENT THROUGH RunReplication WITH THE SAME FILTER, WHICH LOADS
-        // THE RECORDS' CURRENT VALUES AND LOGS THEM AS EVERY OTHER RUN DOES. NEVER THROWS.
+        // THE RECORDS' CURRENT VALUES, SENDS THEM AND LOGS THEM AS EVERY OTHER RUN DOES (A FAILED SEND WITH ITS PAYLOAD, FOR THE RETRY TASK).
+        //
+        // RETURNS FALSE, AND STOPS, WHEN A BATCH COULDN'T BE LOADED OR LOGGED: THE RULE'S ROWS ARE THEN KEPT FOR THE NEXT RUN, BECAUSE A LOAD
+        // THAT FAILS LEAVES ONE Failed ROW FOR THE RULE, WITHOUT THE RECORDS OR THEIR PAYLOADS. NEVER THROWS.
 
-        private void SendQueuedUpserts(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string IDOName, ReplicationRule replicationRule, List<QueueRow> rows, string operation, string source)
+        private bool SendQueuedUpserts(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string IDOName, ReplicationRule replicationRule, List<QueueRow> rows, string operation, string source)
         {
 
             for (int i = 0; i < rows.Count; i += QueueRecordsPerLoad)
@@ -626,38 +705,41 @@ namespace ue_AIR_IDOReplicationRules_ECA
                             missing.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(row), null, ReplicationRecordOutcome.StatusSkipped, "Nothing was sent: the record no longer exists in Syteline."));
                         }
 
-                        this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, new List<ReplicationRuleResult>() { missing });
+                        if (!this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, new List<ReplicationRuleResult>() { missing }))
+                        {
+                            return false;
+                        }
 
                     }
 
                     if (notFound.Count < batch.Count)
                     {
+
                         string filter = string.Join(" OR ", recordFilters.Select(recordFilter => "( " + recordFilter + " )"));
-                        this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, SytelineInternalAPI.NoRecordCap, replicationRule.RuleNum, operation, source, new Dictionary<string, ReplicationRule>() { { replicationRule.RuleNum, replicationRule } });
+                        ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, filter, IDOName, SytelineInternalAPI.NoRecordCap, replicationRule.RuleNum, operation, source, new Dictionary<string, ReplicationRule>() { { replicationRule.RuleNum, replicationRule } });
+
+                        // A RESULT THAT FAILED WITHOUT ANY RECORD IN IT IS A LOAD OR SETUP FAILURE, NOT A SEND THAT FAILED: NOTHING WAS SENT, AND
+                        // THE LOG HAS NO PAYLOAD TO RETRY
+
+                        if (!runResult.LogWritten || runResult.RuleResults.Any(ruleResult => !ruleResult.Success && ruleResult.RecordOutcomes.Count == 0))
+                        {
+                            return false;
+                        }
+
                     }
 
                 }
                 catch (Exception ex)
                 {
 
-                    // A BATCH THAT FAILED BEFORE IT WAS SENT GETS A FAILED ROW PER RECORD, WITHOUT A PAYLOAD. A BULK RESYNC CAN SEND THEM LATER.
-
-                    string errorMessage = "Couldn't send the queued records: " + this.DescribeException(ex);
-                    ReplicationRuleResult failed = new ReplicationRuleResult(replicationRule.RuleNum, replicationRule.TargetType, batch.Count, false, errorMessage, OperationAtTarget(replicationRule.TargetType, operation))
-                    {
-                        CredentialName = replicationRule.CredentialName ?? ""
-                    };
-
-                    foreach (QueueRow row in batch)
-                    {
-                        failed.RecordOutcomes.Add(new ReplicationRecordOutcome(DescribeQueuedRecord(row), null, ReplicationRecordOutcome.StatusFailed, errorMessage));
-                    }
-
-                    this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, new List<ReplicationRuleResult>() { failed });
+                    utils.WriteLogMessage("Couldn't send the queued records of rule '" + replicationRule.RuleNum + "' for IDO '" + IDOName + "', so they were kept: " + this.DescribeException(ex));
+                    return false;
 
                 }
 
             }
+
+            return true;
 
         }
 
