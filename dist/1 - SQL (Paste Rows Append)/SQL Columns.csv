@@ -62,3 +62,4 @@ source,dbo,ue_AIR_idorepl_queue_mst,ShortDescType,,NO
 key_values,dbo,ue_AIR_idorepl_queue_mst,LongListType,,YES
 record_row_pointer,dbo,ue_AIR_idorepl_queue_mst,RowPointerType,,YES
 payload,dbo,ue_AIR_idorepl_queue_mst,LongListType,,YES
+attempt_count,dbo,ue_AIR_idorepl_queue_mst,GenericIntType,0,NO

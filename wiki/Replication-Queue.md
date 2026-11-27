@@ -16,17 +16,18 @@ A rule with the queue only writes a row to the queue in the save, which costs mu
    - Rules without **Use Queue** send in the save, as before.
 2. **The sender.** The background task `ue_AIR_SendQueuedReplications` reads the queue, oldest first. It reads only committed rows, so it never picks up a save that is still running or that later fails. For each rule, it combines the rows for the same record:
 
-   | Earlier | Later | Sent as |
-   | --- | --- | --- |
-   | Insert | Update | Insert |
-   | Insert | Delete | Nothing, logged as `Skipped` |
-   | Update | Update | Update |
-   | Update | Delete | Delete |
-   | Delete | Insert | Delete, then Insert |
+   | Queued rows, oldest first | Sent as |
+   | --- | --- |
+   | Insert, then anything but a delete | Insert |
+   | Insert, ..., Delete | Nothing, logged as `Skipped`: the target never had it |
+   | Update, ..., Delete | Delete |
+   | Update, ..., Delete, ..., Insert | Delete, then Insert |
+   | Updates only | Update |
+   | An `Upsert` (a trigger that passed no operation), no insert or delete | Upsert |
 
    Deletes go first, from what was stored when the record was deleted. Inserts and updates load each record's current values by its keys, 50 records at a time, and send them through the same code as every other run. A record that no longer exists gets a `Skipped` row.
 3. **The log.** Every record the sender handles gets a row in the [replication log](Replication-Log-and-Retries), with the Source `Queue: After-Insert`, `Queue: After-Update` or `Queue: Before-Delete`. A send that fails is logged as `Failed` with its payload, as today, and the [retry task](Replication-Log-and-Retries#the-retry-task) resends it.
-4. **Cleanup.** The sender removes a rule's queue rows once its records were sent and logged. When it can't handle them all, because the rule or its records couldn't be loaded or a log row couldn't be written, it keeps that rule's rows and stops; the next run sends them again, oldest first. If it can't remove rows it did send, it also stops, and the next run sends them again. So a record can occasionally be sent twice, which an upsert or a delete by key tolerates; a change is never dropped silently. The run then shows as failed, and its messages say why.
+4. **Cleanup.** The sender removes a record's queue rows as soon as what was sent for it was logged: the deletes as one part, then each batch of 50 inserts or updates. A part it can't handle, because the rule or the records couldn't be loaded or a log row couldn't be written, keeps only its own rows, and that rule is set aside for the rest of the run, so the other rules keep being sent. Each run that keeps a row counts it (`AttemptCount`). After 5 runs the row is logged as `Failed` and taken off the queue: a delete with its stored payload, so the retry task can still send it, and an insert or update without one, for a Bulk Resync. If rows that were sent can't be removed, the run stops, and the next run sends them again, so a record can occasionally be sent twice, which an upsert or a delete by key tolerates. A run that kept rows shows as failed, and its messages say why.
 
 ## Setting it up
 
@@ -44,7 +45,7 @@ A rule with the queue only writes a row to the queue in the save, which costs mu
 - **If the queue row can't be written,** the change is sent in the save instead, so it isn't lost.
 - **The Resend form, the Rules form's Test tab, bulk loads and the retry task** still send on their own, outside the queue. A later version moves them into the sender.
 - **Switching a rule off drops its queued changes.** Rows for a rule that is inactive, deleted or now for another IDO are logged as `Skipped` and removed. A Bulk Resync can send those records once the rule is back on.
-- **A rule whose rows keep failing holds up the queue.** Its rows are the oldest, so each run tries them first and stops. A field map that names a property the IDO doesn't have does this; fix the rule, or switch it off.
+- **A rule whose rows keep failing is retried for 5 runs, then dropped to the log.** Each run tries it first, sets it aside, and goes on with the other rules. A field map that names a property the IDO doesn't have does this; fix the rule, then send the dropped records with a Bulk Resync.
 - **A record captured once by its keys and once by its RowPointer alone counts as two records,** so their changes aren't combined. That needs one caller that sends every key and another that sends only the RowPointer.
 - **Changes queued in the same few milliseconds** have no guaranteed order between them.
 - **Keys are compared as sent.** A key Syteline stores padded, such as a right-justified customer number, may not match if a REST caller sends it unpadded. Not tested yet.
@@ -62,3 +63,4 @@ A rule with the queue only writes a row to the queue in the save, which costs mu
 | KeyValues | The record's keys, as JSON, when the trigger was given every key |
 | RecordRowPointer | The record's RowPointer, when the trigger was given it |
 | Payload | For a delete, what the rule would send |
+| AttemptCount | How many runs of the sender couldn't send the row. At 5 it is logged as `Failed` and removed. |
