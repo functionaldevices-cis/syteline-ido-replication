@@ -12,6 +12,7 @@ Form: **IDO Replication Rules (AIR)** (`ue_AIR_IDOReplicationRules`)
 4. On the same tab, under the credential line, fill in the options for the target (below).
 5. On the **Field Mapping** tab, add the fields to send (below).
 6. Check **Is Active** when the rule is ready. Only active rules replicate.
+7. Check **Use Queue** to send the rule's changes through the [replication queue](Replication-Queue), after the save, instead of inside it. It needs the sender's background task.
 
 A rule does nothing until the IDO also has active triggers. See [Setting Up Triggers](Setting-Up-Triggers).
 

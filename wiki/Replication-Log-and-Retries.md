@@ -31,6 +31,7 @@ One row per record per rule.
 | The insert trigger | `Event: After-Insert` | `Insert`, or `Upsert` for a Salesforce rule |
 | The update trigger | `Event: After-Update` | `Update`, or `Upsert` for a Salesforce rule |
 | The delete trigger, which runs before the row is removed | `Event: Before-Delete` | `Delete` |
+| The [queue's sender](Replication-Queue), for a rule with Use Queue on | `Queue: After-Insert`, `Queue: After-Update` or `Queue: Before-Delete` | `Insert`, `Update` or `Delete`, after combining the record's queued changes (`Upsert` for a Salesforce insert or update) |
 | A [manual resend](Resending-Records) | `BG Task: Resend` | `Upsert` |
 | A [bulk load](Bulk-Loads) | `BG Task: Bulk` | `Upsert` |
 | A run from the Rules form's Test tab | `BG Task: Test` | `Upsert` |

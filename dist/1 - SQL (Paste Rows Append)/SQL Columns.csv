@@ -54,3 +54,12 @@ option08,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 option09,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 option10,dbo,ue_AIR_idorepl_rule_mst,LongDescType,,YES
 incremental_watermark_property,dbo,ue_AIR_idorepl_rule_mst,CollectionPropertyNameType,'RecordDate',NO
+use_queue,dbo,ue_AIR_idorepl_rule_mst,ListYesNoType,0,NO
+rule_num,dbo,ue_AIR_idorepl_queue_mst,GenericIntType,,NO
+ido_name,dbo,ue_AIR_idorepl_queue_mst,CollectionNameType,,NO
+operation,dbo,ue_AIR_idorepl_queue_mst,ShortDescType,,NO
+source,dbo,ue_AIR_idorepl_queue_mst,ShortDescType,,NO
+key_values,dbo,ue_AIR_idorepl_queue_mst,LongListType,,YES
+record_row_pointer,dbo,ue_AIR_idorepl_queue_mst,RowPointerType,,YES
+payload,dbo,ue_AIR_idorepl_queue_mst,LongListType,,YES
+attempt_count,dbo,ue_AIR_idorepl_queue_mst,GenericIntType,0,NO

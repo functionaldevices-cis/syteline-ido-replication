@@ -1614,6 +1614,30 @@
                <Post301Format />
                <EffectiveCaption>sue_AIR_Test</EffectiveCaption>
             </Component>
+            <Component Name="UseQueueEdit">
+               <DeviceID>-1</DeviceID>
+               <Type>5</Type>
+               <TabOrder>15</TabOrder>
+               <TopPos>11.5</TopPos>
+               <LeftPos>53</LeftPos>
+               <Height>1.3</Height>
+               <ListHeight>0</ListHeight>
+               <Width>20</Width>
+               <Caption>ue_AIR_sUseQueue</Caption>
+               <MaxCharacters>0</MaxCharacters>
+               <ContainerName />
+               <ContainerSequence>0</ContainerSequence>
+               <DataSource>object.UseQueue</DataSource>
+               <Binding>1</Binding>
+               <Flags>1</Flags>
+               <ReadOnly>False</ReadOnly>
+               <Hidden>False</Hidden>
+               <HelpContextID>0</HelpContextID>
+               <MenuName>StdDefault</MenuName>
+               <PropertyClassName>ListYesNo</PropertyClassName>
+               <Post301Format />
+               <EffectiveCaption>ue_AIR_sUseQueue</EffectiveCaption>
+            </Component>
          </Components>
          <EventHandlers>
             <EventHandler Name="CredentialTargetTypeChanged" Sequence="0">

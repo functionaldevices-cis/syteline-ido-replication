@@ -142,7 +142,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
         private const int BackgroundTaskFailedReturnCode = 16;
 
         [IDOMethod(MethodFlags.None, "Infobar")]
-        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "")
+        public int ue_ReplicateRecordToExternalSystems(int BGTaskNum = -1, string queryFilter = "", string IDOName = "", int recordCap = 1, string ruleNum = null, string operation = "", string keyValues = "")
         {
 
             // TRIGGERS PASS A BLANK RULE NUMBER TO REACH THE OPERATION PARAMETER. BLANK MEANS EVERY ACTIVE RULE FOR THE IDO.
@@ -176,6 +176,15 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 BGTaskNum: BGTaskNum
             );
 
+            // A TRIGGER RUN (BGTaskNum -1) PASSES THE RECORD'S KEYS TOO (keyValues). IT QUEUES THE CHANGE FOR EVERY RULE THAT USES THE QUEUE
+            // AND SENDS IT IN THE SAVE FOR EVERY OTHER RULE, AS BEFORE. SEE Queue.cs. IT NEVER THROWS AND ALWAYS RETURNS 0.
+
+            if (BGTaskNum <= 0)
+            {
+                this.RunTriggerReplication(sytelineAPI, utils, queryFilter, IDOName, recordCap, ruleNum, operation, source, keyValues);
+                return 0;
+            }
+
             ReplicationRunResult runResult = this.RunReplication(sytelineAPI, utils, BGTaskNum, queryFilter, IDOName, recordCap, ruleNum, operation, source);
 
             // ONLY A BACKGROUND TASK RUN REPORTS FAILURE. A TRIGGER RUN ALWAYS RETURNS 0, SO IT CAN'T FAIL THE USER'S SAVE.
@@ -200,6 +209,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             public bool NothingToSend = false;
 
+            // FALSE WHEN A LOG ROW COULDN'T BE WRITTEN. THE QUEUE'S SENDER KEEPS ITS ROWS THEN, SO A FAILURE ISN'T LOST WITH ITS LOG ROW.
+
+            public bool LogWritten = true;
+
             public HashSet<string> RecordRowPointersLoaded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         }
@@ -207,9 +220,10 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
         // ONE REPLICATION RUN: LOADS THE RULES AND THE RECORDS THAT MATCH THE FILTER, SENDS THEM, AND WRITES THE REPLICATION LOG.
-        // ue_ReplicateRecordToExternalSystems AND ue_ResendReplications BOTH RUN THROUGH HERE. operation IS ALREADY NORMALIZED.
+        // ue_ReplicateRecordToExternalSystems, ue_ResendReplications AND THE QUEUE'S SENDER ALL RUN THROUGH HERE. operation IS ALREADY
+        // NORMALIZED. A CALLER THAT HAS ALREADY LOADED THE RULES PASSES THEM AS preloadedRules, AND ONLY THOSE RULES RUN.
 
-        private ReplicationRunResult RunReplication(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string queryFilter, string IDOName, int recordCap, string ruleNum, string operation, string source)
+        private ReplicationRunResult RunReplication(SytelineInternalAPI sytelineAPI, Utilities utils, int BGTaskNum, string queryFilter, string IDOName, int recordCap, string ruleNum, string operation, string source, Dictionary<string, ReplicationRule> preloadedRules = null)
         {
 
             ReplicationRunResult runResult = new ReplicationRunResult();
@@ -241,7 +255,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 // LOAD REPLICATION RULE RECORDS FOR SPECIFIED IDO
 
-                replicationRules = this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
+                replicationRules = preloadedRules ?? this.LoadReplicationRulesAndMaps(sytelineAPI, utils, IDOName, ruleNum, includeInactiveRules);
 
                 if (replicationRules.Keys.Count == 0)
                 {
@@ -413,7 +427,7 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
             // WRITE THE REPLICATION LOG. TRIGGERS PASS -1 AS THE BACKGROUND TASK NUMBER; BACKGROUND TASKS PASS THEIR OWN.
 
-            this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
+            runResult.LogWritten = this.WriteReplicationLog(sytelineAPI, utils, IDOName, operation, source, ruleResults);
 
             runResult.NothingToSend = nothingToSend;
             return runResult;
@@ -1349,7 +1363,9 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
 
 
-        private void WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults)
+        // RETURNS FALSE WHEN A LOG ROW COULDN'T BE WRITTEN. IT NEVER THROWS.
+
+        private bool WriteReplicationLog(SytelineInternalAPI sytelineAPI, Utilities utils, string IDOName, string operation, string source, List<ReplicationRuleResult> ruleResults)
         {
 
             try
@@ -1360,10 +1376,11 @@ namespace ue_AIR_IDOReplicationRules_ECA
 
                 if (!ruleResults.Any(ruleResult => ruleResult.RecordOutcomes.Count > 0 || !ruleResult.Success))
                 {
-                    return;
+                    return true;
                 }
 
                 List<IDOUpdateItem> logRows = new List<IDOUpdateItem>();
+                bool everyRowWritten = true;
                 DateTime attemptDate = this.LoadSiteDateTime(sytelineAPI, utils);
 
                 foreach (ReplicationRuleResult ruleResult in ruleResults)
@@ -1396,18 +1413,25 @@ namespace ue_AIR_IDOReplicationRules_ECA
                 {
                     try
                     {
-                        sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList());
+                        if (sytelineAPI.CreateRecords("ue_AIR_IDOReplicationLogs", logRows.Skip(i).Take(200).ToList()) == null)
+                        {
+                            everyRowWritten = false;
+                        }
                     }
                     catch (Exception ex)
                     {
+                        everyRowWritten = false;
                         utils.WriteLogMessage("Couldn't write replication log rows " + (i + 1) + " to " + Math.Min(i + 200, logRows.Count) + ": " + this.DescribeException(ex));
                     }
                 }
+
+                return everyRowWritten;
 
             }
             catch (Exception ex)
             {
                 utils.WriteLogMessage("Couldn't write the replication log: " + this.DescribeException(ex));
+                return false;
             }
 
         }
@@ -3182,7 +3206,8 @@ namespace ue_AIR_IDOReplicationRules_ECA
                     { "Option07" },
                     { "Option08" },
                     { "Option09" },
-                    { "Option10" }
+                    { "Option10" },
+                    { "UseQueue" }
                 },
                 filter: "( IDOName = " + sytelineAPI.QuoteFilterValue(IDOName) + " )" + (includeInactive ? "" : " AND ( IsActive = 1 )") + (ruleNum != null ? " AND ( RuleNum = " + sytelineAPI.QuoteFilterValue(ruleNum) + " )" : ""),
                 orderBy: "RuleNum ASC"
